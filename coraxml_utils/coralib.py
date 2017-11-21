@@ -44,25 +44,25 @@ class CoraFlag:
 
 class Document:
 
-    def __init__(self, sigle, name, header):
+    def __init__(self, sigle, name, header, pages, tokens, shifttags):
         self.sigle = sigle
         self.name = name
         self.header = header
 
-        self.pages = list()
-        self.tokens = list()
-        self.shifttags = list()
+        self.pages = pages
+        self.tokens = tokens
+        self.shifttags = shifttags
 
-        def __bool__(self):
-            return bool(self.pages and self.tokens)
+    def __bool__(self):
+        return bool(self.pages and self.tokens)
 
 
 class Page:
 
-    def __init__(self, name, side):
+    def __init__(self, name, side, columns):
         self.name = name
         self.side = side
-        self.columns = list()
+        self.columns = columns
 
     def range(self):
         if len(self.columns) > 1:
@@ -77,9 +77,9 @@ class Page:
 
 
 class Column:
-    def __init__(self, name):
+    def __init__(self, name, lines):
         self.name = name
-        self.lines = list()
+        self.lines = lines
 
     def range(self):
         if len(self.lines) > 1:
@@ -94,9 +94,9 @@ class Column:
 
 
 class Line:
-    def __init__(self, name):
+    def __init__(self, name, dipls):
         self.name = name
-        self.dipls = list()
+        self.dipls = dipls
 
     def __bool__(self):
         return bool(self.dipls)
@@ -123,11 +123,11 @@ class Line:
 
 class CoraToken:
 
-    def __init__(self, _id, trans):
+    def __init__(self, _id, trans, tok_dipls, tok_annos):
         self.id = _id
         self.trans = trans
-        self.tok_dipls = list()
-        self.tok_annos = list()
+        self.tok_dipls = tok_dipls
+        self.tok_annos = tok_annos
 
     def __str__(self):
         return str(self.trans)
