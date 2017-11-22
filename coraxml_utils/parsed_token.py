@@ -2,8 +2,8 @@
 import re
 import abc
 
-import character
-from settings import Options
+import coraxml_utils.character as character
+from coraxml_utils.settings import Options
 
 MEDIUS = "\u00b7"
 ELEVATUS = "\uf161"
@@ -49,30 +49,13 @@ class ParseError(Exception):
 
 class BaseToken:
     def __init__(self, intoken, options):
-        self.token_re = re.compile(r"( (?x) " + 
-                              r" | ".join([r"(?P<spc> \s+ )",
-                                           self.abbr_re,
-                                           self.comm_re,
-                                           self.majuscule_re,
-                                           self.editnum_re,
-                                           self.splitter_re,
-                                           self.ddash_re,
-                                           self.quotes_re,
-                                           self.strk_re,
-                                           self.preedit_re,
-                                           self.init_punc_re,
-                                           self.punc_re,
-                                           self.ptk_marker_re,
-                                           self.brackets_re,
-                                           self.word_re]) + r" )")
-
+        self.token_re = re.compile(r"( (?x) " + "|".join(self.re_parts) + ")")
         self.options = options
         self.allowed.update(self.options.allowed)
         self.errors = list()
-        if isinstance(intoken, str):
 
+        if isinstance(intoken, str):
             self.original_str = intoken
-            
             self.parse = list()
             open_brackets = list()
             open_br_types = list()
@@ -403,24 +386,31 @@ class RemToken(BaseToken):
         self.ILLEGIBLE_REPLACEMENT = "[...]"
         self.missing_br_open = {'['}
 
-        self.abbr_re = '(?P<abbr> \. [\w$] \. | <<\.{3}>> | \[\[\.\.\.\]\] )'
+        self.spc_re = r"(?P<spc> \s+ )"
+        self.abbr_re = r'(?P<abbr> \. [\w$] \. | <<\.{3}>> | \[\[\.\.\.\]\] )'
         self.comm_re = '(?P<comm> [+@][KEZ] )'
-        self.word_re = '(?P<w> . \\\ [^\[\](){}<>] | . )'
-        self.init_punc_re = '(?P<ip> // | \*C | \*f )'
-        self.punc_re = ('(?P<p>  \. \\\ . | %\. | \. | (?<! \\\ ) / | ' + BULLET + ' | .̇ | ' +
+        self.word_re = r'(?P<w> . \\\ [^\[\](){}<>] | . )'
+        self.init_punc_re = r'(?P<ip> // | \*C | \*f )'
+        self.punc_re = (r'(?P<p>  \. \\\ . | %\. | \. | (?<! \\\ ) / | ' + BULLET + ' | .̇ | ' +
                 MEDIUS + ' | ' + ELEVATUS +  ' | ' + PARAGRAPHUS +
-                ' | ! | \? | : | ;  )')
-        self.strk_re = '(?P<strk>  \*\[ | \*\] )'
+                r' | ! | \? | : | ;  )')
+        self.strk_re = r'(?P<strk>  \*\[ | \*\] )'
         # NB: messy lookahead fix for symbols ending with open parens
-        self.preedit_re = ('(?P<pe> \([.;!?:,"«»]\) | ,,\) | ,,\( (?![.;!?:,"«»]) | ' +
-                    ',\) | ,\( (?![.;!?:,"«»]) | ,, | , )')
-        self.ptk_marker_re = '(?P<ptk> \*1 | \*2 )'
-        self.brackets_re = '(?P<br> \[+ | \]+ | <+ | >+ )'
-        self.quotes_re = '(?P<q> " | « | » )'
-        self.majuscule_re = '(?P<m> [*÷] [{(<] (?: [a-zA-Z] \\\ . | [a-zA-Z] )+ [*÷] \d* [})>] )'
-        self.editnum_re = '(?P<edit> (?<![\*÷]) \{ [^{} ]+ (?<![\*÷]) \} )'
-        self.splitter_re = '(?P<spl> ~\(=\) | ~\|+ | ~ | \(=\) | =\|+ | \# | \|+ )'
-        self.ddash_re = '(?P<dd> = )'
+        self.preedit_re = (r'(?P<pe> \([.;!?:,"«»]\) | ,,\) | ,,\( (?![.;!?:,"«»]) | ' +
+                    r',\) | ,\( (?![.;!?:,"«»]) | ,, | , )')
+        self.ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
+        self.brackets_re = r'(?P<br> \[+ | \]+ | <+ | >+ )'
+        self.quotes_re = r'(?P<q> " | « | » )'
+        self.majuscule_re = r'(?P<m> [*÷] [{(<] (?: [a-zA-Z] \\\ . | [a-zA-Z] )+ [*÷] \d* [})>] )'
+        self.editnum_re = r'(?P<edit> (?<![\*÷]) \{ [^{} ]+ (?<![\*÷]) \} )'
+        self.splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | \(=\) | =\|+ | \# | \|+ )'
+        self.ddash_re = r'(?P<dd> = )'
+
+        # specifies which regexes are to be applied, and in what order
+        self.re_parts = [self.spc_re, self.abbr_re, self.comm_re, self.majuscule_re,
+                         self.splitter_re, self.ddash_re, self.quotes_re,
+                         self.strk_re, self.preedit_re, self.init_punc_re, self.punc_re,
+                         self.ptk_marker_re, self.brackets_re, self.word_re]
 
         super().__init__(intoken, options)
 
@@ -441,37 +431,43 @@ class RexToken(BaseToken, metaclass=abc.ABCMeta):
         self.ILLEGIBLE_REPLACEMENT = "[...]"
         self.missing_br_open = {'['}
 
-        self.alpha = r"[A-Za-zÄÖÜäöüß$]"
-        self.punc = r'[.;!?:,]'
+        alpha = r"[A-Za-zÄÖÜäöüß$]"
+        punc = r'[.;!?:,]'
         quotes = r'["«»]'
         no_pq = r'(?![.;!?:,"«»])'
 
-        self.abbr_re = '(?P<abbr>' + '|'.join(['%\.' + self.alpha + '\%.', 
-                                               '\.' + self.alpha + '\.',
-                                               '\[\.{3}\]',
-                                               '%[A-Z]',
-                                               ]) + ')'
-        self.comm_re = r'(?P<comm> [+@][KEZ] )'
-        self.word_re = r'(?P<w> \\ . | . )'
-        self.init_punc_re = r'(?P<ip> // | \*[Cf] )' 
-        self.punc_re = r'(?P<p> %\. | / | ' + self.punc +')'
-        self.strk_re = r'(?P<strk>  \*[\[ | \*\]] )'
-        self.preedit_re = r'(?P<pe>' + '|'.join(['\(' + self.punc + '\)',
-                                                ',,\)', 
-                                                ',,\(' + no_pq,
-                                                ',\)',
-                                                ',\(' + no_pq,
-                                                ',,']) + ')'
-        self.ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
-        self.brackets_re = r'(?P<br> \[+ (?![ ]) | (?<![ ]) \]+ | <+ (?![ ]) | (?<![ ]) >+ )'
-        self.quotes_re = r'(?P<q> \( ' + quotes + r' \) | ' + quotes + ')'
-        self.majuscule_re = r'(?P<maj> [*÷] [{(<]' + self.alpha + r'{,3} [*÷] \d* [})>] )'
-        self.editnum_re = r'(?P<edit> (?<![\*÷]) \{ [^{}]+ (?<![\*÷]) \} )'
-        self.splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | (?<!\|) \(=\) (?!\|) | =\|+ | \# | \|+ (?!=) )'
-        self.ddash_re = r'(?P<dd> = )'
+        spc_re = r"(?P<spc> \s+ )"
+        abbr_re = '(?P<abbr>' + '|'.join(['%\.' + alpha + '\%.', 
+                                          '\.' + alpha + '\.',
+                                          '\[\.{3}\]',
+                                          '%[A-Z]']) + ')'
+        comm_re = r'(?P<comm> [+@][KEZ] )'
+        word_re = r'(?P<w> \\ . | . )'
+        init_punc_re = r'(?P<ip> // | \*[Cf] )' 
+        punc_re = r'(?P<p> %\. | / | ' + punc +')'
+        strk_re = r'(?P<strk>  \*[\[ | \*\]] )'
+        preedit_re = r'(?P<pe>' + '|'.join(['\(' + punc + '\)',
+                                            ',,\)', 
+                                            ',,\(' + no_pq,
+                                            ',\)',
+                                            ',\(' + no_pq,
+                                            ',,']) + ')'
+        ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
+        brackets_re = r'(?P<br> \[+ (?![ ]) | (?<![ ]) \]+ | <+ (?![ ]) | (?<![ ]) >+ )'
+        quotes_re = r'(?P<q> \( ' + quotes + r' \) | ' + quotes + ')'
+        majuscule_re = r'(?P<maj> [*÷] [{(<]' + alpha + r'{,3} [*÷] \d* [})>] )'
+        editnum_re = r'(?P<edit> (?<![\*÷]) \{ [^{}]+ (?<![\*÷]) \} )'
+        splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | (?<!\|) \(=\) (?!\|) | =\|+ | \# | \|+ (?!=) )'
+        ddash_re = r'(?P<dd> = )'
+
+        # specifies which regexes are to be applied, and in what order
+        self.re_parts = [spc_re, abbr_re, comm_re, majuscule_re,
+                         editnum_re, splitter_re, ddash_re, quotes_re,
+                         strk_re, preedit_re, init_punc_re, punc_re,
+                         ptk_marker_re, brackets_re, word_re]
 
         # LIST OF ALLOWED CHARACTERS FOR validity check
-        self.allowed.update(ALPHA)
+        self.allowed = set(ALPHA)
         self.allowed.update(ALPHA.upper())
         self.allowed.update('-",.:;\/!?1234567890ßäöüÄÖÜ ')
         # for r-kuerzung
@@ -503,3 +499,21 @@ class RefToken(RexToken):
         self.missing_br_open = {'[', '<<'}
         self.allowed.update("()")
 
+
+class PlainToken(BaseToken):
+    def __init__(self, intoken, options):
+        self.ATOMIC_ILLEGIBLE = ""
+        self.ILLEGIBLE_REPLACEMENT = "[...]"
+        self.missing_br_open = {}
+
+        spc_re = r"(?P<spc> \s+ )"
+        word_re = r'(?P<w> . )'
+        self.re_parts = [spc_re, word_re]
+
+        # LIST OF ALLOWED CHARACTERS FOR validity check
+        self.allowed = set(ALPHA)
+        self.allowed.update(ALPHA.upper())
+        self.allowed.update('-",.:;\/!?1234567890ßäöüÄÖÜ ')
+        self.allowed.update("'()[]{}")
+
+        super().__init__(intoken, options)

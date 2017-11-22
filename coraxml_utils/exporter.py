@@ -1,108 +1,87 @@
 
+from coraxml_utils.coralib import *
+from coraxml_utils.settings import *
+
+def create_exporter(format="coraxml", dialect="ref"):
+    return CoraXMLExporter(dialect)
 
 
-# nach coraxml
-class Doc:
+class CoraXMLExporter:
+
+    def __init__(self, dialect):
+        self.dialect = dialect
+        if dialect == "rem":
+            self.dipl_tag = "tok_dipl"
+            self.mod_tag = "tok_anno"
+        else:
+            self.dipl_tag = "dipl"
+            self.mod_tag = "mod"
 
 
-    def to_xml(self):
+    def export(self, doc):
+
         root = etree.Element("text")
-        root.set("id", self.sigle)
+        root.set("id", doc.sigle)
         header = etree.SubElement(root, "header")
-        header.text = self.headertext
+        header.text = doc.header
 
         layoutinfo = etree.SubElement(root, "layoutinfo")
-        for page in self.pages:
+        for page in doc.pages:
             page_xml = etree.Element("page", {"id": page.id,
-                                        "no": page.no,
-                                        "range": page.range()})
+                                              "no": page.no,
+                                              "range": page.range()})
             if page.side:
-                me.set("side", page.side)
-            layoutinfo.append(page.to_xml())
+                page_xml.set("side", page.side)
+            layoutinfo.append(page_xml)
 
-        for col in self.columns:
-            layoutinfo.append(col.to_xml())
+            for col in page.columns:
+                col_xml = etree.Element("column", {"id": col.id,
+                                                   "range": col.range()})
+                if col.name:
+                    col_xml.set("name", self.name)
+                layoutinfo.append(col_xml)
 
-        for line in self.lines:
-            # empty lines could come about after double dashes at
-            # line end have been resolved
-            if line:
-                layoutinfo.append(line.to_xml())
+                for line in col.lines:
+                    # empty lines could come about after double dashes at
+                    # line end have been resolved
+                    if line:
+                        line_xml = etree.Element("line", {"id": self.id,
+                                                          "name": self.linename,
+                                                          "loc": self.loc(),
+                                                          "range": self.range()})
+                        layoutinfo.append(line_xml)
 
         shifttags = etree.SubElement(root, "shifttags")
-        for shifttag in self.shifttags:
+        for shifttag in doc.shifttags:
             etree.SubElement(shifttags, shifttag.tag(), {"range": shifttag.range()})
 
-        for token_or_comment in self.tokens:
-            root.append(token_or_comment.to_xml())
+        for token_or_comment in doc.tokens:
+            if isinstance(token_or_comment, CoraToken):
+                tok = token_or_comment
+                tok_xml = etree.Element("token", {"id": tok.id,
+                                                  "trans": tok.trans})
+
+                for dipl in tok.tok_dipls:
+                    dipl_xml = etree.SubElement(tok_xml, self.dipl_tag, 
+                                                {"id": dipl.id, 
+                                                 "trans": str(dipl.trans)})
+                    dipl_xml.set("utf", str(dipl.trans.with_opts(Options(character="utf"))))
+                for mod in tok.tok_annos:
+                    mod_xml = etree.SubElement(tok_xml, self.mod_tag,
+                                               {"id": mod.id,
+                                                "trans": str(mod.trans)})
+                    mod_xml.set("utf", str(mod.trans.with_opts(Options(character="utf"))))
+                    mod_xml.set("simple", str(mod.trans.with_opts(Options(character="simple"))))
+
+                    # TODO: add annotations/flags to mod
+
+                root.append(tok_xml)
+            elif isinstance(token_or_comment, Comment):
+                comment = token_or_comment
+                comm_xml = etree.Element("comment", {"type": comment.type})
+                comm_xml.text = comment.content
+                root.append(comm_xml)
+            else:
+                raise ValueError("found something weird in this document's token list")
 
         return root
-
-
-class Page:
-
-
-
-    def to_xml(self):
-
-        return me
-
-
-class Column:
-
-
-    def to_xml(self):
-        me = etree.Element("column", {"id": self.id,
-                                      "range": self.range()})
-        if self.name:
-            me.set("name", self.name)
-        return me
-
-class Line:
-
-
-    def to_xml(self):
-        me = etree.Element("line", {"id": self.id,
-                                    "name": self.linename,
-                                    "loc": self.loc(),
-                                    "range": self.range()})
-        return me
-
-class Token:
-
-
-    def to_xml(self):
-        me = etree.Element("token", {"id": self.id,
-                                     "trans": self.trans})
-        for dipl in self.dipls:
-            me.append(dipl.to_xml())
-        for mod in self.mods:
-            me.append(mod.to_xml())
-        return me
-
-class Dipl:
-
-
-    def to_xml(self):
-        return etree.Element("dipl", {"id": self.id,
-                                      "trans": self.trans,
-                                      "utf": self.utf})
-
-class Mod:
-
-
-    def to_xml(self):
-        return etree.Element("mod", {"id": self.id,
-                                     "trans": self.trans,
-                                     "utf": self.utf,
-                                     "ascii": self.simple})
-
-
-
-class Comment:
-
-
-    def to_xml(self):
-        me = etree.Element("comment", {"type": self.type})
-        me.text = self.content
-        return me
