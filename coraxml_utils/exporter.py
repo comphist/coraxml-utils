@@ -13,13 +13,18 @@ class Doc:
 
         layoutinfo = etree.SubElement(root, "layoutinfo")
         for page in self.pages:
+            page_xml = etree.Element("page", {"id": page.id,
+                                        "no": page.no,
+                                        "range": page.range()})
+            if page.side:
+                me.set("side", page.side)
             layoutinfo.append(page.to_xml())
 
         for col in self.columns:
             layoutinfo.append(col.to_xml())
 
         for line in self.lines:
-            # empty lines could come about after double dashes at 
+            # empty lines could come about after double dashes at
             # line end have been resolved
             if line:
                 layoutinfo.append(line.to_xml())
@@ -39,11 +44,7 @@ class Page:
 
 
     def to_xml(self):
-        me = etree.Element("page",{"id": self.id, 
-                                   "no": self.no,
-                                   "range": self.range()})
-        if self.side:
-            me.set("side", self.side)
+
         return me
 
 
@@ -51,7 +52,7 @@ class Column:
 
 
     def to_xml(self):
-        me = etree.Element("column", {"id": self.id, 
+        me = etree.Element("column", {"id": self.id,
                                       "range": self.range()})
         if self.name:
             me.set("name", self.name)
@@ -71,10 +72,10 @@ class Token:
 
 
     def to_xml(self):
-        me = etree.Element("token", {"id": self.id, 
+        me = etree.Element("token", {"id": self.id,
                                      "trans": self.trans})
         for dipl in self.dipls:
-            me.append(dipl.to_xml())        
+            me.append(dipl.to_xml())
         for mod in self.mods:
             me.append(mod.to_xml())
         return me
@@ -86,7 +87,7 @@ class Dipl:
         return etree.Element("dipl", {"id": self.id,
                                       "trans": self.trans,
                                       "utf": self.utf})
-        
+
 class Mod:
 
 

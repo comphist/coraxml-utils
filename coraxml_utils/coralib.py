@@ -2,20 +2,6 @@
 from coraxml_utils.settings import *
 
 
-##################################
-### TODOs:
-
-class CoraTag:
-    pass
-
-class CoraFlag:
-    pass
-
-
-#################################
-
-
-
 class Document:
 
     def __init__(self, sigle, name, header, pages, tokens, shifttags=None):
@@ -75,17 +61,19 @@ class Line:
     def __bool__(self):
         return bool(self.dipls)
 
-    ## keep?
+    # keep?
     def loc(self):
         pass
 
     def range(self):
         if len(self.dipls) > 1:
             first, *middle, last = self.dipls
-            # if first dipl token was merged into last line, then it won't have an ID
-            # in that case, just use second token ID for range
+            # if first dipl token was merged into last line, then it won't have
+            # an ID in that case, just use second token ID for range
             if middle:
-                return "{0}..{1}".format(first.id if hasattr(first, "id") else middle[0].id, 
+                return "{0}..{1}".format(first.id
+                                         if hasattr(first, "id")
+                                         else middle[0].id,
                                          last.id)
             else:
                 return "{0}..{1}".format(first.id, last.id)
@@ -132,12 +120,44 @@ class TokDipl:
     def __str__(self):
         return str(self.trans)
 
-    def merge(self, dipl):
-        self.trans += dipl.trans
-        self.utf += dipl.utf
+    def __eq__(self, other):
+        return (self.id == other.id) and (self.trans == other.trans)
+
+
+class TokAnno:
+
+    annos_order = ["norm", "token_type", "lemma", "lemma_gen", "lemma_idmwb",
+                   "pos", "pos_gen", "infl", "inflClass", "inflClass_gen",
+                   "punc", "link"]
+
+    def __init__(self, _id, trans, tags=None, flags=None):
+        self.id = _id
+        self.trans = trans
+        self.tags = tags if tags else []
+        self.flags = flags if flags else []
+
+    def __str__(self):
+        return str(self.trans)
 
     def __eq__(self, other):
         return (self.id == other.id) and (self.trans == other.trans)
+
+    def merge(self, other):
+        self.trans.parse += other.trans.parse
+
+
+class CoraTag:
+
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+
+class CoraFlag:
+    def __init__(self, name, value=None):
+        self.name = name
+        self.value = value
+
 
 class CoraComment:
 
@@ -146,7 +166,7 @@ class CoraComment:
         self.content = content
 
     def __str__(self):
-        return "+{0} {1} @{0}".format(self.type, 
+        return "+{0} {1} @{0}".format(self.type,
                                       " ".join(self.content))
 
 
@@ -173,70 +193,3 @@ class ShiftTag:
                 "Ü": "title",
                 "M": "marg",
                 "Q": "question"}.get(self.type, "shifttag")
-
-
-
-
-
-
-
-
-
-
-
-class Mod:
-    def __init__(self, trans, utf, simple):
-        self.trans = trans
-        self.utf = utf
-        self.simple = simple
-
-    def merge(self, mod):
-        self.trans += mod.trans
-        self.utf += mod.utf
-        self.simple += mod.simple
-
-
-
-
-class CoraMod:
-
-    annos_order = ["norm", "token_type", "lemma", "lemma_gen", "lemma_idmwb", "pos",
-                   "pos_gen", "infl", "inflClass", "inflClass_gen", "punc", "link"]
-
-    def __init__(self, id='', trans='', utf='', ascii='',
-                 mod_elem=None):
-        self.annotations = dict()
-        self.annotations["targets"] = dict()
-        if mod_elem is not None:
-            self.id = mod_elem.attrib['id']
-            self.ascii = remove_majuskel(
-                           unspace(mod_elem.attrib['ascii']))
-            self.trans = mod_elem.attrib['trans']
-            self.utf = remove_majuskel(
-                         normalize('NFC', unspace(mod_elem.attrib['utf'])))
-            for subelem in mod_elem:
-                key = subelem.tag
-                val = subelem.get("tag")
-
-                # special case for VPC links
-                if val is None:
-                    val = subelem.get("target")
-
-                try:
-                    # standardize empty values
-                    if not re.match(r"[\s-]*$", val):
-                        self.annotations[key] = val
-                    else:
-                        self.annotations[key] = DEFAULT_VAL
-                except TypeError:
-                    pass
-        else:
-            self.id = id
-            self.trans = trans
-            self.utf = utf
-            self.ascii = ascii
-
-    def __str__(self):
-        return ET.tostring(self.to_xml(), pretty_print=True, encoding='utf-8').decode()
-
-

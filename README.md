@@ -1,29 +1,20 @@
 # README #
 
-This README would normally document whatever steps are necessary to get your application up and running.
 
-### What is this repository for? ###
+### Conventions
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* classes -> CamelCase, everything else -> snake_case
+* magic methods before other methods
+* verbs are better than pro-verbs ("import" > "do_import")
 
-### How do I get set up? ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+### Was ist was?
 
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+* `bin/`
+	* `convert_check.py`: Konvertiert und/oder prüft Transkriptionsdateien. 
+	* `trans2coraxml.py`: Konvertiert Transkriptionsdateien nach CoraXML.
+* `coraxml_utils/`
+	* `coralib.py`: Objektmodell
+* `test/`
+	* `importer/`
+	* ...

@@ -146,6 +146,90 @@ class BaseToken:
             self.parse = None
 
 
+    def __len__(self):
+        return len(self.parse)
+
+
+    def __eq__(self, other):
+        return self.parse == other.parse
+
+
+    def __repr__(self):
+        return str(self.parse)
+
+
+    def __str__(self):
+        self.set_illegible_options()
+
+        # this is done here to make sure that it happens *after*
+        # any tokenization has taken place
+        self.handle_character_options()
+
+        last_char = dict()
+        outstr = list()
+        last_index = len(self.parse) - 1
+
+        for i, c in enumerate(self.parse):
+            before = ""
+            after = ""
+            out_char = c["char"]
+            skip_char = False
+
+            # majuscule handling
+            if c["type"] == "maj":
+                if self.options.character != "orig":
+                    out_char = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
+                                       r"\1", c["char"])
+
+            if self.options.doubledash == "delete" and c["type"] == "dd":
+                skip_char = True
+
+            if ((self.options.editnum == "delete" or 
+                 self.options.bibinfo == "none") and c["type"] == "edit"):
+                skip_char = True
+
+            brtype = c.get("brtype", None)
+            # strikethru
+            if brtype == "strk":
+                if self.options.strikethru == "original":
+                    before = c.get("before", "")
+                    after = c.get("after", "")
+                elif self.options.strikethru == "delete":
+                    skip_char = True
+
+            # illegible character handling        
+            elif brtype == "ill":
+                if c["br"] in self.br_orig:
+                    before = c.get("before", "")
+                    after = c.get("after", "")
+                # if last char is bracket end
+                elif c.get("br") in self.br_delete and i == last_index:
+                    before = self.ILLEGIBLE_REPLACEMENT
+                    skip_char = True
+                elif c.get("br") in self.br_delete:
+                    # wait for bracket end, then add replacement (see below)
+                    skip_char = True
+                else:
+                    if last_char.get("br") in self.br_delete:
+                        before = self.ILLEGIBLE_REPLACEMENT
+            else:
+                if last_char.get("br") in self.br_delete:
+                    before = self.ILLEGIBLE_REPLACEMENT
+
+            outstr.append(before)
+            if not skip_char:
+                outstr.append(out_char)
+            outstr.append(after)
+
+            last_char = c
+
+        # token-wise conversion to target
+        if self.options.character != "orig":
+            return character.convert("".join(outstr), self.options.character).strip()
+        else:
+            return "".join(outstr).strip()
+
+
     def validate(self):
         # remove all valid characters, now everything that remains
         # is an error. also remove \&1-9 "variables zeichen"
@@ -212,10 +296,6 @@ class BaseToken:
 
     def with_opts(self, options):
         return self.__class__(self.parse, options)
-
-
-    def __len__(self):
-        return len(self.parse)
 
 
     def keep(self, *types):
@@ -315,82 +395,6 @@ class BaseToken:
                 new_parse.append(this_char_copy)
 
         return self.__class__(new_parse, self.options)
-
-
-    def __repr__(self):
-        return str(self.parse)
-
-
-    def __str__(self):
-        self.set_illegible_options()
-
-        # this is done here to make sure that it happens *after*
-        # any tokenization has taken place
-        self.handle_character_options()
-
-        last_char = dict()
-        outstr = list()
-        last_index = len(self.parse) - 1
-
-        for i, c in enumerate(self.parse):
-            before = ""
-            after = ""
-            out_char = c["char"]
-            skip_char = False
-
-            # majuscule handling
-            if c["type"] == "maj":
-                if self.options.character != "orig":
-                    out_char = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
-                                       r"\1", c["char"])
-
-            if self.options.doubledash == "delete" and c["type"] == "dd":
-                skip_char = True
-
-            if ((self.options.editnum == "delete" or 
-                 self.options.bibinfo == "none") and c["type"] == "edit"):
-                skip_char = True
-
-            brtype = c.get("brtype", None)
-            # strikethru
-            if brtype == "strk":
-                if self.options.strikethru == "original":
-                    before = c.get("before", "")
-                    after = c.get("after", "")
-                elif self.options.strikethru == "delete":
-                    skip_char = True
-
-            # illegible character handling        
-            elif brtype == "ill":
-                if c["br"] in self.br_orig:
-                    before = c.get("before", "")
-                    after = c.get("after", "")
-                # if last char is bracket end
-                elif c.get("br") in self.br_delete and i == last_index:
-                    before = self.ILLEGIBLE_REPLACEMENT
-                    skip_char = True
-                elif c.get("br") in self.br_delete:
-                    # wait for bracket end, then add replacement (see below)
-                    skip_char = True
-                else:
-                    if last_char.get("br") in self.br_delete:
-                        before = self.ILLEGIBLE_REPLACEMENT
-            else:
-                if last_char.get("br") in self.br_delete:
-                    before = self.ILLEGIBLE_REPLACEMENT
-
-            outstr.append(before)
-            if not skip_char:
-                outstr.append(out_char)
-            outstr.append(after)
-
-            last_char = c
-
-        # token-wise conversion to target
-        if self.options.character != "orig":
-            return character.convert("".join(outstr), self.options.character).strip()
-        else:
-            return "".join(outstr).strip()
 
 
 class RemToken(BaseToken):
