@@ -394,6 +394,14 @@ class BaseToken:
         return new_tokens
 
 
+    def tokenize_dipl(self):
+        return self.tokenize(tokenize_type="historical")
+
+
+    def tokenize_anno(self):
+        return self.tokenize(tokenize_type="all", split_init_punc=False)
+
+
 class RemToken(BaseToken):
     def __init__(self, intoken):
         self.ATOMIC_ILLEGIBLE = "<<...>>"
