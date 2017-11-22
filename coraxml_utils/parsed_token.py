@@ -9,13 +9,37 @@ MEDIUS = "\u00b7"
 ELEVATUS = "\uf161"
 PARAGRAPHUS = "\uf1e1"
 BULLET = "\u2219"  # used strangely often in REM
+ALPHA = "abcdefghijklmnopqrstuvwxyz"
 
 BR = {'[': ']', ']': '[', 
       '(': ')', ')': '(',
       '{': '}', '}': '{',
       '<': '>', '>': '<'}
 
-__version__ = "2017.11.15"
+DIPL_TRANS_OPTS = Options(character="orig", syllab=False, tokenize="historical",
+                          illegible="original", strikethru="original",
+                          doubledash="leave", preedtoken="leave")
+
+DIPL_UTF_OPTS = Options(character="utf", syllab=False, tokenize="historical", 
+                        illegible="character", strikethru="leave", 
+                        doubledash="leave", preedpunc="delete", preedtoken="delete")
+
+MOD_TRANS_OPTS = Options(character="orig", tokenize="all", 
+                         illegible="original", strikethru="delete", 
+                         doubledash="leave", preedtoken="leave", preedpunc="leave",
+                         nosplitinit=True)
+
+MOD_SIMPLE_OPTS = Options(character="simple", tokenize="all",  
+                          illegible="leave", strikethru="delete", 
+                          doubledash="delete", preedtoken="delete", preedpunc="leave",
+                          nosplitinit=True)
+
+MOD_UTF_OPTS = Options(character="utf", tokenize="all", 
+                       illegible="character", strikethru="delete", 
+                       doubledash="delete", preedtoken="delete", preedpunc="leave",
+                       nosplitinit=True)
+
+__version__ = "2017.11.21"
 
 
 class ParseError(Exception):
@@ -442,6 +466,13 @@ class RexToken(BaseToken, metaclass=abc.ABCMeta):
         self.splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | (?<!\|) \(=\) (?!\|) | =\|+ | \# | \|+ (?!=) )'
         self.ddash_re = r'(?P<dd> = )'
 
+        # LIST OF ALLOWED CHARACTERS FOR validity check
+        self.allowed.update(ALPHA)
+        self.allowed.update(ALPHA.upper())
+        self.allowed.update('-",.:;\/!?1234567890ßäöüÄÖÜ ')
+        # for r-kuerzung
+        self.allowed.update("'")
+
         self.init_parser()
 
         super().__init__(intoken, options)
@@ -460,9 +491,11 @@ class AnselmToken(RexToken):
     def init_parser(self):
         self.ATOMIC_ILLEGIBLE = ""
         self.missing_br_open = {'<', '<<', '[', '[['}
+        self.allowed.update("()")
 
 
 class RefToken(RexToken):
     def init_parser(self):
         self.missing_br_open = {'[', '<<'}
+        self.allowed.update("()")
 

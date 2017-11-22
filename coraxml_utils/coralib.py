@@ -2,32 +2,6 @@
 from settings import *
 
 
-
-### TODO: diese sachen sollen in den jeweiligen tokenparser
-DIPL_TRANS_OPTS = Options(character="orig", syllab=False, tokenize="historical",
-                          illegible="original", strikethru="original",
-                          doubledash="leave", preedtoken="leave")
-
-DIPL_UTF_OPTS = Options(character="utf", syllab=False, tokenize="historical", 
-                        illegible="character", strikethru="leave", 
-                        doubledash="leave", preedpunc="delete", preedtoken="delete")
-
-MOD_TRANS_OPTS = Options(character="orig", tokenize="all", 
-                         illegible="original", strikethru="delete", 
-                         doubledash="leave", preedtoken="leave", preedpunc="leave",
-                         nosplitinit=True)
-
-MOD_SIMPLE_OPTS = Options(character="simple", tokenize="all",  
-                          illegible="leave", strikethru="delete", 
-                          doubledash="delete", preedtoken="delete", preedpunc="leave",
-                          nosplitinit=True)
-
-MOD_UTF_OPTS = Options(character="utf", tokenize="all", 
-                       illegible="character", strikethru="delete", 
-                       doubledash="delete", preedtoken="delete", preedpunc="leave",
-                       nosplitinit=True)
-
-
 ##################################
 ### TODOs:
 
@@ -44,14 +18,14 @@ class CoraFlag:
 
 class Document:
 
-    def __init__(self, sigle, name, header, pages, tokens, shifttags):
+    def __init__(self, sigle, name, header, pages, tokens, shifttags=None):
         self.sigle = sigle
         self.name = name
         self.header = header
 
         self.pages = pages
         self.tokens = tokens
-        self.shifttags = shifttags
+        self.shifttags = shifttags if shifttags else []
 
     def __bool__(self):
         return bool(self.pages and self.tokens)
@@ -64,6 +38,9 @@ class Page:
         self.side = side
         self.columns = columns
 
+    def __bool__(self):
+        return bool(self.columns)
+
     def range(self):
         if len(self.columns) > 1:
             first, *_, last = self.columns
@@ -72,14 +49,14 @@ class Page:
             first = self.columns[0]
             return first.id
 
-    def __bool__(self):
-        return bool(self.columns)
-
 
 class Column:
     def __init__(self, name, lines):
         self.name = name
         self.lines = lines
+
+    def __bool__(self):
+        return bool(self.lines)
 
     def range(self):
         if len(self.lines) > 1:
@@ -88,9 +65,6 @@ class Column:
         else:
             first = self.lines[0]
             return first.id
-
-    def __bool__(self):
-        return bool(self.lines)
 
 
 class Line:
