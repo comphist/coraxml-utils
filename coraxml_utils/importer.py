@@ -1,16 +1,33 @@
-from coralib import *
+from coraxml_utils.coralib import *
 
 try:
     from lxml import etree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
 
+
+def createCoraXMLImporter(coraxml_dialect=None):
+
+    cora_importer = CoraXMLImporter()
+    if coraxml_dialect is None:
+        pass
+    elif coraxml_dialect == 'rem':
+        cora_importer.tokDipl_tag = 'tok_dipl'
+        cora_importer.tokAnnol_tag = 'tok_anno'
+    else:
+        raise ValueError("CorA-XML dialect " + coraxml_dialect + " is not supported.")
+    return cora_importer
+
 class CoraXMLImporter:
 
-    ## TODO set importer options to handle different variants of CoraXML
-    def __init__(tokDipl_name='dipl', tokAnno_name='mod'):
-        self.tokDipl_name = tokDipl_name
-        self.tokAnno_name = tokAnno_name
+    def __init__(self):
+        self.tokDipl_tag = 'dipl'
+        self.tokAnno_tag = 'mod'
+
+
+    def _createDiplToken(self, dipl_element):
+        return TokDipl(dipl_element.attrib['id'], dipl_element.attrib['trans'])
+
 
     def doImport(self, filename):
 
@@ -47,9 +64,9 @@ class CoraXMLImporter:
                 dipl_tokens = []
                 anno_tokens = []
                 ## TODO trans should not be a string but should be parsed
-                for dipl_element in element.find(self.tokDipl_name):
-                    dipl_tokens.append(TokDipl(element.attrib['id'], element.attrib['trans']))
-                for anno_element in element.find(self.tokAnno_name):
+                for dipl_element in element.find(self.tokDipl_tag):
+                    dipl_tokens.append(self._createDiplToken(dipl_element))
+                for anno_element in element.find(self.tokAnno_tag):
                     pass
                 tokens.append(CoraToken(element.attrib['id'], element.attrib['trans'], dipl_tokens, anno_tokens))
             elif element.tag == 'comment':
