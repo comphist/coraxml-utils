@@ -545,3 +545,7 @@ class PlainToken(BaseToken):
         self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
 
         super().__init__(intoken)
+
+    def validate(self):
+        pass
+
