@@ -233,7 +233,7 @@ class TransImporter:
                   in_comment = True
                 elif re.match(r"@([KEZ])", tok):
                   in_comment = False
-                  self.tokens.append(Comment(tok[1], comment_stack))
+                  tokens.append(CoraComment(tok[1], comment_stack))
                   comment_stack = list()
 
                 # tokens
@@ -247,7 +247,7 @@ class TransImporter:
 
                         # put edition numbering in comments
                         if new_token.parse[0]["type"] == "edit":
-                            self.tokens.append(Comment("Z", [tok]))
+                            tokens.append(CoraComment("Z", [tok]))
                             continue
 
                         for new_dipl in new_token.tokenize_dipl():
@@ -258,18 +258,18 @@ class TransImporter:
                         for new_anno in new_token.tokenize_anno():
                             my_tok_annos.append(TokAnno(new_anno))
 
+                        t = CoraToken(new_token, my_tok_dipls, my_tok_annos)
                         if join_next_mods or join_next_dipls:
                             i = -1
                             while i > -10:  # arbitrary limit on number of intervening comments
-                                if isinstance(self.tokens[i], Comment):
+                                if isinstance(tokens[i], CoraComment):
                                     i -= 1
                                 else:
-                                    self.tokens[i].merge_token(new_token, join_next_dipls, join_next_mods)
+                                    tokens[i].merge_token(t, join_next_dipls, join_next_mods)
                                     break
                             join_next_mods = False
                             join_next_dipls = False
                         else:
-                            t = CoraToken(new_token, my_tok_dipls, my_tok_annos)
                             tokens.append(t)
                             if open_shifttags:
                                 shifttag_stack.append(t)
@@ -281,4 +281,4 @@ class TransImporter:
             # at end of line 
             line_stack.append(Line(linename, this_line_dipls))
 
-        return Document(sigle, name, header, pages, tokens, shifttags)
+        return Document(sigle, name, headertext, pages, tokens, shifttags)

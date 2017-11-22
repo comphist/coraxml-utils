@@ -66,7 +66,7 @@ class BaseToken:
                         # disallow brackets that span multiple tokens
                         if key == "spc":
                             if open_brackets:
-                                raise ParseError("Unclosed bracket at end of token")
+                                raise ParseError("Unclosed bracket at end of token: " + intoken)
 
                         # ensures that nothing in a comment gets processed
                         if key == "comm":
@@ -113,7 +113,7 @@ class BaseToken:
                             self.parse.append(new_char)
 
             if open_brackets:
-                raise ParseError("Unclosed bracket at end of token")
+                raise ParseError("Unclosed bracket at end of token: " + intoken)
 
             self.validate()
 
@@ -144,6 +144,10 @@ class BaseToken:
                               strikethru="original",
                               preedpunc=True,
                               preedtoken=True)
+
+
+    def __iadd__(self, other):
+        return self.__class__(self.parse + other.parse)
 
 
     def set_illegible_options(self, opt_ill, opt_char):
