@@ -1,6 +1,7 @@
 import unittest
 
 from coraxml_utils.coralib import *
+from coraxml_utils.parsed_token import PlainToken
 from coraxml_utils.importer import create_importer
 from coraxml_utils.exporter import create_exporter
 
@@ -13,7 +14,7 @@ class CoraXMLImporterTest(unittest.TestCase):
 
     def test_dipl_from_xml(self):
 
-        expected_dipl = TokDipl('t1_d1', 'test')
+        expected_dipl = TokDipl(PlainToken('test'), extid='t1_d1')
         dipl_element = ET.fromstring('<dipl id="t1_d1" trans="test" />')
 
         self.assertEquals(
@@ -24,10 +25,10 @@ class CoraXMLImporterTest(unittest.TestCase):
     def test_anno_from_xml(self):
 
         expected_anno = TokAnno(
-            't1_m1', 'priuilegien',
-            {'lemma': 'privileg', 'pos': 'NA', 'morph': 'Fem.Dat.Pl', 'boundary': 'Satz'},
-            set(['lemma verified', 'boundary']),
-            True
+            PlainToken('priuilegien'),
+            tags={'lemma': 'privileg', 'pos': 'NA', 'morph': 'Fem.Dat.Pl', 'boundary': 'Satz'},
+            flags=set(['lemma verified', 'boundary']),
+            checked=True, extid='t1_m1'
         )
         anno_element = ET.fromstring('<mod id="t1_m1" trans="priuilegien" utf="priuilegien" ascii="priuilegien" checked="y"><lemma tag="privileg"/><pos tag="NA"/><boundary tag="Satz"/><morph tag="Fem.Dat.Pl"/><cora-flag name="lemma verified"/><cora-flag name="boundary"/></mod>')
 
@@ -47,9 +48,10 @@ class CoraXMLImporterTest(unittest.TestCase):
     def test_cora_token_from_xml(self):
 
         expected_token = CoraToken(
-            't1', 'test|case',
-            [TokDipl('t1_d1', 'test|case')],
-            [TokAnno('t1_m1', 'test|', checked=True), TokAnno('t1_m2', 'case')]
+            PlainToken('test|case'),
+            [TokDipl(PlainToken('test|case'), extid='t1_d1')],
+            [TokAnno(PlainToken('test|'), extid='t1_m1', checked=True), TokAnno(PlainToken('case'), extid='t1_m2')],
+            extid='t1'
         )
         token_element = ET.fromstring('<token id="t1" trans="test|case"><dipl id="t1_d1" trans="test|case" /><mod id="t1_m1" trans="test|" checked="y" /><mod id="t1_m2" trans="case" /></token>')
 

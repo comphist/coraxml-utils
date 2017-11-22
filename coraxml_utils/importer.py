@@ -1,6 +1,7 @@
 import logging
 
 from coraxml_utils.coralib import *
+import coraxml_utils.parsed_token as parsed_token
 
 try:
     from lxml import etree as ET
@@ -17,6 +18,7 @@ def create_importer(file_format, dialect=None):
         elif dialect == 'rem':
             cora_importer.tok_dipl_tag = 'tok_dipl'
             cora_importer.tok_anno_tag = 'tok_anno'
+            cora_importer.tokenparser = parsed_token.RemToken
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
         return cora_importer
@@ -28,10 +30,11 @@ class CoraXMLImporter:
     def __init__(self):
         self.tok_dipl_tag = 'dipl'
         self.tok_anno_tag = 'mod'
+        self.tokenparser = parsed_token.PlainToken
 
 
     def _create_dipl_token(self, dipl_element):
-        return TokDipl(dipl_element.attrib['id'], dipl_element.attrib['trans'])
+        return TokDipl(self.tokenparser(dipl_element.attrib['trans']), extid=dipl_element.attrib['id'])
 
     def _create_anno_token(self, anno_element):
 
@@ -56,8 +59,8 @@ class CoraXMLImporter:
         checked = 'checked' in anno_element.attrib and anno_element.attrib['checked'] == 'y'
 
         return TokAnno(
-            anno_element.attrib['id'], anno_element.attrib['trans'],
-            tags, flags, checked
+            self.tokenparser(anno_element.attrib['trans']),
+            tags=tags, flags=flags, checked=checked, extid=anno_element.attrib['id']
         )
 
     def _create_cora_token(self, coratoken_element):
@@ -70,7 +73,8 @@ class CoraXMLImporter:
         for anno_element in coratoken_element.findall(self.tok_anno_tag):
             anno_tokens.append(self._create_anno_token(anno_element))
 
-        return CoraToken(coratoken_element.attrib['id'], coratoken_element.attrib['trans'], dipl_tokens, anno_tokens)
+        parsed_token = self.tokenparser(coratoken_element.attrib['trans'])
+        return CoraToken(parsed_token, dipl_tokens, anno_tokens, extid=coratoken_element.attrib['id'])
 
     def doImport(self, filename):
 
