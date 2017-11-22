@@ -94,6 +94,12 @@ class CoraToken:
     def __str__(self):
         return str(self.trans)
 
+    def __eq__(self, other):
+        return (self.id == other.id and
+                self.trans == other.trans and
+                self.tok_dipls == other.tok_dipls and
+                self.tok_annos == other.tok_annos)
+
     def merge_token(self, tok, join_dipls=False, join_mods=False):
         self.trans += tok.trans
 
@@ -141,7 +147,12 @@ class TokAnno:
         return str(self.trans)
 
     def __eq__(self, other):
-        return (self.id == other.id) and (self.trans == other.trans)
+        return (self.id == other.id and
+                self.trans == other.trans and
+                self.tags == other.tags and
+                self.flags == other.flags and
+                self.checked == other.checked
+        )
 
     def merge(self, other):
         self.trans.parse += other.trans.parse
