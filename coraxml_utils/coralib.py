@@ -24,7 +24,7 @@ class Page:
     def __init__(self, name, side, columns, extid=""):
         Page.c += 1
         self._id = "p{0}".format(Page.c)
-        self.id = extid if extid else ""
+        self.id = extid
         self.name = name
         self.side = side
         self.columns = columns
@@ -45,10 +45,10 @@ class Column:
 
     c = 0
 
-    def __init__(self, name, lines, extid=""):
+    def __init__(self, lines, name="", extid=""):
         Column.c += 1
         self._id = "c{0}".format(Column.c)
-        self.id = extid if extid else ""
+        self.id = extid
         self.name = name
         self.lines = lines
 
@@ -71,7 +71,7 @@ class Line:
     def __init__(self, name, dipls, extid=""):
         Line.c += 1
         self._id = "l{0}".format(Line.c)
-        self.id = extid if extid else ""
+        self.id = extid
         self.name = name
         self.dipls = dipls
 
@@ -107,7 +107,7 @@ class CoraToken:
     def __init__(self, trans, tok_dipls, tok_annos, extid=""):
         CoraToken.c += 1
         self._id = "t{0}".format(CoraToken.c)
-        self.id = extid if extid else ""
+        self.id = extid
         self.trans = trans
         self.tok_dipls = tok_dipls
         self.tok_annos = tok_annos
@@ -145,7 +145,7 @@ class TokDipl:
     def __init__(self, trans, extid=""):
         TokDipl.c += 1
         self._id = "d{0}".format(TokDipl.c)
-        self.id = extid if extid else ""
+        self.id = extid
         self.trans = trans
 
     def __str__(self):
@@ -166,7 +166,7 @@ class TokAnno:
     def __init__(self, trans, extid="", tags=None, flags=None, checked=False):
         TokAnno.c += 1
         self._id = "a{0}".format(TokAnno.c)
-        self.id = extid if extid else ""
+        self.id = extid
         self.trans = trans
         self.tags = tags if tags else dict()
         self.flags = flags if flags else set()

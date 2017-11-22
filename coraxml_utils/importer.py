@@ -22,6 +22,13 @@ def create_importer(file_format, dialect=None):
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
         return cora_importer
+    elif file_format == "trans":
+        if dialect == "ref":
+            return TransImporter(parsed_token.RefToken)
+        elif dialect == "redi":
+            return TransImporter(parsed_token.RediToken)
+        else:
+            return TransImporter(parsed_token.PlainToken)
     else:
         raise ValueError("File format " + file_format + " is not supported.")
 
@@ -126,166 +133,152 @@ class CoraXMLImporter:
         return Document(cora_header.attrib['sigle'], cora_header.attrib['name'], header, pages, tokens, shifttags)
 
 
-# # von transkription
+class TransImporter:
 
-#  def __init__(self, intext):
-#         self.pages = list()
-#         self.columns = list()
-#         self.lines = list()
-#         self.tokens = list()
-#         self.shifttags = list()
+    def __init__(self, parser):
+        self.ParsedToken = parser
 
-#         self.text = list()
+    def import_from_string(self, intext):
 
-#         # read header
-#         header_open = False
-#         header_lines = list()
+        name = str()  # ???
+        pages = list()
+        columns = list()
+        lines = list()
+        tokens = list()
+        shifttags = list()
 
-#         for line in intext.splitlines():
-#             if line.strip() == "+H":
-#                 header_open = True
-#             elif line.strip() == "@H":
-#                 header_open = False
-#             elif header_open:
-#                 header_lines.append(line)
-#             elif line and not header_open:
-#                 self.text.append(line)
-#             else:
-#                 # skip empty lines
-#                 pass
+        text = list()
 
-#         if not header_lines:
-#             raise Exception("ERROR: Header is empty!")
+        # read header
+        header_open = False
+        header_lines = list()
 
-#         self.headertext = "\n".join(header_lines)
-#         self.sigle = re.search(r"[^:\s]:\s+([\w\d]+)", self.headertext).group(1)
+        for line in intext.splitlines():
+            if line.strip() == "+H":
+                header_open = True
+            elif line.strip() == "@H":
+                header_open = False
+            elif header_open:
+                header_lines.append(line)
+            elif line and not header_open:
+                text.append(line)
+            else:
+                # skip empty lines
+                pass
 
-#         this_line = None
-#         this_col = None
-#         this_page = None
-#         last_page = None
-#         last_side = None
-#         last_col = None
-#         last_line = None        
-#         in_comment = False
-#         open_shifttags = list()
-#         comment_stack = list()
-#         shifttag_stack = list()
-#         join_next_mods = False
-#         join_next_dipls = False
-#         for line in self.text:
+        if not header_lines:
+            logging.error("Header is empty!")
 
-#             bibinfo, content, *_ = line.strip().split("\t")
-#             if _: print("WARNING   extraneous tab in line:", line)
-#             for match in BIBINFO_FORMAT.findall(bibinfo):
-#                 sigle, pageno, side, col, linename = match
-#                 this_line = Line(linename, loc=match[1:])
+        headertext = "\n".join(header_lines)
+        sigle = re.search(r"[^:\s]:\s+([\w\d]+)", headertext).group(1)
 
-#                 if side != last_side or pageno != last_page:
-#                    # new page and col
-#                    this_col = Column(col)
-#                    this_col.lines.append(this_line)
-#                    this_page = Page(pageno, side)
-#                    this_page.columns.append(this_col)
+        this_line = None
+        this_col = None
+        this_page = None
+        last_page = None
+        last_side = None
+        last_col = None
+        last_line = None        
+        in_comment = False
+        open_shifttags = list()
+        comment_stack = list()
+        shifttag_stack = list()
+        join_next_mods = False
+        join_next_dipls = False
 
-#                    self.pages.append(this_page)
-#                    self.columns.append(this_col)
-#                    self.lines.append(this_line)
-#                 elif col != last_col:
-#                     # start new col
-#                     # (columns started this way have names)
-#                     this_col = Column(col)
-#                     this_col.lines.append(this_line)
-#                     this_page.columns.append(this_col)
+        # these need to be saved up, so they can be used when
+        # the column or page changes to make new column or
+        # page objects
+        line_stack = list()
+        column_stack = list()
 
-#                     self.columns.append(this_col)
-#                     self.lines.append(this_line)
-#                 else:
-#                     self.lines.append(this_line)
-#                     this_col.lines.append(this_line)
+        for line in text:
+            this_line_dipls = list()
 
-#                 last_page = pageno
-#                 last_side = side
-#                 last_col = col
+            bibinfo, content, *_ = line.strip().split("\t")
+            if _: logging.warning("extraneous tab in line: " + line)
+            for match in BIBINFO_FORMAT.findall(bibinfo):
+                _, pageno, side, col, linename = match
 
-#             for tok in content.split():
-#                 # shifttags
-#                 if re.match(r"\+[FLRÜMQ]p?", tok):
-#                     open_shifttags.append(tok[1:])
-#                 elif re.match(r"@([FLRÜMQ]p?)", tok):
-#                     closed_shifttag = open_shifttags.pop()
-#                     self.shifttags.append(ShiftTag(closed_shifttag, shifttag_stack))
-#                     if not open_shifttags:
-#                         shifttag_stack = list()
+                if side != last_side or pageno != last_page:
+                   # new page and col
+                   column_stack.append(Column(line_stack))
+                   line_stack = list()
+                   pages.append(Page(pageno, side, column_stack))
+                   column_stack = list()
 
-#                 # comments
-#                 elif re.match(r"\+[KEZ]", tok):
-#                   in_comment = True
-#                 elif re.match(r"@([KEZ])", tok):
-#                   in_comment = False
-#                   self.tokens.append(Comment(tok[1], comment_stack))
-#                   comment_stack = list()
+                elif col != last_col:
+                    # start new col
+                    # (columns started this way have names)
+                    column_stack.append(Column(line_stack, name=col))
+                    line_stack = list()
 
-#                 # tokens
-#                 else:
-#                     if in_comment:
-#                         comment_stack.append(tok)
-#                     else:
-#                         new_token = Token(tok)
-#                         mtok = ParsedToken(tok, Options())
 
-#                         if not mtok.parse:
-#                             raise Exception("token has empty parse: " + tok)
+                last_page = pageno
+                last_side = side
+                last_col = col
 
-#                         # put edition numbering in comments
-#                         if mtok.parse[0]["type"] == "edit":
-#                             self.tokens.append(Comment("Z", [tok]))
-#                             continue
+            for tok in content.split():
+                # shifttags
+                if re.match(r"\+[FLRÜMQ]p?", tok):
+                    open_shifttags.append(tok[1:])
+                elif re.match(r"@([FLRÜMQ]p?)", tok):
+                    closed_shifttag = open_shifttags.pop()
+                    shifttags.append(ShiftTag(closed_shifttag, shifttag_stack))
+                    if not open_shifttags:
+                        shifttag_stack = list()
 
-#                         dtrans = str(mtok.with_opts(DIPL_TRANS_OPTS).tokenize()).split()
-#                         dutfs = str(mtok.with_opts(DIPL_UTF_OPTS).tokenize()).split()
-#                         mtrans = str(mtok.with_opts(MOD_TRANS_OPTS).tokenize()).split()
-#                         mutfs = str(mtok.with_opts(MOD_UTF_OPTS).tokenize()).split()
-#                         msimple = str(mtok.with_opts(MOD_SIMPLE_OPTS).tokenize()).split()
+                # comments
+                elif re.match(r"\+[KEZ]", tok):
+                  in_comment = True
+                elif re.match(r"@([KEZ])", tok):
+                  in_comment = False
+                  self.tokens.append(Comment(tok[1], comment_stack))
+                  comment_stack = list()
 
-#                         if len(dtrans) != len(dutfs):
-#                             raise Exception("dipl length not equal")
-#                         if len(mtrans) != len(msimple):
-#                             if len(msimple) < len(mtrans):
-#                                 while len(msimple) != len(mtrans):
-#                                     msimple.append("")
-#                             else:
-#                                 raise Exception("mod length not equal")
+                # tokens
+                else:
+                    if in_comment:
+                        comment_stack.append(tok)
+                    else:
+                        new_token = self.ParsedToken(tok)
+                        my_tok_dipls = list()
+                        my_tok_annos = list()
 
-#                         for dt, du in zip(dtrans, dutfs):
-#                             new_token.dipls.append(Dipl(dt, du))
+                        # put edition numbering in comments
+                        if new_token.parse[0]["type"] == "edit":
+                            self.tokens.append(Comment("Z", [tok]))
+                            continue
 
-#                         for mt, mu, ms in zip(mtrans, mutfs, msimple):
-#                             new_token.mods.append(Mod(mt, mu, ms))
+                        for new_dipl in new_token.tokenize_dipl():
+                            d = TokDipl(new_dipl)
+                            my_tok_dipls.append(d)
+                            this_line_dipls.append(d)
 
-#                         for d in new_token.dipls:
-#                             this_line.tokens.append(d)
+                        for new_anno in new_token.tokenize_anno():
+                            my_tok_annos.append(TokAnno(new_anno))
 
-#                         if join_next_mods or join_next_dipls:
-#                             i = -1
-#                             while i > -10:  # arbitrary limit on number of intervening comments
-#                                 if isinstance(self.tokens[i], Comment):
-#                                     i -= 1
-#                                 else:
-#                                     self.tokens[i].merge_token(new_token, join_next_dipls, join_next_mods)
-#                                     break
-#                             join_next_mods = False
-#                             join_next_dipls = False
-#                         else:
-#                             self.tokens.append(new_token)
-#                             if open_shifttags:
-#                                 shifttag_stack.append(new_token)
+                        if join_next_mods or join_next_dipls:
+                            i = -1
+                            while i > -10:  # arbitrary limit on number of intervening comments
+                                if isinstance(self.tokens[i], Comment):
+                                    i -= 1
+                                else:
+                                    self.tokens[i].merge_token(new_token, join_next_dipls, join_next_mods)
+                                    break
+                            join_next_mods = False
+                            join_next_dipls = False
+                        else:
+                            t = CoraToken(new_token, my_tok_dipls, my_tok_annos)
+                            tokens.append(t)
+                            if open_shifttags:
+                                shifttag_stack.append(t)
                         
-#                         if mtok.parse:
-#                             join_next_mods = mtok.parse[-1]["char"] in {"(=)", "="}
-#                             join_next_dipls = mtok.parse[-1]["char"] in {"=|"}
+                        if new_token.parse:
+                            join_next_mods = new_token.parse[-1]["char"] in {"(=)", "="}
+                            join_next_dipls = new_token.parse[-1]["char"] in {"=|"}
 
-#             # at end of line
-#             last_line = this_line
+            # at end of line 
+            line_stack.append(Line(linename, this_line_dipls))
 
-#         self.generate_IDs()
+        return Document(sigle, name, header, pages, tokens, shifttags)
