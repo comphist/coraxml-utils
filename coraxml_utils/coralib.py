@@ -130,11 +130,12 @@ class TokAnno:
                    "pos", "pos_gen", "infl", "inflClass", "inflClass_gen",
                    "punc", "link"]
 
-    def __init__(self, _id, trans, tags=None, flags=None):
+    def __init__(self, _id, trans, tags=None, flags=None, checked=False):
         self.id = _id
         self.trans = trans
-        self.tags = tags if tags else []
-        self.flags = flags if flags else []
+        self.tags = tags if tags else dict()
+        self.flags = flags if flags else set()
+        self.checked = checked
 
     def __str__(self):
         return str(self.trans)
@@ -144,19 +145,6 @@ class TokAnno:
 
     def merge(self, other):
         self.trans.parse += other.trans.parse
-
-
-class CoraTag:
-
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-
-
-class CoraFlag:
-    def __init__(self, name, value=None):
-        self.name = name
-        self.value = value
 
 
 class CoraComment:
