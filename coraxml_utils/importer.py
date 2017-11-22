@@ -1,3 +1,5 @@
+import logging
+
 from coraxml_utils.coralib import *
 
 try:
@@ -28,9 +30,33 @@ class CoraXMLImporter:
         self.tokAnno_tag = 'mod'
 
 
-    def _createDiplToken(self, dipl_element):
+    def _create_dipl_token(self, dipl_element):
         return TokDipl(dipl_element.attrib['id'], dipl_element.attrib['trans'])
 
+    def _create_anno_token(self, anno_element):
+
+        # retrieve annotations
+        tags = dict()
+        flags = set()
+
+        for annotation_element in anno_element:
+
+            if annotation_element.tag == 'cora-flag':
+                flagname = annotation_element.attrib['name']
+                if flagname in flags:
+                    logging.warning('Flag ' + flagname + ' is set twice for anno-token ' + anno_element.attrib['id'] + '.')
+                flags.add(flagname)
+            else:
+                tagname = annotation_element.tag
+                if tagname in tags:
+                    logging.warning('Tag ' + tagname + ' is set twice for anno-token ' + anno_element.attrib['id'] + '.')
+                tags[tagname] = annotation_element.attrib['tag']
+
+
+        return TokAnno(
+            anno_element.attrib['id'], anno_element.attrib['trans'],
+            tags, flags, anno_element.attrib['checked'] == 'y'
+        )
 
     def doImport(self, filename):
 
