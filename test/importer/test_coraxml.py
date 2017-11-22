@@ -1,7 +1,7 @@
 import unittest
 
 from coraxml_utils.coralib import *
-from coraxml_utils.importer import createCoraXMLImporter
+from coraxml_utils.importer import create_importer
 
 try:
     from lxml import etree as ET
@@ -9,11 +9,6 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 class CoraXMLImporterTest(unittest.TestCase):
-
-    def test_importer_factory(self):
-
-        with self.assertRaises(ValueError):
-            createCoraXMLImporter('"some unknown dialect"')
 
     def test_dipl_from_xml(self):
 
@@ -23,5 +18,5 @@ class CoraXMLImporterTest(unittest.TestCase):
 
         self.assertEquals(
             expected_dipl,
-            createCoraXMLImporter()._createDiplToken(dipl_element)
+            create_importer('CorA-XML')._createDiplToken(dipl_element)
         )

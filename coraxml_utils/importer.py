@@ -6,17 +6,20 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 
-def createCoraXMLImporter(coraxml_dialect=None):
+def create_importer(file_format, dialect=None):
 
-    cora_importer = CoraXMLImporter()
-    if coraxml_dialect is None:
-        pass
-    elif coraxml_dialect == 'rem':
-        cora_importer.tokDipl_tag = 'tok_dipl'
-        cora_importer.tokAnnol_tag = 'tok_anno'
+    if file_format == 'CorA-XML':
+        cora_importer = CoraXMLImporter()
+        if dialect is None:
+            pass
+        elif dialect == 'rem':
+            cora_importer.tokDipl_tag = 'tok_dipl'
+            cora_importer.tokAnnol_tag = 'tok_anno'
+        else:
+            raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
+        return cora_importer
     else:
-        raise ValueError("CorA-XML dialect " + coraxml_dialect + " is not supported.")
-    return cora_importer
+        raise ValueError("File format " + file_format + " is not supported.")
 
 class CoraXMLImporter:
 

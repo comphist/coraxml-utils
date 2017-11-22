@@ -5,7 +5,8 @@
 
 * classes -> CamelCase, everything else -> snake_case
 * magic methods before other methods
-* verbs are better than pro-verbs ("import" > "do_import")
+* verbs are better than pro-verbs ("export" > "do_export", exception: "import" as
+  it is a keyword)
 
 
 ### Was ist was?
