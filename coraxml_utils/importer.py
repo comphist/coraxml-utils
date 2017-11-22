@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 
 from coraxml_utils.coralib import *
 import coraxml_utils.parsed_token as parsed_token
@@ -83,53 +84,128 @@ class CoraXMLImporter:
         parsed_token = self.tokenparser(coratoken_element.attrib['trans'])
         return CoraToken(parsed_token, dipl_tokens, anno_tokens, extid=coratoken_element.attrib['id'])
 
-    def doImport(self, filename):
+    def _get_range(self, element):
+        return element.attrib['range'].split('..')
 
-        tree = ET.parse(filename, ET.XMLParser(remove_blank_text=True))
+    def _connect_with_layout_elements(self, root, layout_type, subelements, subelement_type, extract_from_xml, create_object):
+        """Connects elements like lines with higher element like columns.
+
+        Positional arguments:
+        root -- the xml object
+        layout_type -- type of the layout element (line, column or page)
+        subelement -- list of the elements that should be connected
+        subelement_type -- the name of the subelement (used for warnings)
+        extract_from_xml -- a function that gets the xml element and returns a dictionary with all relevant information for the layout element
+        create_object -- a function that gets the dictionary from extract_from_xml with added "subelements" and returns an object representing the layout element
+        """
+        layout_elements = []
+
+        # get layoutinfo from xml
+        beginnings = dict()
+        for element in root.findall("layoutinfo/" + layout_type):
+            range = self._get_range(element)
+            if range[0] in beginnings:
+                logging.error('Two ' + layout_type + 's that start at the same position: ' + element.attrib['id'] + ' and ' + beginnings[range[0]]['extid'])
+            beginnings[range[0]] = {**extract_from_xml(element), 'end': range[-1], 'subelements': []}
+
+        open_element = None
+        for subelement in subelements:
+            if open_element is None:
+                if subelement.id in beginnings:
+                    open_element = beginnings.pop(subelement.id)
+                else:
+                    # warn and continue
+                    logging.warn(subelement_type + ' that is not connected to anything in the layout: ' + subelement.id)
+                    continue
+
+            open_element['subelements'].append(subelement)
+            if open_element['end'] == subelement.id:
+                layout_elements.append(create_object(open_element))
+                open_element = None
+
+        if beginnings:
+            logger.warn('Dropped ' + layout_type + '(s) starting with nonexistent ' + subelement_type + ': ' + str(list(beginnings.keys())))
+        if open_element:
+            logger.warn('Dropped ' + layout_type + '(s) ending with nonexistent ' + subelement_type + ': ' + open_element['extid'])
+
+        return layout_elements
+
+
+    def import_from_file(self, filename):
+
+        tree = ET.parse(filename, ET.XMLParser())
         root = tree.getroot()
 
-        ## collect layout information
-        pages = {}
-        columns = {}
-        lines = {}
-
-        # layoutinfo = root.find("layoutinfo")
-        #     layoutinfo = augment_layout_info(layoutinfo)
-
-        # line_ends = {extract_line_end(x.get('range'))
-        #              for x in root.findall('.//line')}
-        # last_verb_pos = str()
-
-        # ## TODO Header
-        # header = root.find("header")
-        # header = make_xml_header(header)
-
-        ## Get shifttags
-        shifttags = {}
-        # insert shifttags element after header (0) and layoutinfo (1)
-        # annotationspans = ET.Element("shifttags")
-        # root.insert(2, annotationspans)
-
-        ## create list of tokens and comments
+        ## Create list of cora_tokens and comments and a list of dipl_tokens for the layout elements
         tokens = []
+        dipl_tokens = []
         for element in root:
 
             if element.tag == 'token':
-                dipl_tokens = []
-                anno_tokens = []
-                ## TODO trans should not be a string but should be parsed
-                for dipl_element in element.find(self.tokDipl_tag):
-                    dipl_tokens.append(self._createDiplToken(dipl_element))
-                for anno_element in element.find(self.tokAnno_tag):
-                    pass
-                tokens.append(CoraToken(element.attrib['id'], element.attrib['trans'], dipl_tokens, anno_tokens))
+                curr_token = self._create_cora_token(element)
+                tokens.append(curr_token)
+                dipl_tokens.extend(curr_token.tok_dipls)
             elif element.tag == 'comment':
                 tokens.append(CoraComment(element.attrib['type'], element.text))
 
+        # Get shifttags
+        shifttag_beginnings = defaultdict(list)
+        shifttags = []
+        open_shifttags = []
+
+        for shifttag_element in root.find('shifttags'):
+            range = self._get_range(shifttag_element)
+            shifttag_beginnings[range[0]].append({
+                'type': shifttag_element.tag,
+                'end': range[-1],
+                'tokens': []
+            })
+
+        for cora_token in tokens:
+            # Skip comments
+            if isinstance(cora_token, CoraComment):
+                continue
+            # move shifttags that start with the current token to open_shifttags
+            if cora_token.id in shifttag_beginnings:
+                open_shifttags.extend(shifttag_beginnings.pop(cora_token.id))
+            # add token to all open_shifttags and create shifttag objects for finished shifttags
+            still_open_shifttags = []
+            for shifttag in open_shifttags:
+                shifttag['tokens'].append(cora_token)
+                if cora_token.id == shifttag['end']:
+                    shifttags.append(ShiftTag(shifttag['type'], shifttag['tokens']))
+                else:
+                    still_open_shifttags.append(shifttag)
+            open_shifttags = still_open_shifttags
+
+        if shifttag_beginnings:
+            logging.warn("Dropped shifttag(s) starting with nonexistent token: " + str(list(shifttag_beginnings.keys())))
+
+        if open_shifttags:
+            logging.warn("Dropped shifttag(s) ending with nonexistent token: " + str([shifttag['end'] for shifttag in open_shifttags]))
+
+        # Get layout info
+        lines = self._connect_with_layout_elements(root, 'line', dipl_tokens, 'dipl token',
+                              lambda element: {'extid': element.attrib['id'], 'name': element.attrib['name']},
+                              lambda dictionary: Line(dictionary['name'], dictionary['subelements'], extid=dictionary['extid']))
+        columns = self._connect_with_layout_elements(root, 'column', lines, 'line',
+                              lambda element: {'extid': element.attrib['id']},
+                              lambda dictionary: Column(dictionary['subelements'], extid=dictionary['extid']))
+        pages = self._connect_with_layout_elements(root, 'page', columns, 'column',
+                              lambda element: {'extid': element.attrib['id'], 'name': element.attrib['no'], 'side': element.attrib['side']},
+                              lambda dictionary: Page(dictionary['name'], dictionary['side'], dictionary['subelements'], extid=dictionary['extid']))
         ## collect document information and create Document object
-        cora_header = root.find('/text/cora-header')
-        # TODO
-        header = ''
+        cora_header = root.find('cora-header')
+
+        # get header
+        header_element = root.find("header")
+        if not list(header_element):
+            # header is only text
+            header = ET.tostring(header_element, encoding="unicode", method="text")
+        else:
+            # header is structured as xml - keep ET.Element
+            header = header_element
+
         return Document(cora_header.attrib['sigle'], cora_header.attrib['name'], header, pages, tokens, shifttags)
 
 
