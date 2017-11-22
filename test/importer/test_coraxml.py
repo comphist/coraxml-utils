@@ -42,3 +42,17 @@ class CoraXMLImporterTest(unittest.TestCase):
 
         with self.assertLogs(None, 'WARN'):
             create_importer('CorA-XML')._create_anno_token(anno_element)
+
+    def test_cora_token_from_xml(self):
+
+        expected_token = CoraToken(
+            't1', 'test|case',
+            [TokDipl('t1_d1', 'test|case')],
+            [TokAnno('t1_m1', 'test|', checked=True), TokAnno('t1_m2', 'case')]
+        )
+        token_element = ET.fromstring('<token id="t1" trans="test|case"><dipl id="t1_d1" trans="test|case" /><mod id="t1_m1" trans="test|" checked="y" /><mod id="t1_m2" trans="case" /></token>')
+
+        self.assertEquals(
+            expected_token,
+            create_importer('CorA-XML')._create_cora_token(token_element)
+        )

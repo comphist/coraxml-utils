@@ -15,8 +15,8 @@ def create_importer(file_format, dialect=None):
         if dialect is None:
             pass
         elif dialect == 'rem':
-            cora_importer.tokDipl_tag = 'tok_dipl'
-            cora_importer.tokAnnol_tag = 'tok_anno'
+            cora_importer.tok_dipl_tag = 'tok_dipl'
+            cora_importer.tok_anno_tag = 'tok_anno'
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
         return cora_importer
@@ -26,8 +26,8 @@ def create_importer(file_format, dialect=None):
 class CoraXMLImporter:
 
     def __init__(self):
-        self.tokDipl_tag = 'dipl'
-        self.tokAnno_tag = 'mod'
+        self.tok_dipl_tag = 'dipl'
+        self.tok_anno_tag = 'mod'
 
 
     def _create_dipl_token(self, dipl_element):
@@ -52,11 +52,25 @@ class CoraXMLImporter:
                     logging.warning('Tag ' + tagname + ' is set twice for anno-token ' + anno_element.attrib['id'] + '.')
                 tags[tagname] = annotation_element.attrib['tag']
 
+        ## the attribute checked is not obligatory
+        checked = 'checked' in anno_element.attrib and anno_element.attrib['checked'] == 'y'
 
         return TokAnno(
             anno_element.attrib['id'], anno_element.attrib['trans'],
-            tags, flags, anno_element.attrib['checked'] == 'y'
+            tags, flags, checked
         )
+
+    def _create_cora_token(self, coratoken_element):
+
+        dipl_tokens = []
+        anno_tokens = []
+
+        for dipl_element in coratoken_element.findall(self.tok_dipl_tag):
+            dipl_tokens.append(self._create_dipl_token(dipl_element))
+        for anno_element in coratoken_element.findall(self.tok_anno_tag):
+            anno_tokens.append(self._create_anno_token(anno_element))
+
+        return CoraToken(coratoken_element.attrib['id'], coratoken_element.attrib['trans'], dipl_tokens, anno_tokens)
 
     def doImport(self, filename):
 
