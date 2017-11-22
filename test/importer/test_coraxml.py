@@ -2,6 +2,7 @@ import unittest
 
 from coraxml_utils.coralib import *
 from coraxml_utils.importer import create_importer
+from coraxml_utils.exporter import create_exporter
 
 try:
     from lxml import etree as ET
@@ -42,3 +43,8 @@ class CoraXMLImporterTest(unittest.TestCase):
 
         with self.assertLogs(None, 'WARN'):
             create_importer('CorA-XML')._create_anno_token(anno_element)
+
+
+class CoraXMLExporterTest(unittest.TestCase):
+
+    pass

@@ -1,9 +1,16 @@
 
+import logging
+
 from coraxml_utils.coralib import *
 from coraxml_utils.settings import *
 
 def create_exporter(format="coraxml", dialect="ref"):
-    return CoraXMLExporter(dialect)
+    if format == "coraxml":
+        return CoraXMLExporter(dialect)
+    elif format == "trans":
+        return TransExporter()
+    else:
+        logging.error("No valid exporter selected")
 
 
 class CoraXMLExporter:
@@ -23,7 +30,12 @@ class CoraXMLExporter:
         root = etree.Element("text")
         root.set("id", doc.sigle)
         header = etree.SubElement(root, "header")
-        header.text = doc.header
+        if isinstance(doc.header, str):
+            header.text = doc.header
+        elif isinstance(doc.header, etree.Element):
+            header.append(doc.header)
+        else:
+            logging.warning("Found something weird in document header")
 
         layoutinfo = etree.SubElement(root, "layoutinfo")
         for page in doc.pages:
@@ -85,3 +97,18 @@ class CoraXMLExporter:
                 raise ValueError("found something weird in this document's token list")
 
         return root
+
+
+class TransExporter:
+
+    def __init__(self):
+        pass
+
+    def export(self, doc):
+
+        # list of strings to be joined at end of method
+        output = list()
+
+        output.append("+H")
+        output.append(doc.header)
+        output.append("@H")

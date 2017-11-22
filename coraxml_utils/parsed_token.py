@@ -2,8 +2,7 @@
 import re
 import abc
 
-import coraxml_utils.character as character
-from coraxml_utils.settings import Options
+from coraxml_utils.character import convert
 
 MEDIUS = "\u00b7"
 ELEVATUS = "\uf161"
@@ -16,28 +15,28 @@ BR = {'[': ']', ']': '[',
       '{': '}', '}': '{',
       '<': '>', '>': '<'}
 
-DIPL_TRANS_OPTS = Options(character="orig", syllab=False, tokenize="historical",
-                          illegible="original", strikethru="original",
-                          doubledash="leave", preedtoken="leave")
+# DIPL_TRANS_OPTS = Options(character="orig", syllab=False, tokenize="historical",
+#                           illegible="original", strikethru="original",
+#                           doubledash="leave", preedtoken="leave")
 
-DIPL_UTF_OPTS = Options(character="utf", syllab=False, tokenize="historical", 
-                        illegible="character", strikethru="leave", 
-                        doubledash="leave", preedpunc="delete", preedtoken="delete")
+# DIPL_UTF_OPTS = Options(character="utf", syllab=False, tokenize="historical", 
+#                         illegible="character", strikethru="leave", 
+#                         doubledash="leave", preedpunc="delete", preedtoken="delete")
 
-MOD_TRANS_OPTS = Options(character="orig", tokenize="all", 
-                         illegible="original", strikethru="delete", 
-                         doubledash="leave", preedtoken="leave", preedpunc="leave",
-                         nosplitinit=True)
+# MOD_TRANS_OPTS = Options(character="orig", tokenize="all", 
+#                          illegible="original", strikethru="delete", 
+#                          doubledash="leave", preedtoken="leave", preedpunc="leave",
+#                          nosplitinit=True)
 
-MOD_SIMPLE_OPTS = Options(character="simple", tokenize="all",  
-                          illegible="leave", strikethru="delete", 
-                          doubledash="delete", preedtoken="delete", preedpunc="leave",
-                          nosplitinit=True)
+# MOD_SIMPLE_OPTS = Options(character="simple", tokenize="all",  
+#                           illegible="leave", strikethru="delete", 
+#                           doubledash="delete", preedtoken="delete", preedpunc="leave",
+#                           nosplitinit=True)
 
-MOD_UTF_OPTS = Options(character="utf", tokenize="all", 
-                       illegible="character", strikethru="delete", 
-                       doubledash="delete", preedtoken="delete", preedpunc="leave",
-                       nosplitinit=True)
+# MOD_UTF_OPTS = Options(character="utf", tokenize="all", 
+#                        illegible="character", strikethru="delete", 
+#                        doubledash="delete", preedtoken="delete", preedpunc="leave",
+#                        nosplitinit=True)
 
 __version__ = "2017.11.21"
 
@@ -48,14 +47,11 @@ class ParseError(Exception):
 
 
 class BaseToken:
-    def __init__(self, intoken, options):
+    def __init__(self, intoken):
         self.token_re = re.compile(r"( (?x) " + "|".join(self.re_parts) + ")")
-        self.options = options
-        self.allowed.update(self.options.allowed)
         self.errors = list()
 
         if isinstance(intoken, str):
-            self.original_str = intoken
             self.parse = list()
             open_brackets = list()
             open_br_types = list()
@@ -123,7 +119,6 @@ class BaseToken:
 
         elif isinstance(intoken, list):
             self.parse = intoken
-            self.options = Options(**options.__dict__)
             self.errors = list()
         else:
             self.parse = None
@@ -142,11 +137,54 @@ class BaseToken:
 
 
     def __str__(self):
-        self.set_illegible_options()
+        return self.to_string(illegible="original", 
+                              character="original",
+                              doubledash=True,
+                              editnum=True,
+                              strikethru="original",
+                              preedpunc=True,
+                              preedtoken=True)
 
-        # this is done here to make sure that it happens *after*
-        # any tokenization has taken place
-        self.handle_character_options()
+
+    def set_illegible_options(self, opt_ill, opt_char):
+        # setting illegible options:
+        #   lists contain bracket types for which each
+        #   action (one list per action) is to be carried out
+
+        br_actions = {"leave": list(),
+                      "delete": list(),
+                      "original": list()}
+
+        if opt_ill == "delete":
+            br_actions["delete"] = ["<", "<<", "[", "[["]
+        elif opt_ill == "leave":
+            br_actions["leave"] = ["<", "<<", "[", "[["]
+        elif opt_ill == "original":
+            br_actions["original"] = ["<", "<<", "[", "[["]
+        elif opt_ill == "character":
+            if opt_char == "utf":
+                br_actions["delete"] = ["[", "[["]
+                br_actions["leave"] = ["<", "<<"]
+            elif opt_char == "simple":
+                br_actions["leave"] = ["<", "["]
+                br_actions["original"] = ["[[", "<<"]
+            else:
+                # the character/orig combo should lead here
+                br_actions["original"] = ["<", "<<",  "[", "[["]
+        else:
+            br_actions["leave"] = ["<", "<<", "[", "[["]  
+        return br_actions        
+
+
+    def to_string(self, 
+                  illegible="leave", 
+                  character="utf",
+                  doubledash=False,
+                  editnum=False,
+                  strikethru="leave",
+                  preedpunc=True,
+                  preedtoken=False):
+        br_actions = self.set_illegible_options(illegible, character)
 
         last_char = dict()
         outstr = list()
@@ -160,44 +198,54 @@ class BaseToken:
 
             # majuscule handling
             if c["type"] == "maj":
-                if self.options.character != "orig":
+                if character != "original":
                     out_char = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
                                        r"\1", c["char"])
 
-            if self.options.doubledash == "delete" and c["type"] == "dd":
+            if not doubledash and c["type"] == "dd":
                 skip_char = True
 
-            if ((self.options.editnum == "delete" or 
-                 self.options.bibinfo == "none") and c["type"] == "edit"):
+            if not editnum and c["type"] == "edit":
                 skip_char = True
 
             brtype = c.get("brtype", None)
             # strikethru
             if brtype == "strk":
-                if self.options.strikethru == "original":
+                if strikethru == "original":
                     before = c.get("before", "")
                     after = c.get("after", "")
-                elif self.options.strikethru == "delete":
+                elif strikethru == "delete":
                     skip_char = True
 
             # illegible character handling        
             elif brtype == "ill":
-                if c["br"] in self.br_orig:
+                if c["br"] in br_actions["original"]:
                     before = c.get("before", "")
                     after = c.get("after", "")
                 # if last char is bracket end
-                elif c.get("br") in self.br_delete and i == last_index:
+                elif c.get("br") in br_actions["delete"] and i == last_index:
                     before = self.ILLEGIBLE_REPLACEMENT
                     skip_char = True
-                elif c.get("br") in self.br_delete:
+                elif c.get("br") in br_actions["delete"]:
                     # wait for bracket end, then add replacement (see below)
                     skip_char = True
                 else:
-                    if last_char.get("br") in self.br_delete:
+                    if last_char.get("br") in br_actions["delete"]:
                         before = self.ILLEGIBLE_REPLACEMENT
             else:
-                if last_char.get("br") in self.br_delete:
+                if last_char.get("br") in br_actions["delete"]:
                     before = self.ILLEGIBLE_REPLACEMENT
+
+            # pre-edition char handling
+            if not preedpunc:
+                if c["type"] in {"pe", "q"}:
+                    skip_char = True
+
+            if not preedtoken:
+                if (c["char"] == "*f" or
+                    c["type"] == "ptk" or
+                    c["type"] == "spl"):
+                    skip_char = True
 
             outstr.append(before)
             if not skip_char:
@@ -207,8 +255,8 @@ class BaseToken:
             last_char = c
 
         # token-wise conversion to target
-        if self.options.character != "orig":
-            return character.convert("".join(outstr), self.options.character).strip()
+        if character != "original":
+            return convert("".join(outstr), character).strip()
         else:
             return "".join(outstr).strip()
 
@@ -220,70 +268,25 @@ class BaseToken:
         # and %[A-Z] which is code for a superscript capital
         # note that superscript capitals are unchanged because unicode does
         # not support superscripting of arbitrary characters
-        test_string = str(self.with_opts(Options(character="simple", 
-                                                 preedpunc="delete", 
-                                                 preedtoken="delete",
-                                                 editnum="delete")))
+        test_string = self.to_string(character="simple", 
+                                     preedpunc=False, 
+                                     preedtoken=False,
+                                     editnum=False)
         if isinstance(self, RediToken):
             test_string = re.sub(r"{[1-9][0-9]?}", "", test_string)
         else:
             test_string = re.sub(r"{[1-9]}", "", test_string)
         test_string = re.sub(r"%[A-Z]", "", test_string)
-        test_string = re.sub(self.options.ESCAPE_CHAR, "", test_string)
-        invalid_chars = set(test_string) - self.options.allowed
+        test_string = re.sub(self.ESCAPE_CHAR, "", test_string)
+        invalid_chars = set(test_string) - self.allowed
 
         if invalid_chars:
             raise ParseError("Transcription contains invalid characters: " + 
                              str(sorted(invalid_chars)))
 
 
-    def set_illegible_options(self):
-        # lists contain bracket types for which each
-        # action (one list per action) is to be carried out
-        self.br_leave = list()
-        self.br_delete = list()
-        self.br_orig = list()
-
-        opt = self.options.illegible
-        if opt == "delete":
-            self.br_delete = ["<", "<<", "[", "[["]
-        elif opt == "leave":
-            self.br_leave = ["<", "<<", "[", "[["]
-        elif opt == "original":
-            self.br_orig = ["<", "<<", "[", "[["]
-        elif opt == "character":
-            if self.options.character == "utf":
-                self.br_delete = ["[", "[["]
-                self.br_leave = ["<", "<<"]
-            elif self.options.character == "simple":
-                self.br_leave = ["<", "["]
-                self.br_orig = ["[[", "<<"]
-            else:
-                # the character/orig combo should lead here
-                self.br_orig = ["<", "<<",  "[", "[["]
-        else:
-            self.br_leave = ["<", "<<", "[", "[["]
-
-
-    def handle_character_options(self):
-        if self.options.preedpunc == "delete":
-            self.parse = [c for c in self.parse 
-                          if c["type"] not in {"pe", "q"}]
-
-        if self.options.preedtoken == "delete":
-            self.parse = [c for c in self.parse
-                          if (c["char"] != "*f" and 
-                              c["type"] != "ptk" and 
-                              c["type"] != "spl")]
-
-
-    def with_opts(self, options):
-        return self.__class__(self.parse, options)
-
-
     def keep(self, *types):
-        return self.__class__([c for c in self.parse if c["type"] in types], 
-                              self.options)
+        return self.__class__([c for c in self.parse if c["type"] in types])
 
 
     def has(self, *types):
@@ -291,17 +294,18 @@ class BaseToken:
         
 
     def delete(self, *types):
-        return self.__class__([c for c in self.parse if c["type"] not in types], 
-                              self.options)
+        return self.__class__([c for c in self.parse if c["type"] not in types])
 
 
     def flip_bracket(self, br_str):
         return "".join(BR.get(c, c) for c in br_str)
 
 
-    def tokenize(self):
+    def tokenize(self, tokenize_type="all", split_init_punc=True):
         new_parse = list()
-        padded_parse = [{"char": "", "type": "spc"}] + self.parse + [{"char": "", "type": "spc"}]
+        padded_parse = ([{"char": "", "type": "spc"}] + 
+                        self.parse + 
+                        [{"char": "", "type": "spc"}])
 
         for i in range(1, len(padded_parse) - 1):
             last_char, this_char, next_char = padded_parse[i-1:i+2]
@@ -310,14 +314,14 @@ class BaseToken:
             conditions = []
             postspace_conds = []
 
-            if (self.options.tokenize == "medium" or 
-                self.options.tokenize == "all"):
+            if (tokenize_type == "medium" or 
+                tokenize_type == "all"):
                 # word split "foo|bar"
                 conditions.append(last_char["type"] == "spl" and 
                                   last_char["char"].endswith("|"))
 
-                if self.options.tokenize == "all":
-                    if not self.options.nosplitinit:
+                if tokenize_type == "all":
+                    if split_init_punc:
                         # initial punctuation "//foo"
                         conditions.append(last_char["type"] in {"ip", "q"})
 
@@ -350,7 +354,7 @@ class BaseToken:
                     conditions.append(this_char["type"] == "ptk" and 
                                       last_char["type"] in {"ip", "p", "pe", "q"})
 
-            elif self.options.tokenize == "historical":
+            elif tokenize_type == "historical":
                 conditions.append(last_char["type"] == "spl" and 
                                   last_char["char"].endswith('#'))
 
@@ -377,11 +381,21 @@ class BaseToken:
             else:
                 new_parse.append(this_char_copy)
 
-        return self.__class__(new_parse, self.options)
+        new_tokens = list()
+        stack = list()
+        for c in new_parse:
+            if c["type"] == "spc":
+                if stack:
+                    new_tokens.append(self.__class__(stack))
+                    stack = list()
+            else:
+                stack.append(c)
+        new_tokens.append(self.__class__(stack))
+        return new_tokens
 
 
 class RemToken(BaseToken):
-    def __init__(self, intoken, options):
+    def __init__(self, intoken):
         self.ATOMIC_ILLEGIBLE = "<<...>>"
         self.ILLEGIBLE_REPLACEMENT = "[...]"
         self.missing_br_open = {'['}
@@ -412,7 +426,9 @@ class RemToken(BaseToken):
                          self.strk_re, self.preedit_re, self.init_punc_re, self.punc_re,
                          self.ptk_marker_re, self.brackets_re, self.word_re]
 
-        super().__init__(intoken, options)
+        self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
+
+        super().__init__(intoken)
 
         # in REM, [[...]] is often used (apparently erroneously) to
         # denote missing letters or lines, so here I replace such 
@@ -427,7 +443,7 @@ class RemToken(BaseToken):
 
 class RexToken(BaseToken, metaclass=abc.ABCMeta):
 
-    def __init__(self, intoken, options):
+    def __init__(self, intoken):
         self.ILLEGIBLE_REPLACEMENT = "[...]"
         self.missing_br_open = {'['}
 
@@ -473,9 +489,11 @@ class RexToken(BaseToken, metaclass=abc.ABCMeta):
         # for r-kuerzung
         self.allowed.update("'")
 
+        self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
+
         self.init_parser()
 
-        super().__init__(intoken, options)
+        super().__init__(intoken)
 
     @abc.abstractmethod
     def init_parser(self):
@@ -501,7 +519,7 @@ class RefToken(RexToken):
 
 
 class PlainToken(BaseToken):
-    def __init__(self, intoken, options):
+    def __init__(self, intoken):
         self.ATOMIC_ILLEGIBLE = ""
         self.ILLEGIBLE_REPLACEMENT = "[...]"
         self.missing_br_open = {}
@@ -516,4 +534,6 @@ class PlainToken(BaseToken):
         self.allowed.update('-",.:;\/!?1234567890ßäöüÄÖÜ ')
         self.allowed.update("'()[]{}")
 
-        super().__init__(intoken, options)
+        self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
+
+        super().__init__(intoken)
