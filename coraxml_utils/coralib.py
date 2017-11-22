@@ -1,5 +1,5 @@
 
-from settings import *
+from coraxml_utils.settings import *
 
 
 
@@ -162,6 +162,8 @@ class TokDipl:
         self.trans += dipl.trans
         self.utf += dipl.utf
 
+    def __eq__(self, other):
+        return (self.id == other.id) and (self.trans == other.trans)
 
 class CoraComment:
 
