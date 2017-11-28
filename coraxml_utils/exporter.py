@@ -29,6 +29,27 @@ class CoraXMLExporter:
             self.dipl_tag = "dipl"
             self.mod_tag = "mod"
 
+    def _create_xml_token(self, tok):
+
+        tok_xml = ET.Element("token", {"id": tok.id,
+                                          "trans": tok.trans})
+
+        for dipl in tok.tok_dipls:
+            dipl_xml = ET.SubElement(tok_xml, self.dipl_tag,
+                                        {"id": dipl.id, 
+                                         "trans": str(dipl.trans)})
+            dipl_xml.set("utf", str(dipl.trans.with_opts(Options(character="utf"))))
+        for mod in tok.tok_annos:
+            mod_xml = ET.SubElement(tok_xml, self.mod_tag,
+                                       {"id": mod.id,
+                                        "trans": str(mod.trans)})
+            mod_xml.set("utf", str(mod.trans.with_opts(Options(character="utf"))))
+            mod_xml.set("simple", str(mod.trans.with_opts(Options(character="simple"))))
+
+            # TODO: add annotations/flags to mod
+
+        return tok_xml
+
     def export(self, doc):
 
         root = ET.Element("text")
@@ -73,26 +94,8 @@ class CoraXMLExporter:
 
         for token_or_comment in doc.tokens:
             if isinstance(token_or_comment, CoraToken):
-                tok = token_or_comment
+                root.append(self._create_xml_token(token_or_comment))
 
-                tok_xml = ET.Element("token", {"id": tok.id,
-                                                  "trans": tok.trans})
-
-                for dipl in tok.tok_dipls:
-                    dipl_xml = ET.SubElement(tok_xml, self.dipl_tag,
-                                                {"id": dipl.id, 
-                                                 "trans": str(dipl.trans)})
-                    dipl_xml.set("utf", str(dipl.trans.with_opts(Options(character="utf"))))
-                for mod in tok.tok_annos:
-                    mod_xml = ET.SubElement(tok_xml, self.mod_tag,
-                                               {"id": mod.id,
-                                                "trans": str(mod.trans)})
-                    mod_xml.set("utf", str(mod.trans.with_opts(Options(character="utf"))))
-                    mod_xml.set("simple", str(mod.trans.with_opts(Options(character="simple"))))
-
-                    # TODO: add annotations/flags to mod
-
-                root.append(tok_xml)
             elif isinstance(token_or_comment, Comment):
                 comment = token_or_comment
                 comm_xml = ET.Element("comment", {"type": comment.type})
