@@ -32,19 +32,19 @@ class CoraXMLExporter:
     def _create_xml_token(self, tok):
 
         tok_xml = ET.Element("token", {"id": tok.id,
-                                          "trans": tok.trans})
+                                          "trans": str(tok.trans)})
 
         for dipl in tok.tok_dipls:
             dipl_xml = ET.SubElement(tok_xml, self.dipl_tag,
                                         {"id": dipl.id, 
                                          "trans": str(dipl.trans)})
-            dipl_xml.set("utf", str(dipl.trans.with_opts(Options(character="utf"))))
+            dipl_xml.set("utf", str(dipl.trans.to_string(character="utf")))
         for mod in tok.tok_annos:
             mod_xml = ET.SubElement(tok_xml, self.mod_tag,
                                        {"id": mod.id,
                                         "trans": str(mod.trans)})
-            mod_xml.set("utf", str(mod.trans.with_opts(Options(character="utf"))))
-            mod_xml.set("simple", str(mod.trans.with_opts(Options(character="simple"))))
+            mod_xml.set("utf", str(mod.trans.to_string(character="utf")))
+            mod_xml.set("simple", str(mod.trans.to_string(character="simple")))
 
             # TODO: add annotations/flags to mod
 
