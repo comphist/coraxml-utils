@@ -46,6 +46,9 @@ class CoraXMLExporter:
             mod_xml.set("utf", str(mod.trans.to_string(character="utf")))
             mod_xml.set("simple", str(mod.trans.to_string(character="simple")))
 
+            if mod.checked:
+                mod_xml.set("checked", "y")
+
             # TODO: add annotations/flags to mod
 
         return tok_xml
