@@ -103,6 +103,13 @@ class BaseToken:
                             new_char = {"trans": val, "type": "w", 
                                         "simple": replacements[new_char_index][2],
                                         "utf": replacements[new_char_index][1]}
+
+                        elif key == "maj":
+                            maj_letter = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
+                                                r"\1", val)
+                            new_char = {"trans": val, "type": key,
+                                        "simple": maj_letter,
+                                        "utf": maj_letter}
                         else:
                             new_char = {"trans": val, "type": key, 
                                         "simple": val, "utf": val}
@@ -210,12 +217,6 @@ class BaseToken:
                 out_char = c[character]
             else:
                 out_char = c["trans"]
-
-            # majuscule handling
-            if c["type"] == "maj":
-                if character != "original":
-                    out_char = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
-                                       r"\1", c["trans"])
 
             if not doubledash and c["type"] == "dd":
                 skip_char = True
@@ -493,8 +494,8 @@ class RexToken(BaseToken, metaclass=abc.ABCMeta):
         ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
         brackets_re = r'(?P<br> \[+ (?![ ]) | (?<![ ]) \]+ | <+ (?![ ]) | (?<![ ]) >+ )'
         quotes_re = r'(?P<q> \( ' + quotes + r' \) | ' + quotes + ')'
-        # majuscule_re = r'(?P<maj> [*÷] [{(<]' + alpha + r'{,3} [*÷] \d* [})>] )'
-        majuscule_re = r'(?P<maj> [*÷] [{(<] | (?<= [*÷] [{(<] ' + alpha + r'+) [*÷] \d* [})>] )'
+        majuscule_re = r'(?P<maj> [*÷] [{(<]' + alpha + r'{,3} [*÷] \d* [})>] )'
+        # majuscule_re = r'(?P<maj> [*÷] [{(<] | (?<= [*÷] [{(<] ' + alpha + r'+) [*÷] \d* [})>] )'
         editnum_re = r'(?P<edit> (?<![\*÷]) \{ [^{}]+ (?<![\*÷]) \} )'
         splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | (?<!\|) \(=\) (?!\|) | =\|+ | \# | \|+ (?!=) )'
         ddash_re = r'(?P<dd> = )'
