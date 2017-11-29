@@ -214,7 +214,11 @@ class TransImporter:
     def __init__(self, parser):
         self.ParsedToken = parser
 
-    def import_from_string(self, intext):
+    def import_from_file(self, filename):
+
+        intext = ""
+        with open(filename, "r", encoding="utf8") as infile:
+            intext = infile.read().replace("\ufeff", "")
 
         name = str()  # ???
         pages = list()

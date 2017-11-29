@@ -205,11 +205,11 @@ class ShiftTag:
         self.tokens = tokens
 
     def range(self):
-        if len(self.elements) > 1:
-            first, *_, last = self.elements
+        if len(self.tokens) > 1:
+            first, *_, last = self.tokens
             return "{0}..{1}".format(first.id, last.id)
-        elif len(self.elements) == 1:
-            first = self.elements[0]
+        elif len(self.tokens) == 1:
+            first = self.tokens[0]
             return first.id
         else:
             return ""

@@ -2,7 +2,7 @@
 import re
 import abc
 
-from coraxml_utils.character import convert
+from coraxml_utils.character import convert, replacements
 
 MEDIUS = "\u00b7"
 ELEVATUS = "\uf161"
@@ -98,8 +98,14 @@ class BaseToken:
                                 open_brackets.pop()
                                 open_br_types.pop()
                                 self.parse[-1]["after"] = val
+                        elif key.startswith('uni'):
+                            new_char_index = int(key[3:])
+                            new_char = {"trans": val, "type": "w", 
+                                        "simple": replacements[new_char_index][2],
+                                        "utf": replacements[new_char_index][1]}
                         else:
-                            new_char = {"char": val, "type": key}
+                            new_char = {"trans": val, "type": key, 
+                                        "simple": val, "utf": val}
 
                         if new_char:
                             if open_brackets:
@@ -115,7 +121,7 @@ class BaseToken:
             if open_brackets:
                 raise ParseError("Unclosed bracket at end of token: " + intoken)
 
-            self.validate()
+            # self.validate()
 
         elif isinstance(intoken, list):
             self.parse = intoken
@@ -197,14 +203,19 @@ class BaseToken:
         for i, c in enumerate(self.parse):
             before = ""
             after = ""
-            out_char = c["char"]
             skip_char = False
+
+            # token-wise conversion to target
+            if character != "original":
+                out_char = c[character]
+            else:
+                out_char = c["trans"]
 
             # majuscule handling
             if c["type"] == "maj":
                 if character != "original":
                     out_char = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
-                                       r"\1", c["char"])
+                                       r"\1", c["trans"])
 
             if not doubledash and c["type"] == "dd":
                 skip_char = True
@@ -246,7 +257,7 @@ class BaseToken:
                     skip_char = True
 
             if not preedtoken:
-                if (c["char"] == "*f" or
+                if (c["trans"] == "*f" or
                     c["type"] == "ptk" or
                     c["type"] == "spl"):
                     skip_char = True
@@ -258,11 +269,7 @@ class BaseToken:
 
             last_char = c
 
-        # token-wise conversion to target
-        if character != "original":
-            return convert("".join(outstr), character).strip()
-        else:
-            return "".join(outstr).strip()
+        return "".join(outstr)
 
 
     def validate(self):
@@ -414,7 +421,7 @@ class RemToken(BaseToken):
 
         self.spc_re = r"(?P<spc> \s+ )"
         self.abbr_re = r'(?P<abbr> \. [\w$] \. | <<\.{3}>> | \[\[\.\.\.\]\] )'
-        self.comm_re = '(?P<comm> [+@][KEZ] )'
+        self.comm_re = r'(?P<comm> [+@][KEZ] )'
         self.word_re = r'(?P<w> . \\\ [^\[\](){}<>] | . )'
         self.init_punc_re = r'(?P<ip> // | \*C | \*f )'
         self.punc_re = (r'(?P<p>  \. \\\ . | %\. | \. | (?<! \\\ ) / | ' + BULLET + ' | .̇ | ' +
@@ -471,6 +478,9 @@ class RexToken(BaseToken, metaclass=abc.ABCMeta):
                                           '%[A-Z]']) + ')'
         comm_re = r'(?P<comm> [+@][KEZ] )'
         word_re = r'(?P<w> \\ . | . )'
+        uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
+                            for i, (x, _, _) in enumerate(replacements)) 
+
         init_punc_re = r'(?P<ip> // | \*[Cf] )' 
         punc_re = r'(?P<p> %\. | / | ' + punc +')'
         strk_re = r'(?P<strk>  \*[\[ | \*\]] )'
@@ -483,7 +493,8 @@ class RexToken(BaseToken, metaclass=abc.ABCMeta):
         ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
         brackets_re = r'(?P<br> \[+ (?![ ]) | (?<![ ]) \]+ | <+ (?![ ]) | (?<![ ]) >+ )'
         quotes_re = r'(?P<q> \( ' + quotes + r' \) | ' + quotes + ')'
-        majuscule_re = r'(?P<maj> [*÷] [{(<]' + alpha + r'{,3} [*÷] \d* [})>] )'
+        # majuscule_re = r'(?P<maj> [*÷] [{(<]' + alpha + r'{,3} [*÷] \d* [})>] )'
+        majuscule_re = r'(?P<maj> [*÷] [{(<] | (?<= [*÷] [{(<] ' + alpha + r'+) [*÷] \d* [})>] )'
         editnum_re = r'(?P<edit> (?<![\*÷]) \{ [^{}]+ (?<![\*÷]) \} )'
         splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | (?<!\|) \(=\) (?!\|) | =\|+ | \# | \|+ (?!=) )'
         ddash_re = r'(?P<dd> = )'
@@ -492,7 +503,7 @@ class RexToken(BaseToken, metaclass=abc.ABCMeta):
         self.re_parts = [spc_re, abbr_re, comm_re, majuscule_re,
                          editnum_re, splitter_re, ddash_re, quotes_re,
                          strk_re, preedit_re, init_punc_re, punc_re,
-                         ptk_marker_re, brackets_re, word_re]
+                         ptk_marker_re, brackets_re, uni_re, word_re]
 
         # LIST OF ALLOWED CHARACTERS FOR validity check
         self.allowed = set(ALPHA)
