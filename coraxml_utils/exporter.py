@@ -135,7 +135,7 @@ class GateJsonExporter:
 
         ## TODO add pages, columns, shifttags, dipls and cora tokens, annotations for anno , metadata
 
-        tweet_object = {
+        json_object = {
             'text': '',
             'entities': {
                 # 'Layout:Page': [],
@@ -164,11 +164,11 @@ class GateJsonExporter:
                             ## add linebreak or whitespace
                             if token_char['dipl_id'] in line_beginnings:
                                 if last_line_offset is not None: ## ignore first linebreak
-                                    tweet_object['text'] += '\n'
+                                    json_object['text'] += '\n'
                                     char_offset += 1
                                 last_line_offset = char_offset
                             else:
-                                tweet_object['text'] += ' '
+                                json_object['text'] += ' '
                                 char_offset += 1
 
                         if 'anno_id' in token_char:
@@ -178,7 +178,7 @@ class GateJsonExporter:
 
                         if 'dipl_id' in token_char:
                             if token_char['dipl_id'] in line_ends:
-                                tweet_object['entities']['Layout:Line'].append(
+                                json_object['entities']['Layout:Line'].append(
                                     {
                                         'indices': [last_line_offset, char_offset],
                                         'name': line_ends[token_char['dipl_id']].name
@@ -189,12 +189,12 @@ class GateJsonExporter:
                                     'indices': [last_anno_token_offset, char_offset],
                             }
                             ## TODO add annotation
-                            tweet_object['entities']['Token:Anno'].append(tok_anno)
+                            json_object['entities']['Token:Anno'].append(tok_anno)
                     else:
-                        tweet_object['text'] += token_char['utf']
+                        json_object['text'] += token_char['utf']
                         char_offset += len(token_char['utf'])
             elif isinstance(token, CoraComment):
-                tweet_object['entities']['Token:Comment'].append(
+                json_object['entities']['Token:Comment'].append(
                     {
                         'indices': [char_offset, char_offset],
                         'type': token.type,
@@ -202,4 +202,4 @@ class GateJsonExporter:
                     }
                 )
 
-        return tweet_object
+        return json_object
