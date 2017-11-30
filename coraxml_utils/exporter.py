@@ -32,12 +32,12 @@ class CoraXMLExporter:
     def _create_xml_token(self, tok):
 
         tok_xml = ET.Element("token", {"id": tok.id,
-                                          "trans": str(tok.trans)})
+                                       "trans": str(tok.trans)})
 
         for dipl in tok.tok_dipls:
             dipl_xml = ET.SubElement(tok_xml, self.dipl_tag,
-                                        {"id": dipl.id, 
-                                         "trans": str(dipl.trans)})
+                                     {"id": dipl.id, 
+                                      "trans": str(dipl.trans)})
             dipl_xml.set("utf", str(dipl.trans.to_string(character="utf")))
         for mod in tok.tok_annos:
             mod_xml = ET.SubElement(tok_xml, self.mod_tag,
@@ -68,15 +68,16 @@ class CoraXMLExporter:
         layoutinfo = ET.SubElement(root, "layoutinfo")
         for page in doc.pages:
             page_xml = ET.Element("page", {"id": page.id,
-                                              "no": page.no,
-                                              "range": page.range()})
+                                           "no": page.name,
+                                           "range": page.range()})
             if page.side:
                 page_xml.set("side", page.side)
+
             layoutinfo.append(page_xml)
 
             for col in page.columns:
                 col_xml = ET.Element("column", {"id": col.id,
-                                                   "range": col.range()})
+                                                "range": col.range()})
                 if col.name:
                     col_xml.set("name", self.name)
                 layoutinfo.append(col_xml)
@@ -86,10 +87,10 @@ class CoraXMLExporter:
                     # line end have been resolved
                     if line:
                         line_xml = ET.Element("line", {"id": self.id,
-                                                          "name": self.linename,
-                                                          "loc": self.loc(),
-                                                          "range": self.range()})
-                        layoutinfo.append(line_xml)
+                                                       "name": self.linename,
+                                                       # "loc": self.loc(),
+                                                       "range": self.range()})
+                    layoutinfo.append(line_xml)
 
         shifttags = ET.SubElement(root, "shifttags")
         for shifttag in doc.shifttags:

@@ -214,11 +214,7 @@ class TransImporter:
     def __init__(self, parser):
         self.ParsedToken = parser
 
-    def import_from_file(self, filename):
-
-        intext = ""
-        with open(filename, "r", encoding="utf8") as infile:
-            intext = infile.read().replace("\ufeff", "")
+    def import_from_string(self, intext):
 
         name = str()  # ???
         pages = list()
@@ -355,8 +351,8 @@ class TransImporter:
                                 shifttag_stack.append(t)
                         
                         if new_token.parse:
-                            join_next_mods = new_token.parse[-1]["char"] in {"(=)", "="}
-                            join_next_dipls = new_token.parse[-1]["char"] in {"=|"}
+                            join_next_mods = new_token.parse[-1]["trans"] in {"(=)", "="}
+                            join_next_dipls = new_token.parse[-1]["trans"] in {"=|"}
 
             # at end of line 
             line_stack.append(Line(linename, this_line_dipls))
