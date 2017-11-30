@@ -158,6 +158,10 @@ class GateJsonExporter:
 
         for token in doc.tokens:
             if isinstance(token, CoraToken):
+
+                tok_annos = list(token.tok_annos)
+                tok_annos.reverse()
+
                 for token_char in token.get_aligned_dipls_and_annos():
                     if token_char['type'] == 'token_begin':
                         if 'dipl_id' in token_char:
@@ -188,7 +192,20 @@ class GateJsonExporter:
                             tok_anno = {
                                     'indices': [last_anno_token_offset, char_offset],
                             }
-                            ## TODO add annotation
+                            tok_anno_object = tok_annos.pop()
+
+                            tok_anno['trans'] = "".join([char['trans'] for char in tok_anno_object.trans.parse])
+                            tok_anno['utf'] = "".join([char['utf'] for char in tok_anno_object.trans.parse])
+                            tok_anno['simple'] = "".join([char['simple'] for char in tok_anno_object.trans.parse])
+
+                            tok_anno['id'] = tok_anno_object.id
+                            tok_anno['checked'] = tok_anno_object.checked
+
+                            for anno_name, anno_value in tok_anno_object.tags.items():
+                                tok_anno[anno_name] = anno_value
+
+                            tok_anno['flags'] = list(tok_anno_object.flags)
+
                             json_object['entities']['Token:Anno'].append(tok_anno)
                     else:
                         json_object['text'] += token_char['utf']
