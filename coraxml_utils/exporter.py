@@ -14,6 +14,8 @@ def create_exporter(format="coraxml", dialect="ref"):
         return CoraXMLExporter(dialect)
     elif format == "trans":
         return TransExporter()
+    elif format == "json":
+        return GateJsonExporter()
     else:
         logging.error("No valid exporter selected")
 
@@ -124,3 +126,81 @@ class TransExporter:
         output.append("+H")
         output.append(doc.header)
         output.append("@H")
+
+class GateJsonExporter:
+
+    def __init__(self):
+        pass
+
+    def export(self, doc):
+
+        ## TODO add pages, columns, shifttags, dipls and cora tokens, annotations for anno , metadata
+
+        tweet_object = {
+            'text': '',
+            'entities': {
+                # 'Layout:Page': [],
+                # 'Layout:Column': [],
+                'Layout:Line': [],
+                'Token:Anno': [],
+                'Token:Comment': []
+            }
+        }
+
+        line_beginnings = {}
+        line_ends = {}
+        for line in [line for page in doc.pages for column in page.columns for line in column.lines]:
+            line_beginnings[line.dipls[0]._id] = line
+            line_ends[line.dipls[-1]._id] = line
+
+        char_offset = 0
+        last_anno_token_offset = None
+        last_line_offset = None
+
+        for token in doc.tokens:
+            if isinstance(token, CoraToken):
+                for token_char in token.get_aligned_dipls_and_annos():
+                    if token_char['type'] == 'token_begin':
+                        if 'dipl_id' in token_char:
+                            ## add linebreak or whitespace
+                            if token_char['dipl_id'] in line_beginnings:
+                                if last_line_offset is not None: ## ignore first linebreak
+                                    tweet_object['text'] += '\n'
+                                    char_offset += 1
+                                last_line_offset = char_offset
+                            else:
+                                tweet_object['text'] += ' '
+                                char_offset += 1
+
+                        if 'anno_id' in token_char:
+                            last_anno_token_offset = char_offset
+
+                    elif token_char['type'] == 'token_end':
+
+                        if 'dipl_id' in token_char:
+                            if token_char['dipl_id'] in line_ends:
+                                tweet_object['entities']['Layout:Line'].append(
+                                    {
+                                        'indices': [last_line_offset, char_offset],
+                                        'name': line_ends[token_char['dipl_id']].name
+                                    }
+                                )
+                        if 'anno_id' in token_char:
+                            tok_anno = {
+                                    'indices': [last_anno_token_offset, char_offset],
+                            }
+                            ## TODO add annotation
+                            tweet_object['entities']['Token:Anno'].append(tok_anno)
+                    else:
+                        tweet_object['text'] += token_char['utf']
+                        char_offset += len(token_char['utf'])
+            elif isinstance(token, CoraComment):
+                tweet_object['entities']['Token:Comment'].append(
+                    {
+                        'indices': [char_offset, char_offset],
+                        'type': token.type,
+                        'content': token.content
+                    }
+                )
+
+        return tweet_object

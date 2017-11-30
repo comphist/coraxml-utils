@@ -139,6 +139,109 @@ class CoraToken:
         else:
             self.tok_annos.extend(tok.tok_annos)
 
+    def get_aligned_dipls_and_annos(self):
+
+        aligned_dipls_and_annos = []
+
+        if not self.tok_annos:
+            ## CoraToken contains only dipls
+            for curr_dipl in self.tok_dipls:
+                aligned_dipls_and_annos.append({
+                    'type': 'token_begin',
+                    'dipl_id': curr_dipl._id
+                })
+                aligned_dipls_and_annos.extend(curr_dipl.trans.parse)
+                aligned_dipls_and_annos.append({
+                    'type': 'token_end',
+                    'dipl_id': curr_dipl._id
+                })
+
+
+        else:
+            ## CoraToken contains dipls and mods - try to align
+            tok_annos = list(self.tok_annos)
+            tok_annos.reverse()
+            tok_dipls = list(self.tok_dipls)
+            tok_dipls.reverse()
+
+            curr_anno = None
+            curr_dipl = None
+            curr_anno_chars = list()
+            curr_dipl_chars = list()
+
+            while tok_annos or curr_anno_chars or tok_dipls or curr_dipl_chars:
+
+                anno_boundary = False
+                dipl_boundary = False
+
+                ## get new token(s) if necessary
+                if (not curr_anno_chars) and tok_annos:
+                    anno_boundary = True
+                    curr_anno = tok_annos.pop()
+                    curr_anno_chars = list(curr_anno.trans.parse)
+                    curr_anno_chars.reverse()
+                if (not curr_dipl_chars) and tok_dipls:
+                    dipl_boundary = True
+                    curr_dipl = tok_dipls.pop()
+                    curr_dipl_chars = list(curr_dipl.trans.parse)
+                    curr_dipl_chars.reverse()
+
+                ## append token start if necessary
+                if anno_boundary and dipl_boundary:
+                    aligned_dipls_and_annos.append({
+                        'type': 'token_begin',
+                        'anno_id': curr_anno._id,
+                        'dipl_id': curr_dipl._id
+                    })
+                elif dipl_boundary:
+                    aligned_dipls_and_annos.append({
+                        'type': 'token_begin',
+                        'dipl_id': curr_dipl._id
+                    })
+                elif anno_boundary:
+                    aligned_dipls_and_annos.append({
+                        'type': 'token_begin',
+                        'anno_id': curr_anno._id
+                    })
+
+                ## character and token end if necessary
+                anno_boundary = False
+                dipl_boundary = False
+                if curr_anno_chars and curr_dipl_chars:
+                    anno_char = curr_anno_chars.pop()
+                    dipl_char = curr_dipl_chars.pop()
+
+                    if dipl_char['trans'] == anno_char['trans']:
+                        aligned_dipls_and_annos.append(dipl_char)
+                    else:
+                        raise ValueError("Dipl and Anno tokens are not alignable.")
+
+                    if not curr_anno_chars:
+                        anno_boundary = True
+                    if not curr_dipl_chars:
+                        dipl_boundary = True
+                else:
+                    raise ValueError("Dipl and Anno tokens are not alignable.")
+
+                ## append token end
+                if anno_boundary and dipl_boundary:
+                    aligned_dipls_and_annos.append({
+                        'type': 'token_end',
+                        'anno_id': curr_anno._id,
+                        'dipl_id': curr_dipl._id
+                    })
+                elif dipl_boundary:
+                    aligned_dipls_and_annos.append({
+                        'type': 'token_end',
+                        'dipl_id': curr_dipl._id
+                    })
+                elif anno_boundary:
+                    aligned_dipls_and_annos.append({
+                        'type': 'token_end',
+                        'anno_id': curr_anno._id
+                    })
+
+        return aligned_dipls_and_annos
 
 class TokDipl:
 
