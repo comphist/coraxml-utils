@@ -133,7 +133,7 @@ class GateJsonExporter:
 
     def export(self, doc):
 
-        ## TODO add shifttags, metadata
+        ## TODO add metadata
 
         json_object = {
             'text': '',
@@ -166,6 +166,13 @@ class GateJsonExporter:
             line_beginnings[line.dipls[0]._id] = line
             line_ends[line.dipls[-1]._id] = line
 
+        shifttag_beginnings = {}
+        for shifttag in doc.shifttags:
+            if shifttag.tokens[0]._id not in shifttag_beginnings:
+                shifttag_beginnings[shifttag.tokens[0]._id] = []
+            shifttag_beginnings[shifttag.tokens[0]._id].append(shifttag)
+        open_shifttags = {}
+
         char_offset = 0
         last_dipl_token_offset = None
         last_anno_token_offset = None
@@ -185,6 +192,11 @@ class GateJsonExporter:
                 ## CoraToken will start with a dipl token - so add 1 to curr char offset
                 ## (unless we are at the beginning of the text)
                 last_cora_token_offset = char_offset + 1 if char_offset > 0 else char_offset
+                if token._id in shifttag_beginnings:
+                    for shifttag in shifttag_beginnings[token._id]:
+                        if shifttag.tokens[-1]._id not in open_shifttags:
+                            open_shifttags[shifttag.tokens[-1]._id] = []
+                        open_shifttags[shifttag.tokens[-1]._id].append((char_offset + 1 if char_offset > 0 else char_offset, shifttag))
 
                 for token_char in token.get_aligned_dipls_and_annos():
                     if token_char['type'] == 'token_begin':
@@ -286,6 +298,18 @@ class GateJsonExporter:
                         'trans': "".join([char['trans'] for char in token.trans.parse])
                     }
                 )
+
+                ## add shifttags
+                if token._id in open_shifttags:
+                    for start_offset, shifttag in open_shifttags[token._id]:
+                        if 'Shifttags:' + shifttag.tag() not in json_object['entities']:
+                            json_object['entities']['Shifttags:' + shifttag.tag()] = []
+                        json_object['entities']['Shifttags:' + shifttag.tag()].append(
+                            {
+                                'indices': [start_offset, char_offset],
+                                'type': shifttag.type
+                            }
+                        )
 
             elif isinstance(token, CoraComment):
                 json_object['entities']['Token:Comment'].append(
