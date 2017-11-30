@@ -133,7 +133,7 @@ class GateJsonExporter:
 
     def export(self, doc):
 
-        ## TODO add pages, columns, shifttags, cora tokens, metadata
+        ## TODO add pages, columns, shifttags, metadata
 
         json_object = {
             'text': '',
@@ -141,6 +141,7 @@ class GateJsonExporter:
                 # 'Layout:Page': [],
                 # 'Layout:Column': [],
                 'Layout:Line': [],
+                'Token:Cora': [],
                 'Token:Dipl': [],
                 'Token:Anno': [],
                 'Token:Comment': []
@@ -166,6 +167,10 @@ class GateJsonExporter:
 
                 tok_dipls = list(token.tok_dipls)
                 tok_dipls.reverse()
+
+                ## CoraToken will start with a dipl token - so add 1 to curr char offset
+                ## (unless we are at the beginning of the text)
+                last_cora_token_offset = char_offset + 1 if char_offset > 0 else char_offset
 
                 for token_char in token.get_aligned_dipls_and_annos():
                     if token_char['type'] == 'token_begin':
@@ -232,6 +237,16 @@ class GateJsonExporter:
                     else:
                         json_object['text'] += token_char['utf']
                         char_offset += len(token_char['utf'])
+
+                ## add CoraToken annotation
+                json_object['entities']['Token:Cora'].append(
+                    {
+                        'indices': [last_cora_token_offset, char_offset],
+                        'id': token.id,
+                        'trans': "".join([char['trans'] for char in token.trans.parse])
+                    }
+                )
+
             elif isinstance(token, CoraComment):
                 json_object['entities']['Token:Comment'].append(
                     {
