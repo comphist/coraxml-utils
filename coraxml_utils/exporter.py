@@ -133,13 +133,13 @@ class GateJsonExporter:
 
     def export(self, doc):
 
-        ## TODO add pages, columns, shifttags, metadata
+        ## TODO add shifttags, metadata
 
         json_object = {
             'text': '',
             'entities': {
-                # 'Layout:Page': [],
-                # 'Layout:Column': [],
+                'Layout:Page': [],
+                'Layout:Column': [],
                 'Layout:Line': [],
                 'Token:Cora': [],
                 'Token:Dipl': [],
@@ -147,6 +147,18 @@ class GateJsonExporter:
                 'Token:Comment': []
             }
         }
+
+        page_beginnings = {}
+        page_ends = {}
+        for page in doc.pages:
+            page_beginnings[page.columns[0].lines[0].dipls[0]._id] = page
+            page_ends[page.columns[-1].lines[-1].dipls[-1]._id] = page
+
+        column_beginnings = {}
+        column_ends = {}
+        for column in [column for page in doc.pages for column in page.columns]:
+            column_beginnings[column.lines[0].dipls[0]._id] = column
+            column_ends[column.lines[-1].dipls[-1]._id] = column
 
         line_beginnings = {}
         line_ends = {}
@@ -157,6 +169,8 @@ class GateJsonExporter:
         char_offset = 0
         last_dipl_token_offset = None
         last_anno_token_offset = None
+        last_page_offset = None
+        last_column_offset = None
         last_line_offset = None
 
         for token in doc.tokens:
@@ -185,6 +199,12 @@ class GateJsonExporter:
                                 json_object['text'] += ' '
                                 char_offset += 1
 
+                            if token_char['dipl_id'] in page_beginnings:
+                                last_page_offset = char_offset
+
+                            if token_char['dipl_id'] in column_beginnings:
+                                last_column_offset = char_offset
+
                             ## update last dipl offset
                             last_dipl_token_offset = char_offset
 
@@ -194,11 +214,31 @@ class GateJsonExporter:
                     elif token_char['type'] == 'token_end':
 
                         if 'dipl_id' in token_char:
+                            ## add page annotation
+                            if token_char['dipl_id'] in page_ends:
+                                json_object['entities']['Layout:Page'].append(
+                                    {
+                                        'indices': [last_page_offset, char_offset],
+                                        'id': page_ends[token_char['dipl_id']].id,
+                                        'name': page_ends[token_char['dipl_id']].name,
+                                        'side': page_ends[token_char['dipl_id']].side
+                                    }
+                                )
+                            ## add column annotation
+                            if token_char['dipl_id'] in column_ends:
+                                json_object['entities']['Layout:Column'].append(
+                                    {
+                                        'indices': [last_column_offset, char_offset],
+                                        'id': column_ends[token_char['dipl_id']].id,
+                                        'name': column_ends[token_char['dipl_id']].name
+                                    }
+                                )
                             ## add line annotation
                             if token_char['dipl_id'] in line_ends:
                                 json_object['entities']['Layout:Line'].append(
                                     {
                                         'indices': [last_line_offset, char_offset],
+                                        'id': line_ends[token_char['dipl_id']].id,
                                         'name': line_ends[token_char['dipl_id']].name
                                     }
                                 )
