@@ -133,7 +133,7 @@ class GateJsonExporter:
 
     def export(self, doc):
 
-        ## TODO add pages, columns, shifttags, dipls and cora tokens, annotations for anno , metadata
+        ## TODO add pages, columns, shifttags, cora tokens, metadata
 
         json_object = {
             'text': '',
@@ -141,6 +141,7 @@ class GateJsonExporter:
                 # 'Layout:Page': [],
                 # 'Layout:Column': [],
                 'Layout:Line': [],
+                'Token:Dipl': [],
                 'Token:Anno': [],
                 'Token:Comment': []
             }
@@ -153,6 +154,7 @@ class GateJsonExporter:
             line_ends[line.dipls[-1]._id] = line
 
         char_offset = 0
+        last_dipl_token_offset = None
         last_anno_token_offset = None
         last_line_offset = None
 
@@ -161,6 +163,9 @@ class GateJsonExporter:
 
                 tok_annos = list(token.tok_annos)
                 tok_annos.reverse()
+
+                tok_dipls = list(token.tok_dipls)
+                tok_dipls.reverse()
 
                 for token_char in token.get_aligned_dipls_and_annos():
                     if token_char['type'] == 'token_begin':
@@ -175,12 +180,16 @@ class GateJsonExporter:
                                 json_object['text'] += ' '
                                 char_offset += 1
 
+                            ## update last dipl offset
+                            last_dipl_token_offset = char_offset
+
                         if 'anno_id' in token_char:
                             last_anno_token_offset = char_offset
 
                     elif token_char['type'] == 'token_end':
 
                         if 'dipl_id' in token_char:
+                            ## add line annotation
                             if token_char['dipl_id'] in line_ends:
                                 json_object['entities']['Layout:Line'].append(
                                     {
@@ -188,6 +197,19 @@ class GateJsonExporter:
                                         'name': line_ends[token_char['dipl_id']].name
                                     }
                                 )
+                            ## add dipl token annotation
+                            tok_dipl = {
+                                    'indices': [last_dipl_token_offset, char_offset],
+                            }
+                            tok_dipl_object = tok_dipls.pop()
+
+                            tok_dipl['trans'] = "".join([char['trans'] for char in tok_dipl_object.trans.parse])
+                            tok_dipl['utf'] = "".join([char['utf'] for char in tok_dipl_object.trans.parse])
+
+                            tok_dipl['id'] = tok_dipl_object.id
+
+                            json_object['entities']['Token:Dipl'].append(tok_dipl)
+
                         if 'anno_id' in token_char:
                             tok_anno = {
                                     'indices': [last_anno_token_offset, char_offset],
