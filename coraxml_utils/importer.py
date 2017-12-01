@@ -19,6 +19,12 @@ def create_importer(file_format, dialect=None):
             cora_importer = CoraXMLImporter(parsed_token.RemToken)
             cora_importer.tok_dipl_tag = 'tok_dipl'
             cora_importer.tok_anno_tag = 'tok_anno'
+        elif dialect == 'ref':
+            return CoraXMLImporter(parsed_token.RefToken)
+        elif dialect == 'redi':
+            return CoraXMLImporter(parsed_token.RediToken)
+        elif dialect == 'anselm':
+            return CoraXMLImporter(parsed_token.AnselmToken)
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
         return cora_importer
