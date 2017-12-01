@@ -134,8 +134,6 @@ class GateJsonExporter:
 
     def export(self, doc):
 
-        ## TODO add metadata
-
         json_object = {
             'text': '',
             'entities': {
@@ -148,6 +146,11 @@ class GateJsonExporter:
                 'Token:Comment': []
             }
         }
+
+        ## add metadata
+        json_object['sigle'] = doc.sigle
+        json_object['name'] = doc.name
+        json_object['header'] = doc.header
 
         page_beginnings = {}
         page_ends = {}
