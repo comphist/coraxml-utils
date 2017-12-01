@@ -12,4 +12,4 @@ class ImporterFactoryTest(unittest.TestCase):
     def test_coraxml_unsupported_dialect(self):
 
         with self.assertRaises(ValueError):
-            create_importer('CorA-XML', '"some unknown dialect"')
+            create_importer('coraxml', '"some unknown dialect"')

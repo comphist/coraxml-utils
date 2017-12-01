@@ -19,7 +19,7 @@ class CoraXMLImporterTest(unittest.TestCase):
 
         self.assertEquals(
             expected_dipl,
-            create_importer('CorA-XML')._create_dipl_token(dipl_element)
+            create_importer('coraxml')._create_dipl_token(dipl_element)
         )
 
     def test_anno_from_xml(self):
@@ -34,7 +34,7 @@ class CoraXMLImporterTest(unittest.TestCase):
 
         self.assertEquals(
             expected_anno,
-            create_importer('CorA-XML')._create_anno_token(anno_element)
+            create_importer('coraxml')._create_anno_token(anno_element)
         )
 
 
@@ -43,7 +43,7 @@ class CoraXMLImporterTest(unittest.TestCase):
         anno_element = ET.fromstring('<mod id="t1_m1" trans="priuilegien" utf="priuilegien" ascii="priuilegien" checked="y"><pos tag="NA"/><pos tag="NA"/></mod>')
 
         with self.assertLogs(None, 'WARN'):
-            create_importer('CorA-XML')._create_anno_token(anno_element)
+            create_importer('coraxml')._create_anno_token(anno_element)
 
     def test_cora_token_from_xml(self):
 
@@ -57,7 +57,7 @@ class CoraXMLImporterTest(unittest.TestCase):
 
         self.assertEquals(
             expected_token,
-            create_importer('CorA-XML')._create_cora_token(token_element)
+            create_importer('coraxml')._create_cora_token(token_element)
         )
 
 class CoraXMLExporterTest(unittest.TestCase):

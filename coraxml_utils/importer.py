@@ -12,7 +12,7 @@ except ImportError:
 
 def create_importer(file_format, dialect=None):
 
-    if file_format == 'CorA-XML':
+    if file_format == 'coraxml':
         cora_importer = CoraXMLImporter()
         if dialect is None:
             pass

@@ -14,7 +14,7 @@ def create_exporter(format="coraxml", dialect="ref"):
         return CoraXMLExporter(dialect)
     elif format == "trans":
         return TransExporter()
-    elif format == "json":
+    elif format == "gatejson":
         return GateJsonExporter()
     else:
         logging.error("No valid exporter selected")
