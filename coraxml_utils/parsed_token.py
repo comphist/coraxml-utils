@@ -74,7 +74,7 @@ class BaseToken:
                                 next_char_br = val
                             else:
                                 open_br = open_brackets.pop()
-                                if open_br != BR[val]:
+                                if open_br != self.flip_bracket(val):
                                     print("non-matching brackets!", intoken)
                                 open_br_types.pop()
                                 self.parse[-1]["after"] = val
@@ -116,7 +116,7 @@ class BaseToken:
             if open_brackets:
                 raise ParseError("Unclosed bracket at end of token: " + intoken)
 
-            # self.validate()
+            self.validate()
 
         elif isinstance(intoken, list):
             self.parse = intoken
@@ -200,7 +200,7 @@ class BaseToken:
             after = ""
             skip_char = False
 
-            # token-wise conversion to target
+            # character conversion
             if character != "original":
                 out_char = c[character]
             else:
@@ -303,9 +303,9 @@ class BaseToken:
 
     def tokenize(self, tokenize_type="all", split_init_punc=True):
         new_parse = list()
-        padded_parse = ([{"char": "", "type": "spc"}] + 
+        padded_parse = ([{"trans": "", "type": "spc"}] + 
                         self.parse + 
-                        [{"char": "", "type": "spc"}])
+                        [{"trans": "", "type": "spc"}])
 
         for i in range(1, len(padded_parse) - 1):
             last_char, this_char, next_char = padded_parse[i-1:i+2]
@@ -318,7 +318,7 @@ class BaseToken:
                 tokenize_type == "all"):
                 # word split "foo|bar"
                 conditions.append(last_char["type"] == "spl" and 
-                                  last_char["char"].endswith("|"))
+                                  last_char["trans"].endswith("|"))
 
                 if tokenize_type == "all":
                     if split_init_punc:
@@ -328,21 +328,21 @@ class BaseToken:
                     # other initial punctuation
                     postspace_conds.append(last_char["type"] in {"spc", None} and
                                            this_char["type"] == "p" and
-                                           this_char["char"] != "." and 
+                                           this_char["trans"] != "." and 
                                            next_char["type"] == "w")
 
                     # final punctuation  "foo%." (NOT "f%.oo")
                     conditions.append(last_char["type"] not in {"br", "spc", "spl"} and
                                       this_char["type"] in {"ip", "p", "pe", "q"} and 
-                                      this_char["char"] != '.' and
+                                      this_char["trans"] != '.' and
                                       next_char["type"] != "w" and
-                                      next_char["char"] not in {'(=)', '#'})
+                                      next_char["trans"] not in {'(=)', '#'})
 
                     # rule for periods (which can be periods or unreadable chars)
                     conditions.append(last_char["type"] not in {"spc", "spl"} and
-                                      this_char["char"] == "." and 
+                                      this_char["trans"] == "." and 
                                       next_char["type"] != "w" and 
-                                      next_char["char"] not in {'(=)', '#'} and
+                                      next_char["trans"] not in {'(=)', '#'} and
                                        # tokenize when period not in missing char parens
                                       (my_bracket not in self.missing_br_open or
                                        # tokenize when period is alone in parens
@@ -356,7 +356,7 @@ class BaseToken:
 
             elif tokenize_type == "historical":
                 conditions.append(last_char["type"] == "spl" and 
-                                  last_char["char"].endswith('#'))
+                                  last_char["trans"].endswith('#'))
 
             else:
                 # do nothing -- no tokenization
@@ -372,12 +372,12 @@ class BaseToken:
                     # reopen after space
                     this_char_copy["before"] = my_bracket
 
-                new_parse.append({"char": " ", "type": "spc"})
+                new_parse.append({"trans": " ", "type": "spc"})
                 new_parse.append(this_char_copy)
 
             elif any(postspace_conds):
                 new_parse.append(this_char_copy)
-                new_parse.append({"char": " ", "type": "spc"})
+                new_parse.append({"trans": " ", "type": "spc"})
             else:
                 new_parse.append(this_char_copy)
 

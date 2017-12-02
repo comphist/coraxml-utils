@@ -2,6 +2,8 @@
 # coding: utf-8
 
 import argparse
+import logging
+logging.basicConfig(format='%(levelname)s: %(message)s')
 
 from coraxml_utils.importer import create_importer
 from coraxml_utils.exporter import create_exporter
@@ -32,7 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("-P", "--parser", choices=["rem", "anselm", "ref", "redi"],
                         default="ref", help="Token parser to use, default: %(default)s")
     args, _ = parser.parse_known_args()
-
+    if _: logging.warn("Unknown args: %s", _)
 
     MyImporter = create_importer("trans", args.parser)
     MyExporter = create_exporter("coraxml", args.parser)

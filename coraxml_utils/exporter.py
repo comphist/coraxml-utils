@@ -39,28 +39,28 @@ class CoraXMLExporter:
             dipl_xml = ET.SubElement(tok_xml, self.dipl_tag,
                                      {"id": dipl.id, 
                                       "trans": str(dipl.trans)})
-            dipl_xml.set("utf", str(dipl.trans.to_string(character="utf",
-                                                         illegible="character",
-                                                         strikethru="leave",
-                                                         doubledash=True,
-                                                         preedpunc=False,
-                                                         preedtoken=False)))
+            dipl_xml.set("utf", dipl.trans.to_string(character="utf",
+                                                     illegible="character",
+                                                     strikethru="leave",
+                                                     doubledash=True,
+                                                     preedpunc=False,
+                                                     preedtoken=False))
         for mod in tok.tok_annos:
             mod_xml = ET.SubElement(tok_xml, self.mod_tag,
                                        {"id": mod.id,
                                         "trans": str(mod.trans)})
-            mod_xml.set("utf", str(mod.trans.to_string(character="utf",
-                                                       illegible="character",
-                                                       strikethru="delete",
-                                                       doubledash=False,
-                                                       preedpunc=True,
-                                                       preedtoken=False)))
-            mod_xml.set("simple", str(mod.trans.to_string(character="simple",
-                                                          illegible="leave",
-                                                          strikethru="delete",
-                                                          doubledash=False,
-                                                          preedpunc=True,
-                                                          preedtoken=False)))
+            mod_xml.set("utf", mod.trans.to_string(character="utf",
+                                                   illegible="character",
+                                                   strikethru="delete",
+                                                   doubledash=False,
+                                                   preedpunc=True,
+                                                   preedtoken=False))
+            mod_xml.set("simple", mod.trans.to_string(character="simple",
+                                                      illegible="leave",
+                                                      strikethru="delete",
+                                                      doubledash=False,
+                                                      preedpunc=True,
+                                                      preedtoken=False))
 
             if mod.checked:
                 mod_xml.set("checked", "y")
@@ -140,6 +140,31 @@ class TransExporter:
         output.append("+H")
         output.append(doc.header)
         output.append("@H")
+
+        for p in doc.pages:
+            for c in p.columns:
+                for l in c.lines:
+                    for d in l.dipls:
+                        tok = d.get_token() # ??
+                        
+                        
+def print_file(self):
+    if self.options.bibinfo == "both":
+        print(*self.header, sep="\n", file=self.outfile)
+        # print(file=self.outfile)  # empty line after header
+
+    join_char = "\n" if self.options.taggermode else " "
+
+    for l in self.text:
+        line = [x for x in l["line"].split(" ") if x]
+        if self.options.bibinfo in {"both", "line"}:
+            bibstr = l["bibl"] + "\t"
+        else:
+            bibstr = ""
+
+        if line:
+            print(bibstr + join_char.join(line).strip(), file=self.outfile)
+
 
 class GateJsonExporter:
 

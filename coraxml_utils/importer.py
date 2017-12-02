@@ -1,4 +1,5 @@
 import logging
+logging.basicConfig(format='%(levelname)s: %(message)s')
 from collections import defaultdict
 
 from coraxml_utils.coralib import *
@@ -10,35 +11,32 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 
-def create_importer(file_format, dialect=None):
+dialect_mapper = {None: parsed_token.PlainToken,
+                  "plain": parsed_token.PlainToken,
+                  "rem": parsed_token.RemToken,
+                  "ref": parsed_token.RefToken,
+                  "redi": parsed_token.RediToken,
+                  "anselm": parsed_token.AnselmToken}
 
+
+def create_importer(file_format, dialect=None, **kwargs):
     if file_format == 'coraxml':
-        if dialect is None:
-            return CoraXMLImporter(parsed_token.PlainToken)
-        elif dialect == 'rem':
-            cora_importer = CoraXMLImporter(parsed_token.RemToken)
-            cora_importer.tok_dipl_tag = 'tok_dipl'
-            cora_importer.tok_anno_tag = 'tok_anno'
-        elif dialect == 'ref':
-            return CoraXMLImporter(parsed_token.RefToken)
-        elif dialect == 'redi':
-            return CoraXMLImporter(parsed_token.RediToken)
-        elif dialect == 'anselm':
-            return CoraXMLImporter(parsed_token.AnselmToken)
+        if dialect in dialect_mapper:
+            cora_importer = CoraXMLImporter(dialect_mapper[dialect])
+            if dialect == 'rem':
+                cora_importer.tok_dipl_tag = 'tok_dipl'
+                cora_importer.tok_anno_tag = 'tok_anno'
+            return cora_importer
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
-        return cora_importer
     elif file_format == "trans":
-        if dialect == "ref":
-            return TransImporter(parsed_token.RefToken)
-        elif dialect == "redi":
-            return TransImporter(parsed_token.RediToken)
-        elif dialect == "ref":
-            return TransImporter(parsed_token.RefToken)
+        if dialect in dialect_mapper:
+            return TransImporter(dialect_mapper[dialect], kwargs)
         else:
-            return TransImporter(parsed_token.PlainToken)
+            raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
     else:
         raise ValueError("File format " + file_format + " is not supported.")
+
 
 class CoraXMLImporter:
 
@@ -62,12 +60,14 @@ class CoraXMLImporter:
             if annotation_element.tag == 'cora-flag':
                 flagname = annotation_element.attrib['name']
                 if flagname in flags:
-                    logging.warning('Flag ' + flagname + ' is set twice for anno-token ' + anno_element.attrib['id'] + '.')
+                    logging.warning('Flag ' + flagname + 
+                                    ' is set twice for anno-token ' + anno_element.attrib['id'] + '.')
                 flags.add(flagname)
             else:
                 tagname = annotation_element.tag
                 if tagname in tags:
-                    logging.warning('Tag ' + tagname + ' is set twice for anno-token ' + anno_element.attrib['id'] + '.')
+                    logging.warning('Tag ' + tagname + 
+                                    ' is set twice for anno-token ' + anno_element.attrib['id'] + '.')
                 tags[tagname] = annotation_element.attrib['tag']
 
         ## the attribute checked is not obligatory
@@ -94,7 +94,8 @@ class CoraXMLImporter:
     def _get_range(self, element):
         return element.attrib['range'].split('..')
 
-    def _connect_with_layout_elements(self, root, layout_type, subelements, subelement_type, extract_from_xml, create_object):
+    def _connect_with_layout_elements(self, root, layout_type, subelements, subelement_type, 
+                                      extract_from_xml, create_object):
         """Connects elements like lines with higher element like columns.
 
         Positional arguments:
@@ -102,8 +103,10 @@ class CoraXMLImporter:
         layout_type -- type of the layout element (line, column or page)
         subelement -- list of the elements that should be connected
         subelement_type -- the name of the subelement (used for warnings)
-        extract_from_xml -- a function that gets the xml element and returns a dictionary with all relevant information for the layout element
-        create_object -- a function that gets the dictionary from extract_from_xml with added "subelements" and returns an object representing the layout element
+        extract_from_xml -- a function that gets the xml element and returns a dictionary with 
+                            all relevant information for the layout element
+        create_object -- a function that gets the dictionary from extract_from_xml with added 
+                         "subelements" and returns an object representing the layout element
         """
         layout_elements = []
 
@@ -112,8 +115,10 @@ class CoraXMLImporter:
         for element in root.findall("layoutinfo/" + layout_type):
             range = self._get_range(element)
             if range[0] in beginnings:
-                logging.error('Two ' + layout_type + 's that start at the same position: ' + element.attrib['id'] + ' and ' + beginnings[range[0]]['extid'])
-            beginnings[range[0]] = {**extract_from_xml(element), 'end': range[-1], 'subelements': []}
+                logging.error('Two ' + layout_type + 's that start at the same position: ' + 
+                              element.attrib['id'] + ' and ' + beginnings[range[0]]['extid'])
+            beginnings[range[0]] = {**extract_from_xml(element), 
+                                    'end': range[-1], 'subelements': []}
 
         open_element = None
         for subelement in subelements:
@@ -122,7 +127,8 @@ class CoraXMLImporter:
                     open_element = beginnings.pop(subelement.id)
                 else:
                     # warn and continue
-                    logging.warn(subelement_type + ' that is not connected to anything in the layout: ' + subelement.id)
+                    logging.warn(subelement_type + ' that is not connected to anything in the layout: ' + 
+                                 subelement.id)
                     continue
 
             open_element['subelements'].append(subelement)
@@ -131,9 +137,13 @@ class CoraXMLImporter:
                 open_element = None
 
         if beginnings:
-            logger.warn('Dropped ' + layout_type + '(s) starting with nonexistent ' + subelement_type + ': ' + str(list(beginnings.keys())))
+            logger.warn('Dropped ' + layout_type + 
+                        '(s) starting with nonexistent ' + subelement_type + 
+                        ': ' + str(list(beginnings.keys())))
         if open_element:
-            logger.warn('Dropped ' + layout_type + '(s) ending with nonexistent ' + subelement_type + ': ' + open_element['extid'])
+            logger.warn('Dropped ' + layout_type + 
+                        '(s) ending with nonexistent ' + subelement_type + 
+                        ': ' + open_element['extid'])
 
         return layout_elements
 
@@ -218,12 +228,12 @@ class CoraXMLImporter:
 
 class TransImporter:
 
-    def __init__(self, parser):
+    def __init__(self, parser, options):
         self.ParsedToken = parser
 
     # TODO: transcription importer should also check bibinfo, shifttags, etc. and
     #   warn or report errors as appropriate (would replace parts of "convert_check"
-    #   script)
+    #   script) -- aka. *checking is default behavior*, new script does conversion
     def import_from_string(self, intext):
 
         name = str()  # ???
@@ -327,7 +337,13 @@ class TransImporter:
                     if in_comment:
                         comment_stack.append(tok)
                     else:
-                        new_token = self.ParsedToken(tok)
+                        try:
+                            new_token = self.ParsedToken(tok)
+                        except parsed_token.ParseError as e:
+                            logging.error("Line could not be parsed: %s", line)
+                            print(e.message)
+                            exit(1)
+
                         my_tok_dipls = list()
                         my_tok_annos = list()
 

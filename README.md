@@ -1,21 +1,11 @@
 # README #
 
 
-### Conventions
+### TODO
 
-* classes -> CamelCase, everything else -> snake_case
-* magic methods before other methods
-* verbs are better than pro-verbs ("export" > "do_export", exception: "import" as
-  it is a keyword)
-
-
-### Was ist was?
-
-* `bin/`
-	* `convert_check.py`: Konvertiert und/oder prüft Transkriptionsdateien. 
-	* `trans2coraxml.py`: Konvertiert Transkriptionsdateien nach CoraXML.
-* `coraxml_utils/`
-	* `coralib.py`: Objektmodell
-* `test/`
-	* `importer/`
-	* ...
+* Zweifelhafter Simplifizierungsregeln (möglicherweise müssen diese projektspezifisch
+aufgefasst werden)
+	* I005: `<mod id="a3220" trans="au\-$z*1|" utf="aūſz" simple="aunsz"/>`
+	* I015: `<mod id="a42" trans="rote\-b\:g" utf="rotēb̈g" simple="rotenbg"/>`
+* Validierung
+	* Präeditionszeichen sind alleinstehend als Token nicht erlaubt
