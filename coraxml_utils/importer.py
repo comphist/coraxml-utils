@@ -12,14 +12,19 @@ except ImportError:
 
 def create_importer(file_format, dialect=None):
 
-    if file_format == 'CorA-XML':
-        cora_importer = CoraXMLImporter()
+    if file_format == 'coraxml':
         if dialect is None:
-            pass
+            return CoraXMLImporter(parsed_token.PlainToken)
         elif dialect == 'rem':
+            cora_importer = CoraXMLImporter(parsed_token.RemToken)
             cora_importer.tok_dipl_tag = 'tok_dipl'
             cora_importer.tok_anno_tag = 'tok_anno'
-            cora_importer.tokenparser = parsed_token.RemToken
+        elif dialect == 'ref':
+            return CoraXMLImporter(parsed_token.RefToken)
+        elif dialect == 'redi':
+            return CoraXMLImporter(parsed_token.RediToken)
+        elif dialect == 'anselm':
+            return CoraXMLImporter(parsed_token.AnselmToken)
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
         return cora_importer
@@ -37,10 +42,10 @@ def create_importer(file_format, dialect=None):
 
 class CoraXMLImporter:
 
-    def __init__(self):
+    def __init__(self, token_parser):
         self.tok_dipl_tag = 'dipl'
         self.tok_anno_tag = 'mod'
-        self.tokenparser = parsed_token.PlainToken
+        self.tokenparser = token_parser
 
 
     def _create_dipl_token(self, dipl_element):

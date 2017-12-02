@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import re
 import argparse
 
 from coraxml_utils.importer import create_importer

@@ -80,7 +80,7 @@ replacements = [
     [ r"%%[oöôóò]",     "\u1D52",     "ro"         ],  # MODIFIER LETTER SMALL O
     [ r"%%[uüûúù]",     "\u1D58",     "ru"         ],  # MODIFIER LETTER SMALL U
     [ r"%%[v]",         "\u1D5B",     "rv"         ],
-    [ r"ct?\%'?",    "\u0063\u035B", "cetera"    ],      # cetera kuerzung (0063 - 'c')
+    [ r"ct?\%'?(?![.])",    "\u0063\u035B", "cetera"    ],      # cetera kuerzung (0063 - 'c')
     # TODO ^-- simpl?
     [ r"e\\,",       "\u0119",     "e"         ],      # SMALL E WITH OGONEK
     [ r"E\\,",       "\u0118",     "E"         ],      # LATIN CAPITAL E WITH OGONEK
@@ -130,6 +130,8 @@ replacements = [
     # nasal bar rules for uppercase letters
     [ r"(?<=^VN)\\-(?=$| )",                   "\u0304",     "D"         ],      # special rule for "vn\-"
     [ r"(?<=[ÄÖÜAEIOUVWY][NM])\\-",      "\u0304",     ""          ],      # Vn\-  => Vn   / Vm\-  => Vm
+    [ r"^N\\-",                        "\u006E\u0304", "EN"        ],      # Cn\-  => Cen
+    [ r"^M\\-",                       "\u006D\u0304", "EM"        ],      # Cm\-  => Cem
     [ r"(?<=[^ÄÖÜAEIOUVWY])N\\-",        "\u006E\u0304", "EN"        ],      # Cn\-  => Cen
     [ r"(?<=[^ÄÖÜAEIOUVWY])M\\-",        "\u006D\u0304", "EM"        ],      # Cm\-  => Cem
     [ r"(?<=[ÄÖÜAEIOUVWY])\\-(?=[NM])",  "\u0304",     ""          ],      # V\-n  => Vn   / V\-m  => Vm
@@ -140,6 +142,8 @@ replacements = [
     # nasal bar
     [ r"(?<=^vn)\\-(?=$| )",                   "\u0304",     "d"         ],      # special rule for "vn\-"
     [ r"(?<=[äöüaeiouvwy][nm])\\-",      "\u0304",     ""          ],      # Vn\-  => Vn   / Vm\-  => Vm
+    [ r"^n\\-",        "\u006E\u0304", "en"        ],      # Cn\-  => Cen
+    [ r"^m\\-",        "\u006D\u0304", "em"        ],      # Cm\-  => Cem
     [ r"(?<=[^äöüaeiouvwy])n\\-",        "\u006E\u0304", "en"        ],      # Cn\-  => Cen
     [ r"(?<=[^äöüaeiouvwy])m\\-",        "\u006D\u0304", "em"        ],      # Cm\-  => Cem
     [ r"(?<=[äöüaeiouvwy])\\-(?=[nm])",  "\u0304",     ""          ],      # V\-n  => Vn   / V\-m  => Vm
