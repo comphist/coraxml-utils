@@ -103,7 +103,12 @@ class BaseToken:
 
                         elif key.startswith('uni'):
                             new_char_index = int(key[3:])
-                            new_char = {"trans": val, "type": "w", 
+                            # special case for punc w/ utf conversions
+                            if "." in val or "·" in val:
+                                mytype = "p"
+                            else:
+                                mytype = "w"
+                            new_char = {"trans": val, "type": mytype, 
                                         "simple": replacements[new_char_index][2],
                                         "utf": replacements[new_char_index][1]}
 
@@ -506,8 +511,8 @@ class RexToken(BaseToken, metaclass=abc.ABCMeta):
         # specifies which regexes are to be applied, and in what order
         self.re_parts = [spc_re, abbr_re, comm_re, majuscule_re,
                          editnum_re, splitter_re, ddash_re, quotes_re,
-                         strk_re, preedit_re, init_punc_re, punc_re,
-                         ptk_marker_re, brackets_re, uni_re, word_re]
+                         strk_re, preedit_re, init_punc_re, 
+                         ptk_marker_re, brackets_re, uni_re, punc_re, word_re]
 
         # LIST OF ALLOWED CHARACTERS FOR validity check
         self.allowed = set(ALPHA)

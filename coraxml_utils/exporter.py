@@ -2,7 +2,7 @@
 import logging
 
 from coraxml_utils.coralib import *
-from coraxml_utils.settings import *
+# from coraxml_utils.settings import *
 
 try:
     from lxml import etree as ET
@@ -14,7 +14,7 @@ def create_exporter(format="coraxml", dialect="ref"):
         return CoraXMLExporter(dialect)
     elif format == "trans":
         return TransExporter()
-    elif format == "gatejson":
+    elif format == "json":
         return GateJsonExporter()
     else:
         logging.error("No valid exporter selected")
@@ -40,13 +40,28 @@ class CoraXMLExporter:
             dipl_xml = ET.SubElement(tok_xml, self.dipl_tag,
                                      {"id": dipl.id, 
                                       "trans": str(dipl.trans)})
-            dipl_xml.set("utf", str(dipl.trans.to_string(character="utf")))
+            dipl_xml.set("utf", str(dipl.trans.to_string(character="utf",
+                                                         illegible="character",
+                                                         strikethru="leave",
+                                                         doubledash=True,
+                                                         preedpunc=False,
+                                                         preedtoken=False)))
         for mod in tok.tok_annos:
             mod_xml = ET.SubElement(tok_xml, self.mod_tag,
                                        {"id": mod.id,
                                         "trans": str(mod.trans)})
-            mod_xml.set("utf", str(mod.trans.to_string(character="utf")))
-            mod_xml.set("simple", str(mod.trans.to_string(character="simple")))
+            mod_xml.set("utf", str(mod.trans.to_string(character="utf",
+                                                       illegible="character",
+                                                       strikethru="delete",
+                                                       doubledash=False,
+                                                       preedpunc=True,
+                                                       preedtoken=False)))
+            mod_xml.set("simple", str(mod.trans.to_string(character="simple",
+                                                          illegible="leave",
+                                                          strikethru="delete",
+                                                          doubledash=False,
+                                                          preedpunc=True,
+                                                          preedtoken=False)))
 
             if mod.checked:
                 mod_xml.set("checked", "y")
@@ -81,17 +96,17 @@ class CoraXMLExporter:
                 col_xml = ET.Element("column", {"id": col.id,
                                                 "range": col.range()})
                 if col.name:
-                    col_xml.set("name", self.name)
+                    col_xml.set("name", col.name)
                 layoutinfo.append(col_xml)
 
                 for line in col.lines:
                     # empty lines could come about after double dashes at
                     # line end have been resolved
                     if line:
-                        line_xml = ET.Element("line", {"id": self.id,
-                                                       "name": self.linename,
+                        line_xml = ET.Element("line", {"id": line.id,
+                                                       "name": line.name,
                                                        # "loc": self.loc(),
-                                                       "range": self.range()})
+                                                       "range": line.range()})
                     layoutinfo.append(line_xml)
 
         shifttags = ET.SubElement(root, "shifttags")
@@ -102,15 +117,15 @@ class CoraXMLExporter:
             if isinstance(token_or_comment, CoraToken):
                 root.append(self._create_xml_token(token_or_comment))
 
-            elif isinstance(token_or_comment, Comment):
+            elif isinstance(token_or_comment, CoraComment):
                 comment = token_or_comment
                 comm_xml = ET.Element("comment", {"type": comment.type})
-                comm_xml.text = comment.content
+                comm_xml.text = " ".join(comment.content)
                 root.append(comm_xml)
             else:
                 raise ValueError("found something weird in this document's token list")
 
-        return root
+        return  ET.ElementTree(root)
 
 
 class TransExporter:
@@ -134,35 +149,18 @@ class GateJsonExporter:
 
     def export(self, doc):
 
-        json_object = {
+        ## TODO add pages, columns, shifttags, dipls and cora tokens, annotations for anno , metadata
+
+        tweet_object = {
             'text': '',
             'entities': {
-                'Layout:Page': [],
-                'Layout:Column': [],
+                # 'Layout:Page': [],
+                # 'Layout:Column': [],
                 'Layout:Line': [],
-                'Token:Cora': [],
-                'Token:Dipl': [],
                 'Token:Anno': [],
                 'Token:Comment': []
             }
         }
-
-        ## add metadata
-        json_object['sigle'] = doc.sigle
-        json_object['name'] = doc.name
-        json_object['header'] = doc.header
-
-        page_beginnings = {}
-        page_ends = {}
-        for page in doc.pages:
-            page_beginnings[page.columns[0].lines[0].dipls[0]._id] = page
-            page_ends[page.columns[-1].lines[-1].dipls[-1]._id] = page
-
-        column_beginnings = {}
-        column_ends = {}
-        for column in [column for page in doc.pages for column in page.columns]:
-            column_beginnings[column.lines[0].dipls[0]._id] = column
-            column_ends[column.lines[-1].dipls[-1]._id] = column
 
         line_beginnings = {}
         line_ends = {}
@@ -170,59 +168,24 @@ class GateJsonExporter:
             line_beginnings[line.dipls[0]._id] = line
             line_ends[line.dipls[-1]._id] = line
 
-        shifttag_beginnings = {}
-        for shifttag in doc.shifttags:
-            if shifttag.tokens[0]._id not in shifttag_beginnings:
-                shifttag_beginnings[shifttag.tokens[0]._id] = []
-            shifttag_beginnings[shifttag.tokens[0]._id].append(shifttag)
-        open_shifttags = {}
-
         char_offset = 0
-        last_dipl_token_offset = None
         last_anno_token_offset = None
-        last_page_offset = None
-        last_column_offset = None
         last_line_offset = None
 
         for token in doc.tokens:
             if isinstance(token, CoraToken):
-
-                tok_annos = list(token.tok_annos)
-                tok_annos.reverse()
-
-                tok_dipls = list(token.tok_dipls)
-                tok_dipls.reverse()
-
-                ## CoraToken will start with a dipl token - so add 1 to curr char offset
-                ## (unless we are at the beginning of the text)
-                last_cora_token_offset = char_offset + 1 if char_offset > 0 else char_offset
-                if token._id in shifttag_beginnings:
-                    for shifttag in shifttag_beginnings[token._id]:
-                        if shifttag.tokens[-1]._id not in open_shifttags:
-                            open_shifttags[shifttag.tokens[-1]._id] = []
-                        open_shifttags[shifttag.tokens[-1]._id].append((char_offset + 1 if char_offset > 0 else char_offset, shifttag))
-
                 for token_char in token.get_aligned_dipls_and_annos():
                     if token_char['type'] == 'token_begin':
                         if 'dipl_id' in token_char:
                             ## add linebreak or whitespace
                             if token_char['dipl_id'] in line_beginnings:
                                 if last_line_offset is not None: ## ignore first linebreak
-                                    json_object['text'] += '\n'
+                                    tweet_object['text'] += '\n'
                                     char_offset += 1
                                 last_line_offset = char_offset
                             else:
-                                json_object['text'] += ' '
+                                tweet_object['text'] += ' '
                                 char_offset += 1
-
-                            if token_char['dipl_id'] in page_beginnings:
-                                last_page_offset = char_offset
-
-                            if token_char['dipl_id'] in column_beginnings:
-                                last_column_offset = char_offset
-
-                            ## update last dipl offset
-                            last_dipl_token_offset = char_offset
 
                         if 'anno_id' in token_char:
                             last_anno_token_offset = char_offset
@@ -230,93 +193,24 @@ class GateJsonExporter:
                     elif token_char['type'] == 'token_end':
 
                         if 'dipl_id' in token_char:
-                            ## add page annotation
-                            if token_char['dipl_id'] in page_ends:
-                                json_object['entities']['Layout:Page'].append(
-                                    {
-                                        'indices': [last_page_offset, char_offset],
-                                        'id': page_ends[token_char['dipl_id']].id,
-                                        'name': page_ends[token_char['dipl_id']].name,
-                                        'side': page_ends[token_char['dipl_id']].side
-                                    }
-                                )
-                            ## add column annotation
-                            if token_char['dipl_id'] in column_ends:
-                                json_object['entities']['Layout:Column'].append(
-                                    {
-                                        'indices': [last_column_offset, char_offset],
-                                        'id': column_ends[token_char['dipl_id']].id,
-                                        'name': column_ends[token_char['dipl_id']].name
-                                    }
-                                )
-                            ## add line annotation
                             if token_char['dipl_id'] in line_ends:
-                                json_object['entities']['Layout:Line'].append(
+                                tweet_object['entities']['Layout:Line'].append(
                                     {
                                         'indices': [last_line_offset, char_offset],
-                                        'id': line_ends[token_char['dipl_id']].id,
                                         'name': line_ends[token_char['dipl_id']].name
                                     }
                                 )
-                            ## add dipl token annotation
-                            tok_dipl = {
-                                    'indices': [last_dipl_token_offset, char_offset],
-                            }
-                            tok_dipl_object = tok_dipls.pop()
-
-                            tok_dipl['trans'] = "".join([char['trans'] for char in tok_dipl_object.trans.parse])
-                            tok_dipl['utf'] = "".join([char['utf'] for char in tok_dipl_object.trans.parse])
-
-                            tok_dipl['id'] = tok_dipl_object.id
-
-                            json_object['entities']['Token:Dipl'].append(tok_dipl)
-
                         if 'anno_id' in token_char:
                             tok_anno = {
                                     'indices': [last_anno_token_offset, char_offset],
                             }
-                            tok_anno_object = tok_annos.pop()
-
-                            tok_anno['trans'] = "".join([char['trans'] for char in tok_anno_object.trans.parse])
-                            tok_anno['utf'] = "".join([char['utf'] for char in tok_anno_object.trans.parse])
-                            tok_anno['simple'] = "".join([char['simple'] for char in tok_anno_object.trans.parse])
-
-                            tok_anno['id'] = tok_anno_object.id
-                            tok_anno['checked'] = tok_anno_object.checked
-
-                            for anno_name, anno_value in tok_anno_object.tags.items():
-                                tok_anno[anno_name] = anno_value
-
-                            tok_anno['flags'] = list(tok_anno_object.flags)
-
-                            json_object['entities']['Token:Anno'].append(tok_anno)
+                            ## TODO add annotation
+                            tweet_object['entities']['Token:Anno'].append(tok_anno)
                     else:
-                        json_object['text'] += token_char['utf']
+                        tweet_object['text'] += token_char['utf']
                         char_offset += len(token_char['utf'])
-
-                ## add CoraToken annotation
-                json_object['entities']['Token:Cora'].append(
-                    {
-                        'indices': [last_cora_token_offset, char_offset],
-                        'id': token.id,
-                        'trans': "".join([char['trans'] for char in token.trans.parse])
-                    }
-                )
-
-                ## add shifttags
-                if token._id in open_shifttags:
-                    for start_offset, shifttag in open_shifttags[token._id]:
-                        if 'Shifttags:' + shifttag.tag() not in json_object['entities']:
-                            json_object['entities']['Shifttags:' + shifttag.tag()] = []
-                        json_object['entities']['Shifttags:' + shifttag.tag()].append(
-                            {
-                                'indices': [start_offset, char_offset],
-                                'type': shifttag.type
-                            }
-                        )
-
             elif isinstance(token, CoraComment):
-                json_object['entities']['Token:Comment'].append(
+                tweet_object['entities']['Token:Comment'].append(
                     {
                         'indices': [char_offset, char_offset],
                         'type': token.type,
@@ -324,4 +218,4 @@ class GateJsonExporter:
                     }
                 )
 
-        return json_object
+        return tweet_object

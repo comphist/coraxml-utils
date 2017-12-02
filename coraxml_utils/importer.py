@@ -12,19 +12,14 @@ except ImportError:
 
 def create_importer(file_format, dialect=None):
 
-    if file_format == 'coraxml':
+    if file_format == 'CorA-XML':
+        cora_importer = CoraXMLImporter()
         if dialect is None:
-            return CoraXMLImporter(parsed_token.PlainToken)
+            pass
         elif dialect == 'rem':
-            cora_importer = CoraXMLImporter(parsed_token.RemToken)
             cora_importer.tok_dipl_tag = 'tok_dipl'
             cora_importer.tok_anno_tag = 'tok_anno'
-        elif dialect == 'ref':
-            return CoraXMLImporter(parsed_token.RefToken)
-        elif dialect == 'redi':
-            return CoraXMLImporter(parsed_token.RediToken)
-        elif dialect == 'anselm':
-            return CoraXMLImporter(parsed_token.AnselmToken)
+            cora_importer.tokenparser = parsed_token.RemToken
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
         return cora_importer
@@ -33,6 +28,8 @@ def create_importer(file_format, dialect=None):
             return TransImporter(parsed_token.RefToken)
         elif dialect == "redi":
             return TransImporter(parsed_token.RediToken)
+        elif dialect == "ref":
+            return TransImporter(parsed_token.RefToken)
         else:
             return TransImporter(parsed_token.PlainToken)
     else:
@@ -40,10 +37,10 @@ def create_importer(file_format, dialect=None):
 
 class CoraXMLImporter:
 
-    def __init__(self, token_parser):
+    def __init__(self):
         self.tok_dipl_tag = 'dipl'
         self.tok_anno_tag = 'mod'
-        self.tokenparser = token_parser
+        self.tokenparser = parsed_token.PlainToken
 
 
     def _create_dipl_token(self, dipl_element):
@@ -219,6 +216,9 @@ class TransImporter:
     def __init__(self, parser):
         self.ParsedToken = parser
 
+    # TODO: transcription importer should also check bibinfo, shifttags, etc. and
+    #   warn or report errors as appropriate (would replace parts of "convert_check"
+    #   script)
     def import_from_string(self, intext):
 
         name = str()  # ???
