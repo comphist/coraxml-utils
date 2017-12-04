@@ -54,3 +54,19 @@ aufgefasst werden)
 	* I015: `<mod id="a42" trans="rote\-b\:g" utf="rotēb̈g" simple="rotenbg"/>`
 * Validierung
 	* Präeditionszeichen sind alleinstehend als Token nicht erlaubt
+
+
+Zum neuen Parser/Token-Modell:
+
+* Parser
+	- `__init__(str)` mit kwargs zum Einstellen einzelner Optionen
+	- `parse(str) -> ParsedToken` (mit Unterklassen wie gehabt)
+
+* ParsedToken
+	- input string: all annotations as spans of this string
+	- tokenizations also as spans (dipl/anno tokenizations)
+	- utf string
+	- simple string
+	- (dipl_utf construction via application of dipl token spans to utf string)
+	- other subtoken annotations (strikethrough, illegible, majuscules) also as spans
+	- actual python references: `majs.append(input_string[0:2])`

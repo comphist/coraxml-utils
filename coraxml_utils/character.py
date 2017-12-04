@@ -1,6 +1,5 @@
 
 import re
-from collections import OrderedDict
 
 # replacements needs to be an array, since they must be done in the
 # correct order.
@@ -245,30 +244,3 @@ replacements = [
 
  
 ]
-
-
-replacedict = OrderedDict()
-for i, (key, utf, simp) in enumerate(replacements):
-    if not (re.match(r"", utf) or len(utf) % 4 != 0):
-        raise Exception("UTF target isn't a valid codepoint: " + utf)
-    replacedict[key] = {"utf": utf, "simple": simp}
-
-
-def convert(string, target):
-    for key, vals in replacedict.items():
-        string = re.sub(key, vals[target], string)
-    return string
-
-def convert_utf(string):
-    return convert(string, "utf")
-
-def convert_simple(string):
-    return convert(string, "simple")
-
-if __name__ == "__main__":
-    import sys
-    myarg = sys.argv.pop()
-    print(myarg)
-    print("Simplification:", convert(myarg, "simple"))
-    print("UTF:", convert(myarg, "utf"))
-
