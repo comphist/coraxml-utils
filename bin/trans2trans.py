@@ -161,8 +161,6 @@ if __name__ == '__main__':
     ap.add_argument("inputfile", type=str, nargs='?')
 
     # these args need to be sent to exporter
-    ap.add_argument('-t', '--tokenize', choices=['none', 'historical', 'medium', 'all'],
-                    default='medium', help="Tokenization")
     ap.add_argument('-p', '--preedpunc', choices=['leave', 'delete'], 
                     default='leave', help="Pre-edition punctuation")
     ap.add_argument('-r', '--preedtoken', choices=['leave', 'delete'], 
@@ -179,6 +177,8 @@ if __name__ == '__main__':
                     default='leave', help='What to do with struck words')
 
     # exporter
+    ap.add_argument('-t', '--tokenize', choices=['none', 'historical', 'medium', 'all'],
+                    default='medium', help="Tokenization")
     ap.add_argument("-T", "--taggermode", action="store_true",
                     help="Output one token per line, all tokenization, no bibinfo")
     ap.add_argument('-b', '--bibinfo', choices=['line', 'both', 'none'],
@@ -194,14 +194,10 @@ if __name__ == '__main__':
                     help="File comes without line info (sigle, line number, ...)")
     ap.add_argument('-S', '--nosyllab', action="store_true",
                     help="Don't resolve syllabification (double dash at line end)")
-
-    # importer??
     ap.add_argument("-A", "--allowed", type=str, default="",
                     help="Additional allowed characters for validity check.")
     ap.add_argument("-R", "--preprocess", type=str,
                     help="File with regexes for preprocessing text.")
-
-    # importer
     ap.add_argument("-P", "--parser", choices=["rem", "anselm", "ref", "redi", "plain"],
                     default="plain", help="Token parser to use, default: %(default)s")
     args = ap.parse_args()

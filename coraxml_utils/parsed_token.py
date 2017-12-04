@@ -52,9 +52,9 @@ class BaseToken:
                                 in_comment = True
                             else:
                                 in_comment = False
-                            self.parse.append({"char": val, "type": key})
+                            self.parse.append({"trans": val, "type": key})
                         elif in_comment:
-                            self.parse.append({"char": val, "type": "w"})
+                            self.parse.append({"trans": val, "type": "w"})
 
                         # handling span-based annotations
                         elif key == "strk":
