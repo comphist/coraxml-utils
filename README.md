@@ -1,5 +1,50 @@
 # README #
 
+## coraxml_utils
+
+coraxml_utils is a collection of tools to work with CorA-XML and different variants.
+It consists of:
+
+- a model for CorA-XML
+- Importer to read different file formats and 
+- Exporter to dump the content of a data model to certain formats 
+
+These tools are used by a collection of scripts that are described in the next section.
+
+### Scripts
+
+- trans2coraxml.py
+- coraxml2gatejson.py
+
+### Importer
+
+#### Transcriptions
+
+This allows to read in a transcription following certain conventions and create a
+CorA-XML for it.
+
+Currently there are parsers for the following conventions:
+
+- ReM
+- ReF
+- ReDi
+- Anselm
+
+#### CorA-XML
+
+##### REM
+##### Extended CorA-XML
+
+TODO:
+extends CorA-XML, adding span annotations and subtoken annotations
+
+
+### Exporter
+
+#### GATE JSON
+
+This is the variant of Tweet JSON used by GATE.
+
 
 ### TODO
 
