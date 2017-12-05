@@ -1,14 +1,4 @@
 
-import re
-import abc
-
-from coraxml_utils.character import convert, replacements
-
-MEDIUS = "\u00b7"
-ELEVATUS = "\uf161"
-PARAGRAPHUS = "\uf1e1"
-BULLET = "\u2219"  # used strangely often in REM
-ALPHA = "abcdefghijklmnopqrstuvwxyz"
 
 BR = {'[': ']', ']': '[', 
       '(': ')', ')': '(',
@@ -16,113 +6,13 @@ BR = {'[': ']', ']': '[',
       '<': '>', '>': '<'}
 
 
-__version__ = "2017.12.01"
+__version__ = "2017.12.05"
 
 
-class ParseError(Exception):
-    def __init__(self, msg):
-        self.message = msg
-
-
-class BaseToken:
-    def __init__(self, intoken):
-        self.token_re = re.compile(r"( (?x) " + "|".join(self.re_parts) + ")")
-        self.errors = list()
-
-        if isinstance(intoken, str):
-            self.parse = list()
-            open_brackets = list()
-            open_br_types = list()
-            next_char_br = None
-            in_comment = False
-
-            for match in re.finditer(self.token_re, intoken):
-                for key, val in match.groupdict().items():
-                    if val:
-                        new_char = None
-
-                        # disallow brackets that span multiple tokens
-                        if key == "spc":
-                            if open_brackets:
-                                raise ParseError("Unclosed bracket at end of token: " + intoken)
-
-                        # ensures that nothing in a comment gets processed
-                        if key == "comm":
-                            if val.startswith("+"):
-                                in_comment = True
-                            else:
-                                in_comment = False
-                            self.parse.append({"trans": val, "type": key})
-                        elif in_comment:
-                            self.parse.append({"trans": val, "type": "w"})
-
-                        # handling span-based annotations
-                        elif key == "strk":
-                            if val == "*[":
-                                open_brackets.append(val)
-                                open_br_types.append("strk")
-                                next_char_br = val
-                            else:
-                                open_brackets.pop()
-                                open_br_types.pop()
-                                self.parse[-1]["after"] = val
-
-                        elif key == "br":
-                            if re.search(r"[\[<]", val):
-                                open_brackets.append(val)
-                                open_br_types.append("ill")
-                                next_char_br = val
-                            else:
-                                open_br = open_brackets.pop()
-                                if open_br != self.flip_bracket(val):
-                                    print("non-matching brackets!", intoken)
-                                open_br_types.pop()
-                                self.parse[-1]["after"] = val
-                                if open_brackets or open_br_types:
-                                    print("verschachtelte klammern:", intoken)
-
-                        elif key.startswith('uni'):
-                            new_char_index = int(key[3:])
-                            # special case for punc w/ utf conversions
-                            if "." in val or "·" in val:
-                                mytype = "p"
-                            else:
-                                mytype = "w"
-                            new_char = {"trans": val, "type": mytype, 
-                                        "simple": replacements[new_char_index][2],
-                                        "utf": replacements[new_char_index][1]}
-
-                        elif key == "maj":
-                            maj_letter = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
-                                                r"\1", val)
-                            new_char = {"trans": val, "type": key,
-                                        "simple": maj_letter,
-                                        "utf": maj_letter}
-                        else:
-                            new_char = {"trans": val, "type": key, 
-                                        "simple": val, "utf": val}
-
-                        if new_char:
-                            if open_brackets:
-                                new_char["br"] = open_brackets[-1]
-                                new_char["brtype"] = open_br_types[-1]
-
-                            if next_char_br:
-                                new_char["before"] = next_char_br
-                                next_char_br = None
-
-                            self.parse.append(new_char)
-
-            if open_brackets:
-                raise ParseError("Unclosed bracket at end of token: " + intoken)
-
-            self.validate()
-
-        elif isinstance(intoken, list):
-            self.parse = intoken
-            self.errors = list()
-        else:
-            self.parse = None
+class ParsedToken:
+    def __init__(self, intoken, illegible_replacement="[...]"):
+        self.parse = intoken
+        self.illegible_replacement = illegible_replacement
 
 
     def __len__(self):
@@ -228,17 +118,17 @@ class BaseToken:
                     after = c.get("after", "")
                 # if last char is bracket end
                 elif c.get("br") in br_actions["delete"] and i == last_index:
-                    before = self.ILLEGIBLE_REPLACEMENT
+                    before = self.illegible_replacement
                     skip_char = True
                 elif c.get("br") in br_actions["delete"]:
                     # wait for bracket end, then add replacement (see below)
                     skip_char = True
                 else:
                     if last_char.get("br") in br_actions["delete"]:
-                        before = self.ILLEGIBLE_REPLACEMENT
+                        before = self.illegible_replacement
             else:
                 if last_char.get("br") in br_actions["delete"]:
-                    before = self.ILLEGIBLE_REPLACEMENT
+                    before = self.illegible_replacement
 
             # pre-edition char handling
             if not preedpunc:
@@ -259,30 +149,6 @@ class BaseToken:
             last_char = c
 
         return "".join(outstr)
-
-
-    def validate(self):
-        # remove all valid characters, now everything that remains
-        # is an error. also remove \&1-9 "variables zeichen"
-        # which gets simplified to {1-9}
-        # and %[A-Z] which is code for a superscript capital
-        # note that superscript capitals are unchanged because unicode does
-        # not support superscripting of arbitrary characters
-        test_string = self.to_string(character="simple", 
-                                     preedpunc=False, 
-                                     preedtoken=False,
-                                     editnum=False)
-        if isinstance(self, RediToken):
-            test_string = re.sub(r"{[1-9][0-9]?}", "", test_string)
-        else:
-            test_string = re.sub(r"{[1-9]}", "", test_string)
-        test_string = re.sub(r"%[A-Z]", "", test_string)
-        test_string = re.sub(self.ESCAPE_CHAR, "", test_string)
-        invalid_chars = set(test_string) - self.allowed
-
-        if invalid_chars:
-            raise ParseError("Transcription contains invalid characters: " + 
-                             str(sorted(invalid_chars)))
 
 
     def keep(self, *types):
