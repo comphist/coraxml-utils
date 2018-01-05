@@ -93,6 +93,13 @@ class BaseParser:
                                         "simple": replacements[new_char_index][2],
                                         "utf": replacements[new_char_index][1]}
 
+                        elif key.startswith('inu'):
+                            new_char_index = int(key[3:])
+                            new_char = {"trans": val, # for the lack of a better alternative
+                                        "type": "w",
+                                        "simple": replacements[new_char_index][2],
+                                        "utf": val}
+
                         elif key == "maj":
                             maj_letter = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
                                                 r"\1", val)
@@ -117,7 +124,10 @@ class BaseParser:
             if open_brackets:
                 raise ParseError("Unclosed bracket at end of token: " + intoken)
 
-            result = ParsedToken(myparse, illegible_replacement=self.ILLEGIBLE_REPLACEMENT)
+            result = ParsedToken(myparse, illegible_replacement=self.ILLEGIBLE_REPLACEMENT,
+                                 missing_br_open=self.missing_br_open,
+                                 dipl_utf_opts=self.dipl_utf_opts, anno_utf_opts=self.anno_utf_opts,
+                                 anno_simple_opts=self.anno_simple_opts)
             self.validate(result)  # throws ParseError
             return result
 
@@ -212,7 +222,9 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         comm_re = r'(?P<comm> [+@][KEZ] )'
         word_re = r'(?P<w> \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
-                            for i, (x, _, _) in enumerate(replacements)) 
+                            for i, (x, _, _) in enumerate(replacements) if x) 
+        inu_re = "|".join("(?P<inu{0}>".format(i) + x + ")"
+                            for i, (_, x, _) in enumerate(replacements) if x)
 
         init_punc_re = r'(?P<ip> // | \*[Cf] )' 
         punc_re = r'(?P<p> %\. | / | ' + punc +')'
@@ -236,7 +248,8 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         self.re_parts = [spc_re, abbr_re, comm_re, majuscule_re,
                          editnum_re, splitter_re, ddash_re, quotes_re,
                          strk_re, preedit_re, init_punc_re, 
-                         ptk_marker_re, brackets_re, uni_re, punc_re, word_re]
+                         ptk_marker_re, brackets_re, uni_re, punc_re, inu_re,
+                         word_re]
 
         # LIST OF ALLOWED CHARACTERS FOR validity check
         self.allowed = set(ALPHA)
@@ -246,6 +259,29 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         self.allowed.update("'")
 
         self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
+
+
+        self.dipl_utf_opts = {"character": "utf",
+                            "illegible": "character",
+                            "strikethru": "leave",
+                            "doubledash": True,
+                            "preedpunc": False,
+                            "preedtoken": False}
+
+        self.anno_utf_opts = {"character": "utf",
+                               "illegible": "character",
+                               "strikethru": "delete",
+                               "doubledash": False,
+                               "preedpunc": True,
+                               "preedtoken": False}
+
+        self.anno_simple_opts = {"character": "simple",
+                                  "illegible": "leave",
+                                  "strikethru": "delete",
+                                  "doubledash": False,
+                                  "preedpunc": True,
+                                  "preedtoken": False}
+
 
         self.init_parser()
 

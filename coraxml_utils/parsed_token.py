@@ -10,9 +10,16 @@ __version__ = "2017.12.05"
 
 
 class ParsedToken:
-    def __init__(self, intoken, illegible_replacement="[...]"):
+    def __init__(self, intoken, illegible_replacement="[...]", missing_br_open="[",
+                 dipl_utf_opts=None, anno_utf_opts=None, anno_simple_opts=None):
         self.parse = intoken
         self.illegible_replacement = illegible_replacement
+        self.missing_br_open = missing_br_open
+
+        self.options = dict()
+        self.options["dipl_utf"] = dipl_utf_opts if dipl_utf_opts else dict()
+        self.options["anno_utf"] = anno_utf_opts if anno_utf_opts else dict()
+        self.options["anno_simple"] = anno_simple_opts if anno_simple_opts else dict()
 
 
     def __len__(self):
@@ -234,6 +241,8 @@ class ParsedToken:
                     if new_parse:
                         # close bracket before space
                         new_parse[-1]["after"] = self.flip_bracket(my_bracket)
+                        
+                        print("kommt vor!", str(self))
 
                     # reopen after space
                     this_char_copy["before"] = my_bracket
@@ -252,11 +261,21 @@ class ParsedToken:
         for c in new_parse:
             if c["type"] == "spc":
                 if stack:
-                    new_tokens.append(self.__class__(stack))
+                    new_tokens.append(self.__class__(stack,
+                                                     illegible_replacement=self.illegible_replacement,
+                                                     missing_br_open=self.missing_br_open,
+                                                     dipl_utf_opts=self.options["dipl_utf"], 
+                                                     anno_utf_opts=self.options["anno_utf"],
+                                                     anno_simple_opts=self.options["anno_simple"]))
                     stack = list()
             else:
                 stack.append(c)
-        new_tokens.append(self.__class__(stack))
+        new_tokens.append(self.__class__(stack,
+                                         illegible_replacement=self.illegible_replacement,
+                                         missing_br_open=self.missing_br_open,
+                                         dipl_utf_opts=self.options["dipl_utf"], 
+                                         anno_utf_opts=self.options["anno_utf"],
+                                         anno_simple_opts=self.options["anno_simple"]))        
         return new_tokens
 
 
@@ -268,3 +287,13 @@ class ParsedToken:
         return self.tokenize(tokenize_type="all", split_init_punc=False)
 
 
+    def dipl_utf(self):
+        return self.to_string(**self.options["dipl_utf"])
+
+
+    def anno_utf(self):
+        return self.to_string(**self.options["anno_utf"])
+
+
+    def anno_simple(self):
+        return self.to_string(**self.options["anno_simple"])

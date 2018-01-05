@@ -1,9 +1,11 @@
+
+import sys
 import logging
 logging.basicConfig(format='%(levelname)s: %(message)s')
 from collections import defaultdict
 
 from coraxml_utils.coralib import *
-import coraxml_utils.parsed_token as parsed_token
+import coraxml_utils.parser as parser
 
 try:
     from lxml import etree as ET
@@ -11,12 +13,12 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 
-dialect_mapper = {None: parsed_token.PlainToken,
-                  "plain": parsed_token.PlainToken,
-                  "rem": parsed_token.RemToken,
-                  "ref": parsed_token.RefToken,
-                  "redi": parsed_token.RediToken,
-                  "anselm": parsed_token.AnselmToken}
+dialect_mapper = {None: parser.PlainParser,
+                  "plain": parser.PlainParser,
+                  "rem": parser.RemParser,
+                  "ref": parser.RefParser,
+                  "redi": parser.RediParser,
+                  "anselm": parser.AnselmParser}
 
 
 def create_importer(file_format, dialect=None, **kwargs):
@@ -229,7 +231,7 @@ class CoraXMLImporter:
 class TransImporter:
 
     def __init__(self, parser, options):
-        self.ParsedToken = parser
+        self.TokenParser = parser()
 
     # TODO: transcription importer should also check bibinfo, shifttags, etc. and
     #   warn or report errors as appropriate (would replace parts of "convert_check"
@@ -338,11 +340,11 @@ class TransImporter:
                         comment_stack.append(tok)
                     else:
                         try:
-                            new_token = self.ParsedToken(tok)
-                        except parsed_token.ParseError as e:
+                            new_token = self.TokenParser.parse(tok)
+                        except parser.ParseError as e:
                             logging.error("Line could not be parsed: %s", line)
                             print(e.message)
-                            exit(1)
+                            sys.exit(1)
 
                         my_tok_dipls = list()
                         my_tok_annos = list()

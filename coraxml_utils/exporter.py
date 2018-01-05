@@ -39,28 +39,13 @@ class CoraXMLExporter:
             dipl_xml = ET.SubElement(tok_xml, self.dipl_tag,
                                      {"id": dipl.id, 
                                       "trans": str(dipl.trans)})
-            dipl_xml.set("utf", dipl.trans.to_string(character="utf",
-                                                     illegible="character",
-                                                     strikethru="leave",
-                                                     doubledash=True,
-                                                     preedpunc=False,
-                                                     preedtoken=False))
+            dipl_xml.set("utf", dipl.trans.dipl_utf())
         for mod in tok.tok_annos:
             mod_xml = ET.SubElement(tok_xml, self.mod_tag,
                                        {"id": mod.id,
                                         "trans": str(mod.trans)})
-            mod_xml.set("utf", mod.trans.to_string(character="utf",
-                                                   illegible="character",
-                                                   strikethru="delete",
-                                                   doubledash=False,
-                                                   preedpunc=True,
-                                                   preedtoken=False))
-            mod_xml.set("simple", mod.trans.to_string(character="simple",
-                                                      illegible="leave",
-                                                      strikethru="delete",
-                                                      doubledash=False,
-                                                      preedpunc=True,
-                                                      preedtoken=False))
+            mod_xml.set("utf", mod.trans.anno_utf())
+            mod_xml.set("simple", mod.trans.anno_simple())
 
             if mod.checked:
                 mod_xml.set("checked", "y")
@@ -316,7 +301,7 @@ class GateJsonExporter:
                             }
                             tok_anno_object = tok_annos.pop()
 
-                            tok_anno['trans'] = "".join([char['trans'] for char in tok_anno_object.trans.parse])
+                            tok_anno['trans'] = str(tok_anno_object.trans)
                             tok_anno['utf'] = "".join([char['utf'] for char in tok_anno_object.trans.parse])
                             tok_anno['simple'] = "".join([char['simple'] for char in tok_anno_object.trans.parse])
 
@@ -338,7 +323,7 @@ class GateJsonExporter:
                     {
                         'indices': [last_cora_token_offset, char_offset],
                         'id': token.id,
-                        'trans': "".join([char['trans'] for char in token.trans.parse])
+                        'trans': str(token.trans)
                     }
                 )
 
