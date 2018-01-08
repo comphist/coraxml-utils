@@ -141,5 +141,5 @@ if __name__ == "__main__":
         print("processing", mypath.stem, "...")
         output = importText(mypath)
         outpath = outputdir / Path(mypath.stem + ".txt")
-        with open(outpath, "w", encoding="utf-8") as outfile:
+        with open(str(outpath), "w", encoding="utf-8") as outfile:
             print(output, file=outfile)
