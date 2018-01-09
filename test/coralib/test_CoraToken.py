@@ -1,7 +1,7 @@
 import unittest
 
 from coraxml_utils.coralib import *
-from coraxml_utils.parsed_token import *
+from coraxml_utils.parser import *
 
 class CoraTokenTest(unittest.TestCase):
 
@@ -21,13 +21,13 @@ class CoraTokenTest(unittest.TestCase):
             {'trans': 'e', 'simple': 'e', 'utf': 'e', 'type': 'w'},
             {'type': 'token_end', 'dipl_id': 'd2', 'anno_id': 'a1'},
         ]
-        dipl_list = [TokDipl(PlainToken('test')), TokDipl(PlainToken('case'))]
+        dipl_list = [TokDipl(PlainParser().parse('test')), TokDipl(PlainParser().parse('case'))]
         dipl_list[0]._id = 'd1'
         dipl_list[1]._id = 'd2'
-        anno_list = [TokAnno(PlainToken('testcase'))]
+        anno_list = [TokAnno(PlainParser().parse('testcase'))]
         anno_list[0]._id = 'a1'
         alignment = CoraToken(
-            PlainToken('testcase'),
+            PlainParser().parse('testcase'),
             dipl_list,
             anno_list
         ).get_aligned_dipls_and_annos()
@@ -53,13 +53,13 @@ class CoraTokenTest(unittest.TestCase):
             {'trans': 'e', 'simple': 'e', 'utf': 'e', 'type': 'w'},
             {'type': 'token_end', 'dipl_id': 'd1', 'anno_id': 'a2'},
         ]
-        dipl_list = [TokDipl(PlainToken('testcase'))]
+        dipl_list = [TokDipl(PlainParser().parse('testcase'))]
         dipl_list[0]._id = 'd1'
-        anno_list = [TokAnno(PlainToken('test')), TokAnno(PlainToken('case'))]
+        anno_list = [TokAnno(PlainParser().parse('test')), TokAnno(PlainParser().parse('case'))]
         anno_list[0]._id = 'a1'
         anno_list[1]._id = 'a2'
         alignment = CoraToken(
-            PlainToken('testcase'),
+            PlainParser().parse('testcase'),
             dipl_list,
             anno_list
         ).get_aligned_dipls_and_annos()
@@ -85,12 +85,12 @@ class CoraTokenTest(unittest.TestCase):
             {'trans': 'e', 'simple': 'e', 'utf': 'e', 'type': 'w'},
             {'type': 'token_end', 'dipl_id': 'd2'},
         ]
-        dipl_list = [TokDipl(PlainToken('test')), TokDipl(PlainToken('case'))]
+        dipl_list = [TokDipl(PlainParser().parse('test')), TokDipl(PlainParser().parse('case'))]
         dipl_list[0]._id = 'd1'
         dipl_list[1]._id = 'd2'
         anno_list = []
         alignment = CoraToken(
-            PlainToken('testcase'),
+            PlainParser().parse('testcase'),
             dipl_list,
             anno_list
         ).get_aligned_dipls_and_annos()
@@ -105,16 +105,16 @@ class CoraTokenTest(unittest.TestCase):
         ## dipl contains character not in annos
         with self.assertRaises(ValueError):
             CoraToken(
-                PlainToken('testcase'),
-                [TokDipl(PlainToken('testecase'))],
-                [TokAnno(PlainToken('test')), TokAnno(PlainToken('case'))]
+                PlainParser().parse('testcase'),
+                [TokDipl(PlainParser().parse('testecase'))],
+                [TokAnno(PlainParser().parse('test')), TokAnno(PlainParser().parse('case'))]
             ).get_aligned_dipls_and_annos()
 
 
         ## annos is shorter than dipls
         with self.assertRaises(ValueError):
             CoraToken(
-                PlainToken('testcase'),
-                [TokDipl(PlainToken('testcase'))],
-                [TokAnno(PlainToken('test'))]
+                PlainParser().parse('testcase'),
+                [TokDipl(PlainParser().parse('testcase'))],
+                [TokAnno(PlainParser().parse('test'))]
             ).get_aligned_dipls_and_annos()

@@ -1,7 +1,7 @@
 import unittest
 
 from coraxml_utils.coralib import *
-from coraxml_utils.parsed_token import PlainToken
+from coraxml_utils.parser import PlainParser
 from coraxml_utils.importer import create_importer
 from coraxml_utils.exporter import create_exporter
 
@@ -14,7 +14,7 @@ class CoraXMLImporterTest(unittest.TestCase):
 
     def test_dipl_from_xml(self):
 
-        expected_dipl = TokDipl(PlainToken('test'), extid='t1_d1')
+        expected_dipl = TokDipl(PlainParser().parse('test'), extid='t1_d1')
         dipl_element = ET.fromstring('<dipl id="t1_d1" trans="test" />')
 
         self.assertEquals(
@@ -25,7 +25,7 @@ class CoraXMLImporterTest(unittest.TestCase):
     def test_anno_from_xml(self):
 
         expected_anno = TokAnno(
-            PlainToken('priuilegien'),
+            PlainParser().parse('priuilegien'),
             tags={'lemma': 'privileg', 'pos': 'NA', 'morph': 'Fem.Dat.Pl', 'boundary': 'Satz'},
             flags=set(['lemma verified', 'boundary']),
             checked=True, extid='t1_m1'
@@ -48,9 +48,9 @@ class CoraXMLImporterTest(unittest.TestCase):
     def test_cora_token_from_xml(self):
 
         expected_token = CoraToken(
-            PlainToken('test|case'),
-            [TokDipl(PlainToken('test|case'), extid='t1_d1')],
-            [TokAnno(PlainToken('test|'), extid='t1_m1', checked=True), TokAnno(PlainToken('case'), extid='t1_m2')],
+            PlainParser().parse('test|case'),
+            [TokDipl(PlainParser().parse('test|case'), extid='t1_d1')],
+            [TokAnno(PlainParser().parse('test|'), extid='t1_m1', checked=True), TokAnno(PlainParser().parse('case'), extid='t1_m2')],
             extid='t1'
         )
         token_element = ET.fromstring('<token id="t1" trans="test|case"><dipl id="t1_d1" trans="test|case" /><mod id="t1_m1" trans="test|" checked="y" /><mod id="t1_m2" trans="case" /></token>')

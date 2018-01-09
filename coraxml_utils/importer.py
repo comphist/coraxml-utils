@@ -45,11 +45,11 @@ class CoraXMLImporter:
     def __init__(self, token_parser):
         self.tok_dipl_tag = 'dipl'
         self.tok_anno_tag = 'mod'
-        self.tokenparser = token_parser
+        self.tokenparser = token_parser()
 
 
     def _create_dipl_token(self, dipl_element):
-        return TokDipl(self.tokenparser(dipl_element.attrib['trans']), extid=dipl_element.attrib['id'])
+        return TokDipl(self.tokenparser.parse(dipl_element.attrib['trans']), extid=dipl_element.attrib['id'])
 
     def _create_anno_token(self, anno_element):
 
@@ -76,7 +76,7 @@ class CoraXMLImporter:
         checked = 'checked' in anno_element.attrib and anno_element.attrib['checked'] == 'y'
 
         return TokAnno(
-            self.tokenparser(anno_element.attrib['trans']),
+            self.tokenparser.parse(anno_element.attrib['trans']),
             tags=tags, flags=flags, checked=checked, extid=anno_element.attrib['id']
         )
 
@@ -90,7 +90,7 @@ class CoraXMLImporter:
         for anno_element in coratoken_element.findall(self.tok_anno_tag):
             anno_tokens.append(self._create_anno_token(anno_element))
 
-        parsed_token = self.tokenparser(coratoken_element.attrib['trans'])
+        parsed_token = self.tokenparser.parse(coratoken_element.attrib['trans'])
         return CoraToken(parsed_token, dipl_tokens, anno_tokens, extid=coratoken_element.attrib['id'])
 
     def _get_range(self, element):
