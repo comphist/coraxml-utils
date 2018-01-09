@@ -157,7 +157,7 @@ class BaseParser:
 
 
 class RemParser(BaseParser):
-    def __init__(self, intoken):
+    def __init__(self):
         self.ATOMIC_ILLEGIBLE = "<<...>>"
         self.ILLEGIBLE_REPLACEMENT = "[...]"
         self.missing_br_open = {'['}
@@ -190,7 +190,7 @@ class RemParser(BaseParser):
 
         self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
 
-        super().__init__(intoken)
+        super().__init__()
 
         # in REM, [[...]] is often used (apparently erroneously) to
         # denote missing letters or lines, so here I replace such 
@@ -328,8 +328,12 @@ class PlainParser(BaseParser):
 
         self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
 
+        self.dipl_utf_opts=None
+        self.anno_utf_opts=None
+        self.anno_simple_opts=None
+
         super().__init__()
 
-    def validate(self):
+    def validate(self, obj):
         pass
 
