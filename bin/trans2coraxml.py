@@ -72,7 +72,6 @@ def importTextFromDocx(infile):
         if match:
             site = "-" + match.groups()[0] + ","
             line = int(match.groups()[1])
-            sec.text = sec.text[match.end(0):]
                 
         # Format the line number (adds 0)
         if line != " ":
@@ -91,7 +90,10 @@ def importTextFromDocx(infile):
                     text_all[len(text_all)-1] += "@H"
                 else:   
                     text_all[len(text_all)-2] += "\n@H"
-                text_all.append(name + site + str(line) + "\t" +  sec.text)
+                if match:
+                    text_all.append(name + site + str(line) + "\t" +  sec.text[match.end(0):])
+                else:
+                    text_all.append(name + site + str(line) + "\t" +  sec.text)
             else:   
                 text_all.append(sec.text[:italic_end] + "\n@H" + sec.text[italic_end:])
             italic_end = -1
@@ -105,7 +107,10 @@ def importTextFromDocx(infile):
 
         # If the beginning of the question is in this paragraph, "+Q" is added.
         elif marked_begin != -1 and marked_end == -1:
-            text_all.append(name + site + str(line) + "\t" + sec.text[:marked_begin] + "+Q " + sec.text [marked_begin:])
+            if match:
+                text_all.append(name + site + str(line) + "\t" + sec.text[match.end(0):marked_begin] + "+Q " + sec.text [marked_begin:])
+            else:
+                text_all.append(name + site + str(line) + "\t" + sec.text[:marked_begin] + "+Q " + sec.text [marked_begin:])
             marked_begin = -1
         # If the ending of the question is in this paragraph, "@Q" is added.
         elif marked_end != -1 and marked_begin == -1:
@@ -113,18 +118,28 @@ def importTextFromDocx(infile):
             if marked_end == 0:
                 text_all[len(text_all)-1] += " @Q"
                 text_all.append(name + site + str(line) + "\t" + sec.text)
-            else: text_all.append(name + site + str(line) + "\t" + sec.text[:marked_end] + " @Q" + sec.text[marked_end:])
+            else:
+                if match:
+                    text_all.append(name + site + str(line) + "\t" + sec.text[match.end(0):marked_end] + " @Q" + sec.text [marked_end:])
+                else:
+                    text_all.append(name + site + str(line) + "\t" + sec.text[:marked_end] + " @Q" + sec.text [marked_end:])
             marked_end = -1
         # If beginning and ending are in one line, both "+Q" and "@Q"are added to the line.
-        elif marked_begin != -1 and marked_end  != -1:    text_all.append(name + site + str(line) + "\t" + sec.text[:marked_begin] + "+Q " + sec.text [:marked_end] + " @Q" + sec.text[marked_end:])
+        elif marked_begin != -1 and marked_end  != -1:
+            if match:
+                text_all.append(name + site + str(line) + "\t" + sec.text[match.end(0):marked_begin] + "+Q " + sec.text [:marked_end] + " @Q" + sec.text[marked_end:])
+            else:
+                text_all.append(name + site + str(line) + "\t" + sec.text[:marked_begin] + "+Q " + sec.text [:marked_end] + " @Q" + sec.text[marked_end:])
 
         # Else: Adding the text in the list
         else:
             # Excluding site information, if the line is included in the heading
-            if head == False: 
-                text_all.append(name + site + str(line) + "\t" + sec.text)
-            else: 
-                text_all.append(sec.text)
+            if head == False:
+                if match:
+                    text_all.append(name + site + str(line) + "\t" + sec.text[match.end(0):])
+                else:
+                    text_all.append(name + site + str(line) + "\t" + sec.text)
+            else: text_all.append(sec.text)
         # Increasing line number
         if line != " ": 
             line = int(line) + 1
