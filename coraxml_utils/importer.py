@@ -2,6 +2,8 @@
 import sys
 import logging
 logging.basicConfig(format='%(levelname)s: %(message)s')
+logger = logging.getLogger()
+
 from collections import defaultdict
 
 from coraxml_utils.coralib import *
