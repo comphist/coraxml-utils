@@ -59,12 +59,14 @@ class CoraXMLExporter:
         root = ET.Element("text")
         root.set("id", doc.sigle)
         header = ET.SubElement(root, "header")
-        if isinstance(doc.header, str):
-            header.text = doc.header
-        elif isinstance(doc.header, ET.Element):
+        ## TODO improve export of the header
+        if doc.header_string:
+            ET.fromstring(doc.header_string)
             header.append(doc.header)
         else:
-            logging.warning("Found something weird in document header")
+            header.text = ''
+            for key, value in doc.header:
+                header.text += key + ':' + value
 
         layoutinfo = ET.SubElement(root, "layoutinfo")
         for page in doc.pages:
@@ -123,7 +125,12 @@ class TransExporter:
         output = list()
 
         output.append("+H")
-        output.append(doc.header)
+        ## TODO improve export of the header
+        if doc.header_string:
+            output.append(doc.header_string)
+        else:
+            for key, value in doc.header:
+                output.append(key + ':' + value)
         output.append("@H")
 
         for p in doc.pages:

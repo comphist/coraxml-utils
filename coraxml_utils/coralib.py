@@ -4,10 +4,11 @@ from coraxml_utils.settings import *
 
 class Document:
 
-    def __init__(self, sigle, name, header, pages, tokens, shifttags=None):
+    def __init__(self, sigle, name, header, pages, tokens, shifttags=None, header_string=None):
         self.sigle = sigle
         self.name = name
         self.header = header
+        self.header_string = header_string
 
         self.pages = pages
         self.tokens = tokens

@@ -41,6 +41,19 @@ def create_importer(file_format, dialect=None, **kwargs):
     else:
         raise ValueError("File format " + file_format + " is not supported.")
 
+## TODO project specific functions!
+def parse_header(header_string):
+
+    header = dict()
+    for header_line in header_string.splitlines():
+        header_line = header_line.strip()
+        ## skip empty lines
+        if not header_line:
+            continue
+        key_value = header_line.split(':')
+        header[key_value[0]] = key_value[1]
+
+    return header
 
 class CoraXMLImporter:
 
@@ -220,14 +233,16 @@ class CoraXMLImporter:
 
         # get header
         header_element = root.find("header")
+        header_string = ET.tostring(header_element, encoding="unicode", method="xml")
         if not list(header_element):
-            # header is only text
-            header = ET.tostring(header_element, encoding="unicode", method="text")
+            header = parse_header(ET.tostring(header_element, encoding="unicode", method="text"))
         else:
-            # header is structured as xml - keep ET.Element
-            header = header_element
+            # header is structured as xml - transform to dict
+            header = dict()
+            for header_part in header_element:
+                header[header_part.tag] = header_part.text
 
-        return Document(cora_header.attrib['sigle'], cora_header.attrib['name'], header, pages, tokens, shifttags)
+        return Document(cora_header.attrib['sigle'], cora_header.attrib['name'], header, pages, tokens, shifttags, header_string)
 
 
 class TransImporter:
@@ -270,6 +285,7 @@ class TransImporter:
             logging.error("Header is empty!")
 
         headertext = "\n".join(header_lines)
+        header = parse_header(headertext)
         sigle = re.search(r"[^:\s]:\s+([\w\d]+)", headertext).group(1)
 
         this_line = None
@@ -387,4 +403,4 @@ class TransImporter:
             # at end of line 
             line_stack.append(Line(linename, this_line_dipls))
 
-        return Document(sigle, name, headertext, pages, tokens, shifttags)
+        return Document(sigle, name, header, pages, tokens, shifttags, headertext)
