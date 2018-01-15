@@ -29,7 +29,7 @@ def importTextFromDocx(infile):
     doc = docx.Document(str(infile))
     name = infile.stem
 
-    #variables to distinct the fonts and to save the indices of beginning and end
+    #variables to distinguish the fonts and to save the indices of beginning and end
     begin = False
     normal = False
     italic = False

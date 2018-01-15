@@ -3,7 +3,7 @@ import re
 import abc
 
 from coraxml_utils.character import replacements
-from coraxml_utils.parsed_token import ParsedToken
+from coraxml_utils.parsed_token import Trans
 
 MEDIUS = "\u00b7"
 ELEVATUS = "\uf161"
@@ -124,11 +124,8 @@ class BaseParser:
             if open_brackets:
                 raise ParseError("Unclosed bracket at end of token: " + intoken)
 
-            result = ParsedToken(myparse, illegible_replacement=self.ILLEGIBLE_REPLACEMENT,
-                                 missing_br_open=self.missing_br_open,
-                                 dipl_utf_opts=self.dipl_utf_opts, anno_utf_opts=self.anno_utf_opts,
-                                 anno_simple_opts=self.anno_simple_opts)
-            self.validate(result)  # throws ParseError
+            result = Trans(myparse, self.tokenize(myparse))
+            # self.validate(result)  # throws ParseError
             return result
 
 
@@ -290,6 +287,65 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def init_parser(self):
         pass
+
+
+    def tokenize(self, some_parse, split_init_punc=True):
+
+        padded_parse = ([{"trans": "", "type": "spc"}] + 
+                        some_parse + 
+                        [{"trans": "", "type": "spc"}])
+        dipl_tok_bounds = list()
+        anno_tok_bounds = list()
+
+        for i in range(1, len(padded_parse) - 1):
+            last_char, this_char, next_char = padded_parse[i-1:i+2]
+
+            my_bracket = this_char.get("br")
+
+            if last_char["type"] == "spl" and last_char["trans"].endswith('#'):
+                dipl_tok_bounds.append(i)
+
+            # word split "foo|bar"
+            if last_char["type"] == "spl" and last_char["trans"].endswith("|"):
+                anno_tok_bounds.append(i)
+
+            if split_init_punc:
+                # initial punctuation "//foo"
+                if last_char["type"] in {"ip", "q"}:
+                    anno_tok_bounds.append(i)
+
+            # other initial punctuation
+            if (last_char["type"] in {"spc", None} and
+                this_char["type"] == "p" and this_char["trans"] != "." and 
+                next_char["type"] == "w"):
+                anno_tok_bounds.append(i)
+
+            # final punctuation  "foo%." (NOT "f%.oo")
+            if (last_char["type"] not in {"br", "spc", "spl"} and
+                this_char["type"] in {"ip", "p", "pe", "q"} and this_char["trans"] != '.' and
+                next_char["type"] != "w" and next_char["trans"] not in {'(=)', '#'}):
+                anno_tok_bounds.append(i)
+
+            # rule for periods (which can be periods or unreadable chars)
+            if (last_char["type"] not in {"spc", "spl"} and
+                  this_char["trans"] == "." and 
+                  next_char["type"] != "w" and 
+                  next_char["trans"] not in {'(=)', '#'} and
+                   # tokenize when period not in missing char parens
+                  (my_bracket not in self.missing_br_open or
+                   # tokenize when period is alone in parens
+                   (this_char.get("before") and 
+                    this_char.get("after") and
+                    this_char.get("brtype") == "ill"))):
+                anno_tok_bounds.append(i)
+
+            # ptk marker after punctuation  "foo.*2"
+            if this_char["type"] == "ptk" and last_char["type"] in {"ip", "p", "pe", "q"}:
+                anno_tok_bounds.append(i)
+
+
+        return dipl_tok_bounds, anno_tok_bounds
+
 
 
 class RediParser(RexParser):

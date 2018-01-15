@@ -33,19 +33,19 @@ class CoraXMLExporter:
     def _create_xml_token(self, tok):
 
         tok_xml = ET.Element("token", {"id": tok.id,
-                                       "trans": str(tok.trans)})
+                                       "trans": tok.trans})
 
         for dipl in tok.tok_dipls:
             dipl_xml = ET.SubElement(tok_xml, self.dipl_tag,
                                      {"id": dipl.id, 
-                                      "trans": str(dipl.trans)})
-            dipl_xml.set("utf", dipl.trans.dipl_utf())
+                                      "trans": dipl.trans})
+            dipl_xml.set("utf", dipl.trans.utf())
         for mod in tok.tok_annos:
             mod_xml = ET.SubElement(tok_xml, self.mod_tag,
                                        {"id": mod.id,
-                                        "trans": str(mod.trans)})
-            mod_xml.set("utf", mod.trans.anno_utf())
-            mod_xml.set("simple", mod.trans.anno_simple())
+                                        "trans": mod.trans})
+            mod_xml.set("utf", mod.trans.utf())
+            mod_xml.set("simple", mod.trans.simple())
 
             if mod.checked:
                 mod_xml.set("checked", "y")
