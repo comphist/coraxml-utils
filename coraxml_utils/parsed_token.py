@@ -24,7 +24,10 @@ class BaseTrans:
 
 
     def __eq__(self, other):
-        return self.parse == other.parse
+        if hasattr(other, 'parse'):
+            return self.parse == other.parse
+        else:
+            return False
 
 
     def __repr__(self):
