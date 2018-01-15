@@ -404,11 +404,12 @@ class PlainParser(BaseParser):
         dipl_tok_bounds = list()
         anno_tok_bounds = list()
 
-        for i in range(0, len(some_parse)):
+        for i in range(0, len(some_parse) - 1):
 
             # tokenize on whitespace
             if some_parse[i]["type"] == "spc":
-                anno_tok_bounds.append(i + 1)
-                dipl_tok_bounds.append(i + 1)
+                ## why + 2?
+                anno_tok_bounds.append(i + 2)
+                dipl_tok_bounds.append(i + 2)
 
         return dipl_tok_bounds, anno_tok_bounds
