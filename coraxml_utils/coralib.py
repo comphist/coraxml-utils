@@ -4,10 +4,11 @@ from coraxml_utils.settings import *
 
 class Document:
 
-    def __init__(self, sigle, name, header, pages, tokens, shifttags=None):
+    def __init__(self, sigle, name, header, pages, tokens, shifttags=None, header_string=None):
         self.sigle = sigle
         self.name = name
         self.header = header
+        self.header_string = header_string
 
         self.pages = pages
         self.tokens = tokens
@@ -259,8 +260,14 @@ class TokDipl:
     def __eq__(self, other):
         return (self.id == other.id) and (self.trans == other.trans)
 
+class AnnotatableElement:
 
-class TokAnno:
+    def __init__(self, tags=None, flags=None):
+
+        self.tags = tags if tags else dict()
+        self.flags = flags if flags else set()
+
+class TokAnno(AnnotatableElement):
 
     ## TODO: move to coraxml_exporter, dialect="rem"
     # annos_order = ["norm", "token_type", "lemma", "lemma_gen", "lemma_idmwb",
@@ -273,9 +280,8 @@ class TokAnno:
         self._id = "a{0}".format(TokAnno.c)
         self.id = extid if extid else self._id
         self.trans = trans
-        self.tags = tags if tags else dict()
-        self.flags = flags if flags else set()
         self.checked = checked
+        super().__init__(tags=tags, flags=flags)
 
     def __str__(self):
         return str(self.trans)
@@ -291,6 +297,11 @@ class TokAnno:
     def merge(self, other):
         self.trans.parse += other.trans.parse
 
+class AnnoSpan(AnnotatableElement):
+
+    def __init__(self, annos, tags=None, flags=None):
+        self.annos = annos
+        super().__init__(tags=tags, flags=flags)
 
 class CoraComment:
 
