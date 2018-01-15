@@ -125,7 +125,7 @@ class BaseParser:
                 raise ParseError("Unclosed bracket at end of token: " + intoken)
 
             result = Trans(myparse, self.tokenize(myparse))
-            # self.validate(result)  # throws ParseError
+            self.validate(result)  # throws ParseError
             return result
 
 
@@ -136,16 +136,18 @@ class BaseParser:
         # and %[A-Z] which is code for a superscript capital
         # note that superscript capitals are unchanged because unicode does
         # not support superscripting of arbitrary characters
-        test_string = obj.to_string(character="simple", 
-                                     preedpunc=False, 
-                                     preedtoken=False,
-                                     editnum=False)
+        test_string = "".join(c["simple"] 
+                              for c in obj.parse
+                              if c.get("type") not in {"pe", "ptk", "edit", "spl"})
         if isinstance(self, RediParser):
             test_string = re.sub(r"{[1-9][0-9]?}", "", test_string)
         else:
             test_string = re.sub(r"{[1-9]}", "", test_string)
         test_string = re.sub(r"%[A-Z]", "", test_string)
         test_string = re.sub(self.ESCAPE_CHAR, "", test_string)
+
+        # allow foreign language marking
+        test_string = re.sub(r"\*f", "", test_string)
         invalid_chars = set(test_string) - self.allowed
 
         if invalid_chars:
