@@ -38,8 +38,16 @@ class BaseTrans:
     def __iadd__(self, other):
         return self.__class__(self.parse + other.parse)
 
+       self.dipl_utf_opts = {"illegible": "character",
+                            "strikethru": "leave",
+                            "doubledash": True,
+                            "preedpunc": False,
+                            "preedtoken": False}
+    def to_string(self, illegible="original", strikethru="original", doubledash=True,
+                  preedpunc=True, preedtoken=True):
+            
+        for c in self.parse:
 
-    def to_string(self):
         return "".join(c.get("trans") for c in self.parse)
 
 
@@ -88,17 +96,14 @@ class DiplTrans(BaseTrans):
 class Trans(BaseTrans):
 
 
-    def __init__(self, myparse, tok_bounds):
+    def __init__(self, myparse, anno_splits=None, dipl_splits=None, **kwargs):
         super().__init__(myparse)
         self.parse = myparse
-        self.dipl_tok_bounds, self.anno_tok_bounds = tok_bounds
+        self.dipl_tok_bounds = dipl_splits if dipl_splits else []
+        self.anno_tok_bounds = anno_splits if anno_splits else []
 
-        self.illegible = "leave"
-        self.doubledash = False
-        self.editnum = False
-        self.strikethru = "leave"
-        self.preedpunc = True
-        self.preedtoken = False
+        for key, val in kwargs.items():
+            setattr(self, key, val)
 
 
     def set_illegible_options(self, opt_ill, opt_char):

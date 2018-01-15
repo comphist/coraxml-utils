@@ -124,7 +124,8 @@ class BaseParser:
             if open_brackets:
                 raise ParseError("Unclosed bracket at end of token: " + intoken)
 
-            result = Trans(myparse, self.tokenize(myparse))
+            as, ds = self.tokenize(myparse)
+            result = Trans(myparse, )
             self.validate(result)  # throws ParseError
             return result
 
@@ -219,7 +220,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                           '\[\.{3}\]',
                                           '%[A-Z]']) + ')'
         comm_re = r'(?P<comm> [+@][KEZ] )'
-        word_re = r'(?P<w> \\ . | . )'
+        word_re = r'(?P<w> \*f | \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
                             for i, (x, _, _) in enumerate(replacements) if x) 
         inu_re = "|".join("(?P<inu{0}>".format(i) + x + ")"
@@ -260,22 +261,19 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
 
 
-        self.dipl_utf_opts = {"character": "utf",
-                            "illegible": "character",
+        self.dipl_utf_opts = {"illegible": "character",
                             "strikethru": "leave",
                             "doubledash": True,
                             "preedpunc": False,
                             "preedtoken": False}
 
-        self.anno_utf_opts = {"character": "utf",
-                               "illegible": "character",
+        self.anno_utf_opts = {"illegible": "character",
                                "strikethru": "delete",
                                "doubledash": False,
                                "preedpunc": True,
                                "preedtoken": False}
 
-        self.anno_simple_opts = {"character": "simple",
-                                  "illegible": "leave",
+        self.anno_simple_opts = {"illegible": "leave",
                                   "strikethru": "delete",
                                   "doubledash": False,
                                   "preedpunc": True,
@@ -289,7 +287,6 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def init_parser(self):
         pass
-
 
     def tokenize(self, some_parse, split_init_punc=True):
 
@@ -390,9 +387,9 @@ class PlainParser(BaseParser):
 
         self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
 
-        self.dipl_utf_opts=None
-        self.anno_utf_opts=None
-        self.anno_simple_opts=None
+        self.dipl_utf_opts = None
+        self.anno_utf_opts = None
+        self.anno_simple_opts = None
 
         super().__init__()
 
