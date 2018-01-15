@@ -64,7 +64,7 @@ class CoraXMLImporter:
 
 
     def _create_dipl_token(self, dipl_element):
-        return TokDipl(self.tokenparser.parse(dipl_element.attrib['trans']), extid=dipl_element.attrib['id'])
+        return TokDipl(self.tokenparser.parse(dipl_element.attrib['trans']).tokenize_dipl()[0], extid=dipl_element.attrib['id'])
 
     def _create_anno_token(self, anno_element):
 
@@ -91,7 +91,7 @@ class CoraXMLImporter:
         checked = 'checked' in anno_element.attrib and anno_element.attrib['checked'] == 'y'
 
         return TokAnno(
-            self.tokenparser.parse(anno_element.attrib['trans']),
+            self.tokenparser.parse(anno_element.attrib['trans']).tokenize_anno()[0],
             tags=tags, flags=flags, checked=checked, extid=anno_element.attrib['id']
         )
 

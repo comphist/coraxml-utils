@@ -33,17 +33,17 @@ class CoraXMLExporter:
     def _create_xml_token(self, tok):
 
         tok_xml = ET.Element("token", {"id": tok.id,
-                                       "trans": tok.trans})
+                                       "trans": tok.trans.to_string()})
 
         for dipl in tok.tok_dipls:
             dipl_xml = ET.SubElement(tok_xml, self.dipl_tag,
                                      {"id": dipl.id, 
-                                      "trans": dipl.trans})
+                                      "trans": dipl.trans.to_string()})
             dipl_xml.set("utf", dipl.trans.utf())
         for mod in tok.tok_annos:
             mod_xml = ET.SubElement(tok_xml, self.mod_tag,
                                        {"id": mod.id,
-                                        "trans": mod.trans})
+                                        "trans": mod.trans.to_string()})
             mod_xml.set("utf", mod.trans.utf())
             mod_xml.set("simple", mod.trans.simple())
 
@@ -295,8 +295,8 @@ class GateJsonExporter:
                             }
                             tok_dipl_object = tok_dipls.pop()
 
-                            tok_dipl['trans'] = "".join([char['trans'] for char in tok_dipl_object.trans.parse])
-                            tok_dipl['utf'] = "".join([char['utf'] for char in tok_dipl_object.trans.parse])
+                            tok_dipl['trans'] = tok_dipl_object.trans.to_string()
+                            tok_dipl['utf'] = tok_dipl_object.trans.utf()
 
                             tok_dipl['id'] = tok_dipl_object.id
 
@@ -308,9 +308,9 @@ class GateJsonExporter:
                             }
                             tok_anno_object = tok_annos.pop()
 
-                            tok_anno['trans'] = str(tok_anno_object.trans)
-                            tok_anno['utf'] = "".join([char['utf'] for char in tok_anno_object.trans.parse])
-                            tok_anno['simple'] = "".join([char['simple'] for char in tok_anno_object.trans.parse])
+                            tok_anno['trans'] = tok_anno_object.trans.to_string()
+                            tok_anno['utf'] = tok_anno_object.trans.utf()
+                            tok_anno['simple'] = tok_anno_object.trans.simple()
 
                             tok_anno['id'] = tok_anno_object.id
                             tok_anno['checked'] = tok_anno_object.checked
