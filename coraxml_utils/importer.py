@@ -226,10 +226,18 @@ class CoraXMLImporter:
                               lambda element: {'extid': element.attrib['id']},
                               lambda dictionary: Column(dictionary['subelements'], extid=dictionary['extid']))
         pages = self._connect_with_layout_elements(root, 'page', columns, 'column',
-                              lambda element: {'extid': element.attrib['id'], 'name': element.attrib['no'], 'side': element.attrib['side']},
+                              lambda element: {'extid': element.attrib['id'], 'name': element.attrib['no'], 'side': element.attrib.get('side', None)},
                               lambda dictionary: Page(dictionary['name'], dictionary['side'], dictionary['subelements'], extid=dictionary['extid']))
         ## collect document information and create Document object
+        sigle = None
+        name = None
         cora_header = root.find('cora-header')
+        if cora_header:
+            if hasattrib(cora_header.attrib, 'sigle'):
+                sigle = cora_header.attrib['sigle']
+            if hasattrib(cora_header.attrib, 'name'):
+                name = cora_header.attrib['name']
+
 
         # get header
         header_element = root.find("header")
@@ -242,7 +250,7 @@ class CoraXMLImporter:
             for header_part in header_element:
                 header[header_part.tag] = header_part.text
 
-        return Document(cora_header.attrib['sigle'], cora_header.attrib['name'], header, pages, tokens, shifttags, header_string)
+        return Document(sigle, name, header, pages, tokens, shifttags, header_string)
 
 
 class TransImporter:
