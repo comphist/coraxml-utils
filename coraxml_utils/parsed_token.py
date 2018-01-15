@@ -66,10 +66,10 @@ class AnnoTrans(BaseTrans):
         super().__init__(myparse)
 
     def utf(self):
-        return self.to_string(**self.options["anno_utf"])
+        return "".join(c.get("utf") for c in self.parse)
 
     def simple(self):
-        return self.to_string(**self.options["anno_simple"])
+        return "".join(c.get("simple") for c in self.parse)
 
 
 class DiplTrans(BaseTrans):
@@ -78,7 +78,7 @@ class DiplTrans(BaseTrans):
         super().__init__(myparse)
 
     def utf(self):
-        return self.to_string(**self.options["dipl_utf"])
+        return "".join(c.get("utf") for c in self.parse)
 
     def get_subtoken_tree(self):
         # TODO

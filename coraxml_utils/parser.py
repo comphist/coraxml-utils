@@ -223,7 +223,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         inu_re = "|".join("(?P<inu{0}>".format(i) + x + ")"
                             for i, (_, x, _) in enumerate(replacements) if x)
 
-        init_punc_re = r'(?P<ip> // | \*[Cf] )' 
+        # init_punc_re = r'(?P<ip> // | \*[Cf] )' 
         punc_re = r'(?P<p> %\. | / | ' + punc +')'
         strk_re = r'(?P<strk>  \*[\[ | \*\]] )'
         preedit_re = r'(?P<pe>' + '|'.join(['\(' + punc + '\)',
@@ -244,7 +244,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         # specifies which regexes are to be applied, and in what order
         self.re_parts = [spc_re, abbr_re, comm_re, majuscule_re,
                          editnum_re, splitter_re, ddash_re, quotes_re,
-                         strk_re, preedit_re, init_punc_re, 
+                         strk_re, preedit_re,
                          ptk_marker_re, brackets_re, uni_re, punc_re, inu_re,
                          word_re]
 
@@ -343,6 +343,10 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
             if this_char["type"] == "ptk" and last_char["type"] in {"ip", "p", "pe", "q"}:
                 anno_tok_bounds.append(i)
 
+            # always tokenize on whitespace 
+            if this_char["type"] == "spc":
+                anno_tok_bounds.append(i)
+                dipl_tok_bounds.append(i)
 
         return dipl_tok_bounds, anno_tok_bounds
 
