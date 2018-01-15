@@ -396,3 +396,16 @@ class PlainParser(BaseParser):
     def validate(self, obj):
         pass
 
+    def tokenize(self, some_parse, split_init_punc=True):
+
+        dipl_tok_bounds = list()
+        anno_tok_bounds = list()
+
+        for i in range(0, len(some_parse)):
+
+            # tokenize on whitespace
+            if some_parse[i]["type"] == "spc":
+                anno_tok_bounds.append(i + 1)
+                dipl_tok_bounds.append(i + 1)
+
+        return dipl_tok_bounds, anno_tok_bounds
