@@ -1,5 +1,119 @@
+from typing import List
 
-from coraxml_utils.settings import *
+# necessary??
+# from coraxml_utils.settings import *
+
+
+class BaseTrans:
+
+    def __init__(self, myparse):
+        self.parse = myparse
+
+    def __len__(self):
+        return len(self.parse)
+
+    def __eq__(self, other):
+        return self.parse == other.parse
+
+    def __repr__(self):
+        return str(self.parse)
+
+    def __str__(self):
+        return self.trans()
+
+    def __iadd__(self, other):
+        return self.__class__(self.parse + other.parse)
+
+    def trans(self):
+        return "".join(c.get("trans") for c in self.parse)
+
+    def keep(self, *types):
+        return self.__class__([c for c in self.parse if c["type"] in types])
+
+    def has(self, *types):
+        return any(c["type"] in types for c in self.parse)
+        
+    def delete(self, *types):
+        return self.__class__([c for c in self.parse if c["type"] not in types])
+
+
+class AnnoTrans(BaseTrans):
+
+    def __init__(self, myparse):
+        super().__init__(myparse)
+
+    def utf(self):
+        return "".join(c.get("anno_utf") for c in self.parse)
+
+    def simple(self):
+        return "".join(c.get("anno_simple") for c in self.parse)
+
+
+class DiplTrans(BaseTrans):
+
+    def __init__(self, myparse, subtoken=None):
+        super().__init__(myparse)
+        self.subtoken_annos = subtoken
+
+    def utf(self):
+        return "".join(c.get("dipl_utf") for c in self.parse)
+
+    def get_subtoken_tree(self):
+        # TODO
+        pass
+
+
+class Trans(BaseTrans):
+
+    def __init__(self, myparse, anno_splits=None, dipl_splits=None, subtoken=None):
+        super().__init__(myparse)
+        
+        self.dipl_tok_bounds = dipl_splits if dipl_splits else []
+        self.anno_tok_bounds = anno_splits if anno_splits else []
+
+        self.subtoken_annos = subtoken
+
+    # TODO: these methods should also close the open brackets
+    #  that result from tokenization (since all tokens are 
+    #  validated on parsing, we can assume that all open 
+    #  brackets are open due to tokenization and are not
+    #  transcription errors)
+    def tokenize_anno(self) -> List[AnnoTrans]:
+        output_tokens = list()
+        stack = list()
+        for i, c in enumerate(self.parse):
+            if i + 1 in self.anno_tok_bounds:
+                output_tokens.append(AnnoTrans(stack))
+                stack = list()
+            stack.append(c)
+        output_tokens.append(AnnoTrans(stack))
+        return output_tokens
+
+
+    def tokenize_dipl(self) -> List[DiplTrans]:
+        output_tokens = list()
+        stack = list()
+        for i, c in enumerate(self.parse):
+            if i + 1 in self.dipl_tok_bounds:
+                output_tokens.append(DiplTrans(stack, subtoken=self.subtoken_annos))
+                stack = list()
+            stack.append(c)
+        output_tokens.append(DiplTrans(stack))
+        return output_tokens
+
+
+class SubtokenAnno:
+
+    def __init__(self, mytype, start_index, end_index):
+        self.type = mytype
+        self.start = start_index
+        self.end = end_index
+
+    def __str__(self):
+        return f"<'{self.type}' range=({self.start}, {self.end})>"
+
+    def __repr__(self):
+        return str(self)
 
 
 class Document:
@@ -244,6 +358,7 @@ class CoraToken:
 
         return aligned_dipls_and_annos
 
+
 class TokDipl:
 
     c = 0
@@ -260,12 +375,14 @@ class TokDipl:
     def __eq__(self, other):
         return (self.id == other.id) and (self.trans == other.trans)
 
+
 class AnnotatableElement:
 
     def __init__(self, tags=None, flags=None):
 
         self.tags = tags if tags else dict()
         self.flags = flags if flags else set()
+
 
 class TokAnno(AnnotatableElement):
 
@@ -297,11 +414,13 @@ class TokAnno(AnnotatableElement):
     def merge(self, other):
         self.trans.parse += other.trans.parse
 
+
 class AnnoSpan(AnnotatableElement):
 
     def __init__(self, annos, tags=None, flags=None):
         self.annos = annos
         super().__init__(tags=tags, flags=flags)
+
 
 class CoraComment:
 

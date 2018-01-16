@@ -1,9 +1,14 @@
 
 import re
 import abc
+import logging
+logging.basicConfig(format='%(levelname)s: %(message)s')
+logger = logging.getLogger()
+
+from collections import defaultdict
 
 from coraxml_utils.character import replacements
-from coraxml_utils.parsed_token import Trans
+from coraxml_utils.coralib import Trans, DiplTrans, AnnoTrans, SubtokenAnno
 
 MEDIUS = "\u00b7"
 ELEVATUS = "\uf161"
@@ -11,10 +16,13 @@ PARAGRAPHUS = "\uf1e1"
 BULLET = "\u2219"  # used strangely often in REM
 ALPHA = "abcdefghijklmnopqrstuvwxyz"
 
-BR = {'[': ']', ']': '[', 
-      '(': ')', ')': '(',
-      '{': '}', '}': '{',
-      '<': '>', '>': '<'}
+
+def flip_bracket(br_str):
+    return "".join({'[': ']', ']': '[', 
+                    '(': ')', ')': '(',
+                    '{': '}', '}': '{',
+                    '<': '>', '>': '<'}.get(c, c) for c in br_str)
+
 
 class ParseError(Exception):
     def __init__(self, msg):
@@ -26,110 +34,6 @@ class BaseParser:
     def __init__(self):
         self.token_re = re.compile(r"( (?x) " + "|".join(self.re_parts) + ")")
 
-    def flip_bracket(self, br_str):
-        return "".join(BR.get(c, c) for c in br_str)
-
-    def parse(self, intoken):
-        if isinstance(intoken, str):
-            myparse = list()
-            open_brackets = list()
-            open_br_types = list()
-            next_char_br = None
-            in_comment = False
-
-            for match in re.finditer(self.token_re, intoken):
-                for key, val in match.groupdict().items():
-                    if val:
-                        new_char = None
-
-                        # disallow brackets that span multiple tokens
-                        if key == "spc":
-                            if open_brackets:
-                                raise ParseError("Unclosed bracket at end of token: " + intoken)
-
-                        # ensures that nothing in a comment gets processed
-                        if key == "comm":
-                            if val.startswith("+"):
-                                in_comment = True
-                            else:
-                                in_comment = False
-                            myparse.append({"trans": val, "type": key})
-                        elif in_comment:
-                            myparse.append({"trans": val, "type": "w"})
-
-                        # handling span-based annotations
-                        elif key == "strk":
-                            if val == "*[":
-                                open_brackets.append(val)
-                                open_br_types.append("strk")
-                                next_char_br = val
-                            else:
-                                open_brackets.pop()
-                                open_br_types.pop()
-                                myparse[-1]["after"] = val
-
-                        elif key == "br":
-                            if re.search(r"[\[<]", val):
-                                open_brackets.append(val)
-                                open_br_types.append("ill")
-                                next_char_br = val
-                            else:
-                                open_br = open_brackets.pop()
-                                if open_br != self.flip_bracket(val):
-                                    print("non-matching brackets!", intoken)
-                                open_br_types.pop()
-                                myparse[-1]["after"] = val
-                                if open_brackets or open_br_types:
-                                    print("verschachtelte klammern:", intoken)
-
-                        elif key.startswith('uni'):
-                            new_char_index = int(key[3:])
-                            # special case for punc w/ utf conversions
-                            if "." in val or "·" in val:
-                                mytype = "p"
-                            else:
-                                mytype = "w"
-                            new_char = {"trans": val, "type": mytype, 
-                                        "simple": replacements[new_char_index][2],
-                                        "utf": replacements[new_char_index][1]}
-
-                        elif key.startswith('inu'):
-                            new_char_index = int(key[3:])
-                            new_char = {"trans": val, # for the lack of a better alternative
-                                        "type": "w",
-                                        "simple": replacements[new_char_index][2],
-                                        "utf": val}
-
-                        elif key == "maj":
-                            maj_letter = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
-                                                r"\1", val)
-                            new_char = {"trans": val, "type": key,
-                                        "simple": maj_letter,
-                                        "utf": maj_letter}
-                        else:
-                            new_char = {"trans": val, "type": key, 
-                                        "simple": val, "utf": val}
-
-                        if new_char:
-                            if open_brackets:
-                                new_char["br"] = open_brackets[-1]
-                                new_char["brtype"] = open_br_types[-1]
-
-                            if next_char_br:
-                                new_char["before"] = next_char_br
-                                next_char_br = None
-
-                            myparse.append(new_char)
-
-            if open_brackets:
-                raise ParseError("Unclosed bracket at end of token: " + intoken)
-
-            as, ds = self.tokenize(myparse)
-            result = Trans(myparse, )
-            self.validate(result)  # throws ParseError
-            return result
-
-
     def validate(self, obj):
         # remove all valid characters, now everything that remains
         # is an error. also remove \&1-9 "variables zeichen"
@@ -137,9 +41,9 @@ class BaseParser:
         # and %[A-Z] which is code for a superscript capital
         # note that superscript capitals are unchanged because unicode does
         # not support superscripting of arbitrary characters
-        test_string = "".join(c["simple"] 
+        test_string = "".join(c["anno_simple"] 
                               for c in obj.parse
-                              if c.get("type") not in {"pe", "ptk", "edit", "spl"})
+                              if c.get("type") not in {"ill", "pe", "ptk", "edit", "spl"})
         if isinstance(self, RediParser):
             test_string = re.sub(r"{[1-9][0-9]?}", "", test_string)
         else:
@@ -156,51 +60,6 @@ class BaseParser:
                              str(sorted(invalid_chars)))
 
 
-class RemParser(BaseParser):
-    def __init__(self):
-        self.ATOMIC_ILLEGIBLE = "<<...>>"
-        self.ILLEGIBLE_REPLACEMENT = "[...]"
-        self.missing_br_open = {'['}
-
-        self.spc_re = r"(?P<spc> \s+ )"
-        self.abbr_re = r'(?P<abbr> \. [\w$] \. | <<\.{3}>> | \[\[\.\.\.\]\] )'
-        self.comm_re = r'(?P<comm> [+@][KEZ] )'
-        self.word_re = r'(?P<w> . \\\ [^\[\](){}<>] | . )'
-        self.init_punc_re = r'(?P<ip> // | \*C | \*f )'
-        self.punc_re = (r'(?P<p>  \. \\\ . | %\. | \. | (?<! \\\ ) / | ' + BULLET + ' | .̇ | ' +
-                MEDIUS + ' | ' + ELEVATUS +  ' | ' + PARAGRAPHUS +
-                r' | ! | \? | : | ;  )')
-        self.strk_re = r'(?P<strk>  \*\[ | \*\] )'
-        # NB: messy lookahead fix for symbols ending with open parens
-        self.preedit_re = (r'(?P<pe> \([.;!?:,"«»]\) | ,,\) | ,,\( (?![.;!?:,"«»]) | ' +
-                    r',\) | ,\( (?![.;!?:,"«»]) | ,, | , )')
-        self.ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
-        self.brackets_re = r'(?P<br> \[+ | \]+ | <+ | >+ )'
-        self.quotes_re = r'(?P<q> " | « | » )'
-        self.majuscule_re = r'(?P<m> [*÷] [{(<] (?: [a-zA-Z] \\\ . | [a-zA-Z] )+ [*÷] \d* [})>] )'
-        self.editnum_re = r'(?P<edit> (?<![\*÷]) \{ [^{} ]+ (?<![\*÷]) \} )'
-        self.splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | \(=\) | =\|+ | \# | \|+ )'
-        self.ddash_re = r'(?P<dd> = )'
-
-        # specifies which regexes are to be applied, and in what order
-        self.re_parts = [self.spc_re, self.abbr_re, self.comm_re, self.majuscule_re,
-                         self.splitter_re, self.ddash_re, self.quotes_re,
-                         self.strk_re, self.preedit_re, self.init_punc_re, self.punc_re,
-                         self.ptk_marker_re, self.brackets_re, self.word_re]
-
-        self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
-
-        super().__init__()
-
-        # in REM, [[...]] is often used (apparently erroneously) to
-        # denote missing letters or lines, so here I replace such 
-        # instances with the correct abbr, [...]
-        new_parse = list()
-        for c in self.parse:
-            if c["type"] == "abbr" and c["char"] == "[[...]]":
-                c["char"] = "[...]"
-            new_parse.append(c)
-        self.parse = new_parse
 
 
 class RexParser(BaseParser, metaclass=abc.ABCMeta):
@@ -260,26 +119,6 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
 
         self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
 
-
-        self.dipl_utf_opts = {"illegible": "character",
-                            "strikethru": "leave",
-                            "doubledash": True,
-                            "preedpunc": False,
-                            "preedtoken": False}
-
-        self.anno_utf_opts = {"illegible": "character",
-                               "strikethru": "delete",
-                               "doubledash": False,
-                               "preedpunc": True,
-                               "preedtoken": False}
-
-        self.anno_simple_opts = {"illegible": "leave",
-                                  "strikethru": "delete",
-                                  "doubledash": False,
-                                  "preedpunc": True,
-                                  "preedtoken": False}
-
-
         self.init_parser()
 
         super().__init__()
@@ -287,6 +126,161 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def init_parser(self):
         pass
+
+
+    def parse(self, intoken, output_type="trans"):
+        """
+        output_type: {"trans", "dipl", "anno"}
+        """
+        myparse = list()
+        subtoken_spans = list() # list of SubtokenAnnos
+        open_spans = defaultdict(list)    # list of tuples, (type, start)
+        in_comment = False
+        new_char = None
+
+        for match in re.finditer(self.token_re, intoken):
+            for key, val in match.groupdict().items():
+                if val:
+                    # disallow brackets that span multiple tokens
+                    if key == "spc":
+                        if any(val for key, val in open_spans.items()):
+                            raise ParseError("Unclosed bracket at end of token: " + intoken)
+
+                    # ensures that nothing in a comment gets processed
+                    if key == "comm":
+                        if val.startswith("+"):
+                            in_comment = True
+                        else:
+                            in_comment = False
+                        myparse.append({"trans": val, "type": key})
+                    elif in_comment:
+                        myparse.append({"trans": val, "type": "w"})         
+                                
+                    if val == "*[":
+                        open_spans[val].append(match.start())
+                        new_char = {"trans": val, 
+                                    "dipl_utf": "",
+                                    "anno_utf": "",
+                                    "anno_simple": "",
+                                    "type": "*["}
+
+                    elif val == "*]":
+                        closing = open_spans["*["].pop()
+                        subtoken_spans.append(SubtokenAnno("*[", closing, match.end()))
+                        new_char = {"trans": val, 
+                                    "dipl_utf": "",
+                                    "anno_utf": "",
+                                    "anno_simple": "",
+                                    "type": "*["}
+
+                    elif val in {"<", "<<"}:
+                        open_spans[val].append(match.start())
+                        new_char = {"trans": val, 
+                                    "dipl_utf": "",
+                                    "anno_utf": "",
+                                    "anno_simple": "",
+                                    "type": val}
+                    elif val in {">", ">>"}:
+                        openbr = flip_bracket(val)
+                        closing = open_spans[openbr].pop()
+                        subtoken_spans.append(SubtokenAnno(openbr, closing, match.end()))
+                        new_char = {"trans": val, 
+                                    "dipl_utf": "",
+                                    "anno_utf": "",
+                                    "anno_simple": "",
+                                    "type": openbr}
+                    elif val in {"[", "[["}:
+                        open_spans[val].append(match.start())
+                        new_char = {"trans": val, 
+                                    "dipl_utf": self.ILLEGIBLE_REPLACEMENT,
+                                    "anno_utf": self.ILLEGIBLE_REPLACEMENT,
+                                    "anno_simple": "",
+                                    "type": val}
+                    elif val in {"]", "]]"}:
+                        openbr = flip_bracket(val)
+                        closing = open_spans[openbr].pop()
+                        subtoken_spans.append(SubtokenAnno(openbr, closing, match.end()))                        
+                        new_char = {"trans": val,
+                                    "dipl_utf": "",
+                                    "anno_utf": "",
+                                    "anno_simple": "",
+                                    "type": openbr}
+
+                    elif key == "dd":
+                        new_char = {"trans": val,
+                                    "dipl_utf": val,
+                                    "anno_utf": "",
+                                    "anno_simple": "",
+                                    "type": "dd"}
+                    elif key in {"pe", "q"}:
+                        new_char = {"trans": val,
+                                    "dipl_utf": "",
+                                    "anno_utf": val,
+                                    "anno_simple": val,
+                                    "type": key}
+                    elif key in {"ptk", "spl"} or val == "*f":
+                        new_char = {"trans": val,
+                                    "dipl_utf": "",
+                                    "anno_utf": "",
+                                    "anno_simple": "",
+                                    "type": key}
+
+                    else:
+                        if key.startswith("uni"):
+                            _, utfchar, simplechar = replacements[int(key[3:])]
+                            new_char = {"trans": val,
+                                        "dipl_utf": utfchar,
+                                        "anno_utf": utfchar,
+                                        "anno_simple": simplechar,
+                                        # special case for punc w/ utf conversions
+                                        "type": "p" if "." in val or "·" in val else "w"} 
+                        elif key.startswith("inu"):
+                            _, _, simplechar = replacements[int(key[3:])]
+                            new_char = {"trans": val, # for the lack of a better alternative
+                                        "dipl_utf": val,
+                                        "anno_utf": val,
+                                        "anno_simple": simplechar,
+                                        "type": "w"}
+                        elif key == "maj":
+                            maj_letter = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
+                                                r"\1", val)
+                            new_char = {"trans": val,
+                                        "dipl_utf": maj_letter,
+                                        "anno_utf": maj_letter,
+                                        "anno_simple": maj_letter,
+                                        "type": key}
+                        else:
+                            new_char = {"trans": val,
+                                        "dipl_utf": val,
+                                        "anno_utf": val,
+                                        "anno_simple": val,
+                                        "type": key}
+
+                        # process open spans (omit illegible chars as required)
+                        if open_spans["["] or open_spans["[["]:
+                            new_char["dipl_utf"] = ""
+                            new_char["anno_utf"] = ""
+                        elif open_spans["*["]:
+                            new_char["anno_utf"] = ""
+                            new_char["anno_simple"] = ""
+
+                    myparse.append(new_char)
+
+        if any(val for key, val in open_spans.items()):
+            raise ParseError("Unclosed bracket at end of token: " + intoken)
+
+        if output_type.startswith("dipl"):
+            result = DiplTrans(myparse, subtoken=subtoken_spans)
+        elif output_type.startswith("anno"):
+            result = AnnoTrans(myparse)
+        else:
+            dipl_spl, anno_spl = self.tokenize(myparse)
+            result = Trans(myparse, 
+                           anno_splits=anno_spl, dipl_splits=dipl_spl,
+                           subtoken=subtoken_spans)
+        self.validate(result)  # throws ParseError
+        return result
+        
 
     def tokenize(self, some_parse, split_init_punc=True):
 
@@ -369,6 +363,54 @@ class RefParser(RexParser):
         self.allowed.update("()")
 
 
+#  TODO: finish converting to RexParser derivative
+class RemParser(RexParser):
+    def __init__(self):
+        self.ATOMIC_ILLEGIBLE = "<<...>>"
+        self.ILLEGIBLE_REPLACEMENT = "[...]"
+        self.missing_br_open = {'['}
+
+        # self.spc_re = r"(?P<spc> \s+ )"
+        # self.abbr_re = r'(?P<abbr> \. [\w$] \. | <<\.{3}>> | \[\[\.\.\.\]\] )'
+        # self.comm_re = r'(?P<comm> [+@][KEZ] )'
+        # self.word_re = r'(?P<w> . \\\ [^\[\](){}<>] | . )'
+        # self.init_punc_re = r'(?P<ip> // | \*C | \*f )'
+        # self.punc_re = (r'(?P<p>  \. \\\ . | %\. | \. | (?<! \\\ ) / | ' + BULLET + ' | .̇ | ' +
+        #         MEDIUS + ' | ' + ELEVATUS +  ' | ' + PARAGRAPHUS +
+        #         r' | ! | \? | : | ;  )')
+        # self.strk_re = r'(?P<strk>  \*\[ | \*\] )'
+        # # NB: messy lookahead fix for symbols ending with open parens
+        # self.preedit_re = (r'(?P<pe> \([.;!?:,"«»]\) | ,,\) | ,,\( (?![.;!?:,"«»]) | ' +
+        #             r',\) | ,\( (?![.;!?:,"«»]) | ,, | , )')
+        # self.ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
+        # self.brackets_re = r'(?P<br> \[+ | \]+ | <+ | >+ )'
+        # self.quotes_re = r'(?P<q> " | « | » )'
+        # self.majuscule_re = r'(?P<m> [*÷] [{(<] (?: [a-zA-Z] \\\ . | [a-zA-Z] )+ [*÷] \d* [})>] )'
+        # self.editnum_re = r'(?P<edit> (?<![\*÷]) \{ [^{} ]+ (?<![\*÷]) \} )'
+        # self.splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | \(=\) | =\|+ | \# | \|+ )'
+        # self.ddash_re = r'(?P<dd> = )'
+
+        # # specifies which regexes are to be applied, and in what order
+        # self.re_parts = [self.spc_re, self.abbr_re, self.comm_re, self.majuscule_re,
+        #                  self.splitter_re, self.ddash_re, self.quotes_re,
+        #                  self.strk_re, self.preedit_re, self.init_punc_re, self.punc_re,
+        #                  self.ptk_marker_re, self.brackets_re, self.word_re]
+
+        # self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
+
+        # super().__init__()
+
+        # # in REM, [[...]] is often used (apparently erroneously) to
+        # # denote missing letters or lines, so here I replace such 
+        # # instances with the correct abbr, [...]
+        # new_parse = list()
+        # for c in self.parse:
+        #     if c["type"] == "abbr" and c["char"] == "[[...]]":
+        #         c["char"] = "[...]"
+        #     new_parse.append(c)
+        # self.parse = new_parse
+
+
 class PlainParser(BaseParser):
     def __init__(self):
         self.ATOMIC_ILLEGIBLE = ""
@@ -409,3 +451,36 @@ class PlainParser(BaseParser):
                 dipl_tok_bounds.append(i + 1)
 
         return dipl_tok_bounds, anno_tok_bounds
+
+    def parse(self, intoken, output_type="trans"):
+        """
+        output_type: {"trans", "dipl", "anno"}
+        """
+        myparse = list()
+        subtoken_spans = list() # list of SubtokenAnnos
+        open_spans = defaultdict(list)    # list of tuples, (type, start)
+        in_comment = False
+        new_char = None
+
+        for match in re.finditer(self.token_re, intoken):
+            for key, val in match.groupdict().items():
+                if val:
+                    new_char = {"trans": val,
+                                "dipl_utf": val,
+                                "anno_utf": val,
+                                "anno_simple": val,
+                                "type": key}
+
+                    myparse.append(new_char)
+
+        if output_type.startswith("dipl"):
+            result = DiplTrans(myparse, subtoken=subtoken_spans)
+        elif output_type.startswith("anno"):
+            result = AnnoTrans(myparse)
+        else:
+            dipl_spl, anno_spl = self.tokenize(myparse)
+            result = Trans(myparse, 
+                           anno_splits=anno_spl, dipl_splits=dipl_spl,
+                           subtoken=subtoken_spans)
+        self.validate(result)  # throws ParseError
+        return result
