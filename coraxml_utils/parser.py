@@ -43,7 +43,8 @@ class BaseParser:
         # not support superscripting of arbitrary characters
         test_string = "".join(c["anno_simple"] 
                               for c in obj.parse
-                              if c.get("type") not in {"ill", "pe", "ptk", "edit", "spl"})
+                              if c.get("type") not in {"pe", "ptk", "edit", "spl",
+                                                       "[", "[[", "<", "<<", "abbr"})
         if isinstance(self, RediParser):
             test_string = re.sub(r"{[1-9][0-9]?}", "", test_string)
         else:
@@ -95,7 +96,8 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                             ',\(' + no_pq,
                                             ',,']) + ')'
         ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
-        brackets_re = r'(?P<br> \[+ (?![ ]) | (?<![ ]) \]+ | <+ (?![ ]) | (?<![ ]) >+ )'
+        # brackets_re = r'(?P<br> \[+ (?![ ]) | (?<![ ]) \]+ | <+ (?![ ]) | (?<![ ]) >+ )'
+        brackets_re = r'(?P<br> \[+ | \]+ | <+ | >+ )'
         quotes_re = r'(?P<q> \( ' + quotes + r' \) | ' + quotes + ')'
         majuscule_re = r'(?P<maj> [*÷] [{(<]' + alpha + r'{,3} [*÷] \d* [})>] )'
         # majuscule_re = r'(?P<maj> [*÷] [{(<] | (?<= [*÷] [{(<] ' + alpha + r'+) [*÷] \d* [})>] )'
@@ -245,9 +247,9 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                             maj_letter = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
                                                 r"\1", val)
                             new_char = {"trans": val,
-                                        "dipl_utf": maj_letter,
-                                        "anno_utf": maj_letter,
-                                        "anno_simple": maj_letter,
+                                        "dipl_utf": maj_letter.replace("$", "\u017F"),
+                                        "anno_utf": maj_letter.replace("$", "\u017F"),
+                                        "anno_simple": maj_letter.replace("$", "s"),
                                         "type": key}
                         else:
                             new_char = {"trans": val,
@@ -298,6 +300,9 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
             if last_char["type"] == "spl" and last_char["trans"].endswith('#'):
                 dipl_tok_bounds.append(i)
 
+            if this_char["type"] == "dd":
+                dipl_tok_bounds.append(i)
+
             # word split "foo|bar"
             if last_char["type"] == "spl" and last_char["trans"].endswith("|"):
                 anno_tok_bounds.append(i)
@@ -323,6 +328,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
             if (last_char["type"] not in {"spc", "spl"} and
                   this_char["trans"] == "." and 
                   next_char["type"] != "w" and 
+                  this_char["trans"] != last_char["trans"] and # group same chars
                   next_char["trans"] not in {'(=)', '#'} and
                    # tokenize when period not in missing char parens
                   (my_bracket not in self.missing_br_open or

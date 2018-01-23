@@ -1,6 +1,7 @@
 
 import logging
 
+from lxml import etree
 from coraxml_utils.coralib import *
 
 try:
@@ -33,24 +34,28 @@ class CoraXMLExporter:
     def _create_xml_token(self, tok):
 
         tok_xml = ET.Element("token", {"id": tok.id,
-                                       "trans": tok.trans.to_string()})
+                                       "trans": str(tok.trans)})
 
         for dipl in tok.tok_dipls:
             dipl_xml = ET.SubElement(tok_xml, self.dipl_tag,
                                      {"id": dipl.id, 
-                                      "trans": dipl.trans.to_string()})
+                                      "trans": str(dipl.trans)})
             dipl_xml.set("utf", dipl.trans.utf())
         for mod in tok.tok_annos:
             mod_xml = ET.SubElement(tok_xml, self.mod_tag,
                                        {"id": mod.id,
-                                        "trans": mod.trans.to_string()})
+                                        "trans": str(mod.trans)})
             mod_xml.set("utf", mod.trans.utf())
             mod_xml.set("simple", mod.trans.simple())
 
             if mod.checked:
                 mod_xml.set("checked", "y")
 
-            # TODO: add annotations/flags to mod
+            for key, val in mod.tags.items():
+                ET.SubElement(mod_xml, key, {"tag": val})
+
+            for val in mod.flags:
+                ET.SubElement(mod_xml, "cora-flag", {"name": val})
 
         return tok_xml
 
@@ -59,14 +64,13 @@ class CoraXMLExporter:
         root = ET.Element("text")
         root.set("id", doc.sigle)
         header = ET.SubElement(root, "header")
-        ## TODO improve export of the header
+        ## TODO improve export of the header    
         if doc.header_string:
-            ET.fromstring(doc.header_string)
-            header.append(doc.header)
+            headerxmlstr = ET.fromstring(doc.header_string)
+            header.append(headerxmlstr)
         else:
-            header.text = ''
-            for key, value in doc.header:
-                header.text += key + ':' + value
+            header.text = "\n".join(f"{key}:{value}" for key, value in doc.header)
+    
 
         layoutinfo = ET.SubElement(root, "layoutinfo")
         for page in doc.pages:
@@ -106,7 +110,7 @@ class CoraXMLExporter:
             elif isinstance(token_or_comment, CoraComment):
                 comment = token_or_comment
                 comm_xml = ET.Element("comment", {"type": comment.type})
-                comm_xml.text = " ".join(comment.content)
+                comm_xml.text = comment.content
                 root.append(comm_xml)
             else:
                 raise ValueError("found something weird in this document's token list")
@@ -295,7 +299,7 @@ class GateJsonExporter:
                             }
                             tok_dipl_object = tok_dipls.pop()
 
-                            tok_dipl['trans'] = tok_dipl_object.trans.to_string()
+                            tok_dipl['trans'] = str(tok_dipl_object.trans)
                             tok_dipl['utf'] = tok_dipl_object.trans.utf()
 
                             tok_dipl['id'] = tok_dipl_object.id
@@ -308,7 +312,7 @@ class GateJsonExporter:
                             }
                             tok_anno_object = tok_annos.pop()
 
-                            tok_anno['trans'] = tok_anno_object.trans.to_string()
+                            tok_anno['trans'] = str(tok_anno_object.trans)
                             tok_anno['utf'] = tok_anno_object.trans.utf()
                             tok_anno['simple'] = tok_anno_object.trans.simple()
 

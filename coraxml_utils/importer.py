@@ -1,4 +1,5 @@
 
+import re
 import sys
 import logging
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -7,6 +8,7 @@ logger = logging.getLogger()
 from collections import defaultdict
 
 from coraxml_utils.coralib import *
+from coraxml_utils.settings import BIBINFO_FORMAT
 import coraxml_utils.parser as parser
 
 try:
@@ -50,8 +52,8 @@ def parse_header(header_string):
         ## skip empty lines
         if not header_line:
             continue
-        key_value = header_line.split(':')
-        header[key_value[0]] = key_value[1]
+        key, *val = header_line.split(':')
+        header[key] = val if val else ""
 
     return header
 
@@ -114,7 +116,8 @@ class CoraXMLImporter:
 
     def _connect_with_layout_elements(self, root, layout_type, subelements, subelement_type, 
                                       extract_from_xml, create_object):
-        """Connects elements like lines with higher element like columns.
+        """
+        Connects elements like lines with higher element like columns.
 
         Positional arguments:
         root -- the xml object
@@ -230,15 +233,12 @@ class CoraXMLImporter:
                               lambda element: {'extid': element.attrib['id'], 'name': element.attrib['no'], 'side': element.attrib.get('side', None)},
                               lambda dictionary: Page(dictionary['name'], dictionary['side'], dictionary['subelements'], extid=dictionary['extid']))
         ## collect document information and create Document object
-        sigle = None
-        name = None
+        sigle = ""
+        name = ""
         cora_header = root.find('cora-header')
-        if cora_header:
-            if hasattrib(cora_header.attrib, 'sigle'):
-                sigle = cora_header.attrib['sigle']
-            if hasattrib(cora_header.attrib, 'name'):
-                name = cora_header.attrib['name']
-
+        if cora_header is not None:
+            sigle = cora_header.get("sigle", "")
+            name = cora_header.get("name", "")
 
         # get header
         header_element = root.find("header")
@@ -325,14 +325,14 @@ class TransImporter:
             for match in BIBINFO_FORMAT.findall(bibinfo):
                 _, pageno, side, col, linename = match
 
-                if side != last_side or pageno != last_page:
+                if last_page and (side != last_side or pageno != last_page):
                    # new page and col
                    column_stack.append(Column(line_stack))
                    line_stack = list()
                    pages.append(Page(pageno, side, column_stack))
                    column_stack = list()
 
-                elif col != last_col:
+                elif last_col and col != last_col:
                     # start new col
                     # (columns started this way have names)
                     column_stack.append(Column(line_stack, name=col))
