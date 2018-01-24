@@ -9,9 +9,9 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
 
-def create_exporter(format="coraxml", dialect="ref"):
+def create_exporter(format="coraxml", options=None):
     if format == "coraxml":
-        return CoraXMLExporter(dialect)
+        return CoraXMLExporter(options)
     elif format == "trans":
         return TransExporter()
     elif format == "gatejson":
@@ -22,31 +22,31 @@ def create_exporter(format="coraxml", dialect="ref"):
 
 class CoraXMLExporter:
 
-    def __init__(self, dialect):
-        self.dialect = dialect
-        if dialect == "rem":
-            self.dipl_tag = "tok_dipl"
-            self.mod_tag = "tok_anno"
-        else:
-            self.dipl_tag = "dipl"
-            self.mod_tag = "mod"
+    def __init__(self, options=None):
+
+        if options is None:
+            options = dict()
+
+        self.dipl_tag = options.get('dipl_tag_name', "dipl")
+        self.anno_tag = options.get('anno_tag_name', "mod")
+        self.simple_attrib = options.get('simple_attrib_name', "ascii")
 
     def _create_xml_token(self, tok):
 
         tok_xml = ET.Element("token", {"id": tok.id,
-                                       "trans": str(tok.trans)})
+                                       "trans": tok.trans.trans()})
 
         for dipl in tok.tok_dipls:
             dipl_xml = ET.SubElement(tok_xml, self.dipl_tag,
                                      {"id": dipl.id, 
-                                      "trans": str(dipl.trans)})
+                                      "trans": dipl.trans.trans()})
             dipl_xml.set("utf", dipl.trans.utf())
         for mod in tok.tok_annos:
-            mod_xml = ET.SubElement(tok_xml, self.mod_tag,
+            mod_xml = ET.SubElement(tok_xml, self.anno_tag,
                                        {"id": mod.id,
-                                        "trans": str(mod.trans)})
+                                        "trans": mod.trans.trans()})
             mod_xml.set("utf", mod.trans.utf())
-            mod_xml.set("simple", mod.trans.simple())
+            mod_xml.set(self.simple_attrib, mod.trans.simple())
 
             if mod.checked:
                 mod_xml.set("checked", "y")
@@ -299,7 +299,7 @@ class GateJsonExporter:
                             }
                             tok_dipl_object = tok_dipls.pop()
 
-                            tok_dipl['trans'] = str(tok_dipl_object.trans)
+                            tok_dipl['trans'] = tok_dipl_object.trans.trans()
                             tok_dipl['utf'] = tok_dipl_object.trans.utf()
 
                             tok_dipl['id'] = tok_dipl_object.id
@@ -312,7 +312,7 @@ class GateJsonExporter:
                             }
                             tok_anno_object = tok_annos.pop()
 
-                            tok_anno['trans'] = str(tok_anno_object.trans)
+                            tok_anno['trans'] = tok_anno_object.trans.trans()
                             tok_anno['utf'] = tok_anno_object.trans.utf()
                             tok_anno['simple'] = tok_anno_object.trans.simple()
 
