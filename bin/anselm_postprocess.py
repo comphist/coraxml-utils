@@ -18,8 +18,12 @@ if __name__ == "__main__":
                         help='Ausgabepfad')
     args, _ = parser.parse_known_args()
 
+    # name mod -> tok_anno, dipl -> tok_dipl
     MyImporter = create_importer("coraxml", dialect="anselm")
-    MyExporter = create_exporter("coraxml")
+    MyExporter = create_exporter("coraxml", options={
+        'dipl_tag_name': 'tok_dipl',
+        'anno_tag_name': 'tok_anno',
+    })
 
     for filepath in args.infiles:
 
