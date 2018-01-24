@@ -52,3 +52,56 @@ def add_tokenization_tags(token):
         if token_type and token_type != DEFAULT_VAL:
             m.tags["token_type"] = token_type
     return token
+
+
+def add_punc_tags(token):
+    mods = token.tok_annos
+    
+    for i, m in enumerate(mods):
+        sent_type = str()
+        nom_type = str()
+        mtrans = str(m.trans)
+        
+        if mtrans == "(.)":
+            sent_type = "DE"
+        elif mtrans == "(?)":
+            sent_type = "QE"
+        elif mtrans == "(!)":
+            sent_type = "EE"
+        elif mtrans == "(;)": # semicolon end
+            sent_type = "SE"
+        elif mtrans == "(:)": # colon end
+            sent_type = "CE"
+
+        if mtrans == "(,)":
+            nom_type = "C" # modern comma
+
+        if sent_type:
+            # TODO: adapt to cases w/multiple punct
+            if mods[i - 1].trans.keep("p") and len(mods) > 2:
+                etree.SubElement(mods[i - 2], "punc", {"tag": sent_type})
+                etree.SubElement(mods[i - 1], "punc", {"tag": "$E"})
+            else:
+                etree.SubElement(mods[i - 1], "punc", {"tag": sent_type})
+            token.remove(m)
+
+        if nom_type:
+            if mods[i - 1].trans.keep("p") and len(mods) > 2:
+                etree.SubElement(mods[i - 2], "punc", {"tag": nom_type})
+                etree.SubElement(mods[i - 1], "punc", {"tag": "$C"})
+            else:
+                etree.SubElement(mods[i - 1], "punc", {"tag": nom_type})
+            try:
+                token.remove(m)
+            except ValueError:
+                print(token.id)
+            
+    return token
+
+
+def update_punct_pos(token):
+    for m in token.tok_annos:
+        if any(c["type"] == "p" for c in m.trans.parse):
+            if not m.tags.get("pos") or m.tags.get("pos") == DEFAULT_VAL:
+                m.tags.set("pos", "$(")
+    return token

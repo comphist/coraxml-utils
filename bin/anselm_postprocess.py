@@ -7,7 +7,7 @@ from pathlib import Path
 from coraxml_utils.importer import create_importer
 from coraxml_utils.exporter import create_exporter
 from coraxml_utils.coralib import CoraToken
-from coraxml_utils.modifier import add_tokenization_tags
+from coraxml_utils.modifier import add_tokenization_tags, update_punct_pos
 
 
 if __name__ == "__main__":
@@ -30,23 +30,15 @@ if __name__ == "__main__":
             # add tokenization tags
             tok = add_tokenization_tags(tok)
 
-            # # add punc tags
+            # add punc tags
+            # ANSELM: as yet no pre-edition punctuation 
+            # (and therefore no sent bounds discernible)
             # tok = add_punc_tags(tok)
 
-            # # TODO: für Anselm:  alle Satzzeichen auf $( setzen
-            # tok = update_punct_pos(tok)
+            # alle Satzzeichen (type = p) auf $( setzen (wenn noch nichts gesetzt)
+            tok = update_punct_pos(tok)
 
-            # # split pos and morph attributes
-            # tok = split_morph_from_pos(tok)
 
-            # # rename lemmapos -> posLemma
-            # tok = rename_lemmapos(tok)
-
-            # # move lemma ID to its own attribute, if present
-            # tok = split_lemma_id(tok)
-
-            # # rename mod -> tok_mod, dipl -> tok_dipl
-            # tok = rename_modipl(tok)
 
         output_xml = MyExporter.export(doc)
 
