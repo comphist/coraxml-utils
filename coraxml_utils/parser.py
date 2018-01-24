@@ -57,7 +57,7 @@ class BaseParser:
         invalid_chars = set(test_string) - self.allowed
 
         if invalid_chars:
-            raise ParseError("Transcription contains invalid characters: " + 
+            raise ParseError(f"Transcription {obj.trans()} contains invalid characters: " +
                              str(sorted(invalid_chars)))
 
 
@@ -167,7 +167,10 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                     "type": "*["}
 
                     elif val == "*]":
-                        closing = open_spans["*["].pop()
+                        if open_spans["*["]:
+                            closing = open_spans["*["].pop()
+                        else:
+                            raise ParseError("Closed *] is not opened: " + intoken)
                         subtoken_spans.append(SubtokenAnno("*[", closing, match.end()))
                         new_char = {"trans": val, 
                                     "dipl_utf": "",
@@ -200,7 +203,10 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                     "type": val}
                     elif val in {"]", "]]"}:
                         openbr = flip_bracket(val)
-                        closing = open_spans[openbr].pop()
+                        if open_spans[openbr]:
+                            closing = open_spans[openbr].pop()
+                        else:
+                            raise ParseError("Closing bracket is not opened: " + intoken)
                         subtoken_spans.append(SubtokenAnno(openbr, closing, match.end()))                        
                         new_char = {"trans": val,
                                     "dipl_utf": "",
