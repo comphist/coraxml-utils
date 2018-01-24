@@ -31,6 +31,13 @@ if __name__ == "__main__":
         doc = MyImporter.import_from_file(filepath)
 
         for tok in filter(lambda x: isinstance(x, CoraToken), doc.tokens):
+
+            # remove comment and boundary
+            for tok_anno in tok.tok_annos:
+                tok_anno.tags.pop('comment', None)
+                tok_anno.tags.pop('boundary', None)
+                tok_anno.flags.discard('boundary')
+
             # add tokenization tags
             tok = add_tokenization_tags(tok)
 
