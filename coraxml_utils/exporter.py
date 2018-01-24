@@ -326,8 +326,8 @@ class GateJsonExporter:
 
                             json_object['entities']['Token:Anno'].append(tok_anno)
                     else:
-                        json_object['text'] += token_char['utf']
-                        char_offset += len(token_char['utf'])
+                        json_object['text'] += token_char['dipl_utf']
+                        char_offset += len(token_char['dipl_utf'])
 
                 ## add CoraToken annotation
                 json_object['entities']['Token:Cora'].append(

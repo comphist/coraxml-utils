@@ -9,16 +9,16 @@ class CoraTokenTest(unittest.TestCase):
 
         expected_alignment = [
             {'type': 'token_begin', 'dipl_id': 'd1', 'anno_id': 'a1'},
-            {'trans': 't', 'simple': 't', 'utf': 't', 'type': 'w'},
-            {'trans': 'e', 'simple': 'e', 'utf': 'e', 'type': 'w'},
-            {'trans': 's', 'simple': 's', 'utf': 's', 'type': 'w'},
-            {'trans': 't', 'simple': 't', 'utf': 't', 'type': 'w'},
+            {'trans': 't', 'anno_simple': 't', 'dipl_utf': 't', 'anno_utf': 't', 'type': 'w'},
+            {'trans': 'e', 'anno_simple': 'e', 'dipl_utf': 'e', 'anno_utf': 'e', 'type': 'w'},
+            {'trans': 's', 'anno_simple': 's', 'dipl_utf': 's', 'anno_utf': 's', 'type': 'w'},
+            {'trans': 't', 'anno_simple': 't', 'dipl_utf': 't', 'anno_utf': 't', 'type': 'w'},
             {'type': 'token_end', 'dipl_id': 'd1'},
             {'type': 'token_begin', 'dipl_id': 'd2'},
-            {'trans': 'c', 'simple': 'c', 'utf': 'c', 'type': 'w'},
-            {'trans': 'a', 'simple': 'a', 'utf': 'a', 'type': 'w'},
-            {'trans': 's', 'simple': 's', 'utf': 's', 'type': 'w'},
-            {'trans': 'e', 'simple': 'e', 'utf': 'e', 'type': 'w'},
+            {'trans': 'c', 'anno_simple': 'c', 'dipl_utf': 'c', 'anno_utf': 'c', 'type': 'w'},
+            {'trans': 'a', 'anno_simple': 'a', 'dipl_utf': 'a', 'anno_utf': 'a', 'type': 'w'},
+            {'trans': 's', 'anno_simple': 's', 'dipl_utf': 's', 'anno_utf': 's', 'type': 'w'},
+            {'trans': 'e', 'anno_simple': 'e', 'dipl_utf': 'e', 'anno_utf': 'e', 'type': 'w'},
             {'type': 'token_end', 'dipl_id': 'd2', 'anno_id': 'a1'},
         ]
         dipl_list = [TokDipl(PlainParser().parse('test')), TokDipl(PlainParser().parse('case'))]
@@ -41,16 +41,16 @@ class CoraTokenTest(unittest.TestCase):
 
         expected_alignment = [
             {'type': 'token_begin', 'dipl_id': 'd1', 'anno_id': 'a1'},
-            {'trans': 't', 'simple': 't', 'utf': 't', 'type': 'w'},
-            {'trans': 'e', 'simple': 'e', 'utf': 'e', 'type': 'w'},
-            {'trans': 's', 'simple': 's', 'utf': 's', 'type': 'w'},
-            {'trans': 't', 'simple': 't', 'utf': 't', 'type': 'w'},
+            {'trans': 't', 'anno_simple': 't', 'dipl_utf': 't', 'anno_utf': 't', 'type': 'w'},
+            {'trans': 'e', 'anno_simple': 'e', 'dipl_utf': 'e', 'anno_utf': 'e', 'type': 'w'},
+            {'trans': 's', 'anno_simple': 's', 'dipl_utf': 's', 'anno_utf': 's', 'type': 'w'},
+            {'trans': 't', 'anno_simple': 't', 'dipl_utf': 't', 'anno_utf': 't', 'type': 'w'},
             {'type': 'token_end', 'anno_id': 'a1'},
             {'type': 'token_begin', 'anno_id': 'a2'},
-            {'trans': 'c', 'simple': 'c', 'utf': 'c', 'type': 'w'},
-            {'trans': 'a', 'simple': 'a', 'utf': 'a', 'type': 'w'},
-            {'trans': 's', 'simple': 's', 'utf': 's', 'type': 'w'},
-            {'trans': 'e', 'simple': 'e', 'utf': 'e', 'type': 'w'},
+            {'trans': 'c', 'anno_simple': 'c', 'dipl_utf': 'c', 'anno_utf': 'c', 'type': 'w'},
+            {'trans': 'a', 'anno_simple': 'a', 'dipl_utf': 'a', 'anno_utf': 'a', 'type': 'w'},
+            {'trans': 's', 'anno_simple': 's', 'dipl_utf': 's', 'anno_utf': 's', 'type': 'w'},
+            {'trans': 'e', 'anno_simple': 'e', 'dipl_utf': 'e', 'anno_utf': 'e', 'type': 'w'},
             {'type': 'token_end', 'dipl_id': 'd1', 'anno_id': 'a2'},
         ]
         dipl_list = [TokDipl(PlainParser().parse('testcase'))]
@@ -73,16 +73,16 @@ class CoraTokenTest(unittest.TestCase):
 
         expected_alignment = [
             {'type': 'token_begin', 'dipl_id': 'd1'},
-            {'trans': 't', 'simple': 't', 'utf': 't', 'type': 'w'},
-            {'trans': 'e', 'simple': 'e', 'utf': 'e', 'type': 'w'},
-            {'trans': 's', 'simple': 's', 'utf': 's', 'type': 'w'},
-            {'trans': 't', 'simple': 't', 'utf': 't', 'type': 'w'},
+            {'trans': 't', 'anno_simple': 't', 'dipl_utf': 't', 'anno_utf': 't', 'type': 'w'},
+            {'trans': 'e', 'anno_simple': 'e', 'dipl_utf': 'e', 'anno_utf': 'e', 'type': 'w'},
+            {'trans': 's', 'anno_simple': 's', 'dipl_utf': 's', 'anno_utf': 's', 'type': 'w'},
+            {'trans': 't', 'anno_simple': 't', 'dipl_utf': 't', 'anno_utf': 't', 'type': 'w'},
             {'type': 'token_end', 'dipl_id': 'd1'},
             {'type': 'token_begin', 'dipl_id': 'd2'},
-            {'trans': 'c', 'simple': 'c', 'utf': 'c', 'type': 'w'},
-            {'trans': 'a', 'simple': 'a', 'utf': 'a', 'type': 'w'},
-            {'trans': 's', 'simple': 's', 'utf': 's', 'type': 'w'},
-            {'trans': 'e', 'simple': 'e', 'utf': 'e', 'type': 'w'},
+            {'trans': 'c', 'anno_simple': 'c', 'dipl_utf': 'c', 'anno_utf': 'c', 'type': 'w'},
+            {'trans': 'a', 'anno_simple': 'a', 'dipl_utf': 'a', 'anno_utf': 'a', 'type': 'w'},
+            {'trans': 's', 'anno_simple': 's', 'dipl_utf': 's', 'anno_utf': 's', 'type': 'w'},
+            {'trans': 'e', 'anno_simple': 'e', 'dipl_utf': 'e', 'anno_utf': 'e', 'type': 'w'},
             {'type': 'token_end', 'dipl_id': 'd2'},
         ]
         dipl_list = [TokDipl(PlainParser().parse('test')), TokDipl(PlainParser().parse('case'))]
