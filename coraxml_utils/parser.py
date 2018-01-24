@@ -242,13 +242,13 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                         "anno_simple": simplechar,
                                         # special case for punc w/ utf conversions
                                         "type": "p" if "." in val or "·" in val else "w"} 
-                        elif key.startswith("inu"):
-                            _, _, simplechar = replacements[int(key[3:])]
-                            new_char = {"trans": val, # for the lack of a better alternative
-                                        "dipl_utf": val,
-                                        "anno_utf": val,
-                                        "anno_simple": simplechar,
-                                        "type": "w"}
+                        # elif key.startswith("inu"):
+                        #     _, _, simplechar = replacements[int(key[3:])]
+                        #     new_char = {"trans": val, # for the lack of a better alternative
+                        #                 "dipl_utf": val,
+                        #                 "anno_utf": val,
+                        #                 "anno_simple": simplechar,
+                        #                 "type": "w"}
                         elif key == "maj":
                             maj_letter = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
                                                 r"\1", val)
