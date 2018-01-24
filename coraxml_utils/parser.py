@@ -371,7 +371,7 @@ class RefParser(RexParser):
 
 #  TODO: finish converting to RexParser derivative
 class RemParser(RexParser):
-    def __init__(self):
+    def init_parser(self):
         self.ATOMIC_ILLEGIBLE = "<<...>>"
         self.ILLEGIBLE_REPLACEMENT = "[...]"
         self.missing_br_open = {'['}
