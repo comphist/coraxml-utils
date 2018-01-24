@@ -102,6 +102,6 @@ def add_punc_tags(token):
 def update_punct_pos(token):
     for m in token.tok_annos:
         if any(c["type"] == "p" for c in m.trans.parse):
-            if not m.tags.get("pos") or m.tags.get("pos") == DEFAULT_VAL:
-                m.tags.set("pos", "$(")
+            if m.tags.get("pos", DEFAULT_VAL) == DEFAULT_VAL:
+                m.tags["pos"] = "$("
     return token
