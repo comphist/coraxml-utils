@@ -7,7 +7,7 @@ from pathlib import Path
 from coraxml_utils.importer import create_importer
 from coraxml_utils.exporter import create_exporter
 from coraxml_utils.coralib import CoraToken
-from coraxml_utils.modifier import add_tokenization_tags, update_punct_pos
+from coraxml_utils.modifier import add_tokenization_tags, update_punct_pos, fill_annotation_column, change_tags
 
 
 if __name__ == "__main__":
@@ -32,11 +32,24 @@ if __name__ == "__main__":
 
         for tok in filter(lambda x: isinstance(x, CoraToken), doc.tokens):
 
-            # remove comment and boundary
             for tok_anno in tok.tok_annos:
+                # remove comment and boundary
                 tok_anno.tags.pop('comment', None)
                 tok_anno.tags.pop('boundary', None)
                 tok_anno.flags.discard('boundary')
+
+                # add "--" if morph is not set
+                fill_annotation_column(tok_anno, 'morph')
+                # set norm_broad to norm if it is not set
+                if 'norm' in tok_anno.tags:
+                    fill_annotation_column(tok_anno, 'norm_broad', tok_anno.tags['norm'])
+
+                # rename norm_type-tags
+                change_tags(tok_anno, 'norm_type', {
+                    'f': 'inflection',
+                    's': 'semantic',
+                    'x': 'extinct'
+                })
 
             # add tokenization tags
             tok = add_tokenization_tags(tok)
