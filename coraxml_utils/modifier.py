@@ -106,11 +106,11 @@ def update_punct_pos(token):
                 m.tags["pos"] = "$("
     return token
 
-## adds a default value if the token is not annotated with an annotation of the given type
 def fill_annotation_column(tok_anno, annotation_type, default_value="--"):
+    """Add a default value if the token is not annotated with an annotation of the given type."""
     tok_anno.tags[annotation_type] = tok_anno.tags.get(annotation_type, default_value)
 
-## change tags to a new value, specified with a dict
 def change_tags(tok_anno, annotation_type, rename_dict):
+    """Change certain tags of the given tpye to a new value that is specified in rename_dict."""
     if annotation_type in tok_anno.tags:
         tok_anno.tags[annotation_type] = rename_dict.get(tok_anno.tags[annotation_type], tok_anno.tags[annotation_type])
