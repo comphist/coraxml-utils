@@ -110,7 +110,7 @@ class SubtokenAnno:
         self.end = end_index
 
     def __str__(self):
-        return f"<'{self.type}' range=({self.start}, {self.end})>"
+        return "<'" + self.type + "' range=(" + self.start + ", " + self.end + ")>"
 
     def __repr__(self):
         return str(self)

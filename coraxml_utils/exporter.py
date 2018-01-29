@@ -69,7 +69,7 @@ class CoraXMLExporter:
             headerxmlstr = ET.fromstring(doc.header_string)
             header.append(headerxmlstr)
         else:
-            header.text = "\n".join(f"{key}:{value}" for key, value in doc.header)
+            header.text = "\n".join(key + ":" + value for key, value in doc.header)
     
 
         layoutinfo = ET.SubElement(root, "layoutinfo")

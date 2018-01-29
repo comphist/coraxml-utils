@@ -57,7 +57,7 @@ class BaseParser:
         invalid_chars = set(test_string) - self.allowed
 
         if invalid_chars:
-            raise ParseError(f"Transcription {obj.trans()} contains invalid characters: " +
+            raise ParseError("Transcription " + obj.trans() + " contains invalid characters: " +
                              str(sorted(invalid_chars)))
 
 
