@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     for filepath in args.infiles:
 
-        print(f"processing {filepath}...")
+        print("processing %s..." % filepath)
         doc = MyImporter.import_from_file(filepath)
 
         for tok in filter(lambda x: isinstance(x, CoraToken), doc.tokens):
@@ -52,7 +52,7 @@ if __name__ == "__main__":
                 })
 
             # add tokenization tags
-            tok = add_tokenization_tags(tok)
+            add_tokenization_tags(tok)
 
             # add punc tags
             # ANSELM: as yet no pre-edition punctuation 
@@ -60,13 +60,13 @@ if __name__ == "__main__":
             # tok = add_punc_tags(tok)
 
             # alle Satzzeichen (type = p) auf $( setzen (wenn noch nichts gesetzt)
-            tok = update_punct_pos(tok)
+            update_punct_pos(tok)
 
 
 
         output_xml = MyExporter.export(doc)
-
-        with open(Path(args.outpath) / f"{doc.sigle}.xml", "wb") as outfile:
+        outfilepath = str(Path(args.outpath) / (doc.sigle + ".xml"))
+        with open(outfilepath, "wb") as outfile:
             output_xml.write(outfile, xml_declaration=True,
                              pretty_print=True, encoding='utf-8')
 

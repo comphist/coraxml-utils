@@ -83,8 +83,8 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         word_re = r'(?P<w> \*f | \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
                             for i, (x, _, _) in enumerate(replacements) if x) 
-        inu_re = "|".join("(?P<inu{0}>".format(i) + x + ")"
-                            for i, (_, x, _) in enumerate(replacements) if x)
+        # inu_re = "|".join("(?P<inu{0}>".format(i) + x + ")"
+        #                     for i, (_, x, _) in enumerate(replacements) if x)
 
         # init_punc_re = r'(?P<ip> // | \*[Cf] )' 
         punc_re = r'(?P<p> %\. | / | ' + punc +')'
@@ -96,8 +96,8 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                             ',\(' + no_pq,
                                             ',,']) + ')'
         ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
-        # brackets_re = r'(?P<br> \[+ (?![ ]) | (?<![ ]) \]+ | <+ (?![ ]) | (?<![ ]) >+ )'
-        brackets_re = r'(?P<br> \[+ | \]+ | <+ | >+ )'
+        brackets_re = r'(?P<br> \[+ (?![ ]) | (?<![ ]) \]+ | <+ (?![ ]) | (?<![ ]) >+ )'
+        # brackets_re = r'(?P<br> \[+ | \]+ | <+ | >+ )'
         quotes_re = r'(?P<q> \( ' + quotes + r' \) | ' + quotes + ')'
         majuscule_re = r'(?P<maj> [*÷] [{(<]' + alpha + r'{,3} [*÷] \d* [})>] )'
         # majuscule_re = r'(?P<maj> [*÷] [{(<] | (?<= [*÷] [{(<] ' + alpha + r'+) [*÷] \d* [})>] )'
@@ -109,7 +109,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         self.re_parts = [spc_re, abbr_re, comm_re, majuscule_re,
                          editnum_re, splitter_re, ddash_re, quotes_re,
                          strk_re, preedit_re,
-                         ptk_marker_re, brackets_re, uni_re, punc_re, inu_re,
+                         ptk_marker_re, brackets_re, uni_re, punc_re,
                          word_re]
 
         # LIST OF ALLOWED CHARACTERS FOR validity check

@@ -1,8 +1,3 @@
-from typing import List
-
-# necessary??
-# from coraxml_utils.settings import *
-
 
 class BaseTrans:
 
@@ -78,7 +73,7 @@ class Trans(BaseTrans):
     #  validated on parsing, we can assume that all open 
     #  brackets are open due to tokenization and are not
     #  transcription errors)
-    def tokenize_anno(self) -> List[AnnoTrans]:
+    def tokenize_anno(self):
         output_tokens = list()
         stack = list()
         for i, c in enumerate(self.parse):
@@ -89,8 +84,7 @@ class Trans(BaseTrans):
         output_tokens.append(AnnoTrans(stack))
         return output_tokens
 
-
-    def tokenize_dipl(self) -> List[DiplTrans]:
+    def tokenize_dipl(self):
         output_tokens = list()
         stack = list()
         for i, c in enumerate(self.parse):
