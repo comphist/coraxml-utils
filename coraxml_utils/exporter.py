@@ -237,7 +237,7 @@ class GateJsonExporter:
                             open_shifttags[shifttag.tokens[-1]._id] = []
                         open_shifttags[shifttag.tokens[-1]._id].append((char_offset + 1 if char_offset > 0 else char_offset, shifttag))
 
-                for token_char in token.get_aligned_dipls_and_annos():
+                for token_char in token.trans.get_parse_with_tokenization():
                     if token_char['type'] == 'token_begin':
                         if 'dipl_id' in token_char:
                             ## add linebreak or whitespace
