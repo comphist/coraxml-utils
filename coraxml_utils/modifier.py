@@ -51,7 +51,6 @@ def add_tokenization_tags(token):
 
         if token_type and token_type != DEFAULT_VAL:
             m.tags["token_type"] = token_type
-    return token
 
 
 def add_punc_tags(token):
@@ -95,8 +94,6 @@ def add_punc_tags(token):
                 token.remove(m)
             except ValueError:
                 print(token.id)
-            
-    return token
 
 
 def update_punct_pos(token):
@@ -104,7 +101,6 @@ def update_punct_pos(token):
         if any(c["type"] == "p" for c in m.trans.parse):
             if m.tags.get("pos", DEFAULT_VAL) == DEFAULT_VAL:
                 m.tags["pos"] = "$("
-    return token
 
 def fill_annotation_column(tok_anno, annotation_type, default_value="--"):
     """Add a default value if the token is not annotated with an annotation of the given type."""
