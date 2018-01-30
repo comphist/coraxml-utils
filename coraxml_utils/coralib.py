@@ -123,7 +123,7 @@ class SubtokenAnno:
 
 class Document:
 
-    def __init__(self, sigle, name, header, pages, tokens, shifttags=None, header_string=None):
+    def __init__(self, sigle, name, header, pages, tokens, shifttags=None, header_string=None, annospans=None):
         self.sigle = sigle
         self.name = name
         self.header = header
@@ -132,6 +132,7 @@ class Document:
         self.pages = pages
         self.tokens = tokens
         self.shifttags = shifttags if shifttags else []
+        self.annospans = annospans if annospans else []
 
     def __bool__(self):
         return bool(self.pages and self.tokens)
