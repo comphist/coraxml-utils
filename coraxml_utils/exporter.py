@@ -237,67 +237,53 @@ class GateJsonExporter:
                             open_shifttags[shifttag.tokens[-1]._id] = []
                         open_shifttags[shifttag.tokens[-1]._id].append((char_offset + 1 if char_offset > 0 else char_offset, shifttag))
 
-                for token_char in token.trans.get_parse_with_tokenization():
-                    if token_char['type'] == 'token_begin':
-                        if 'dipl_id' in token_char:
-                            ## add linebreak or whitespace
-                            if token_char['dipl_id'] in line_beginnings:
-                                if last_line_offset is not None: ## ignore first linebreak
-                                    json_object['text'] += '\n'
-                                    char_offset += 1
-                                last_line_offset = char_offset
-                            else:
-                                json_object['text'] += ' '
-                                char_offset += 1
+                current_anno = None
+                current_dipl = None
 
-                            if token_char['dipl_id'] in page_beginnings:
-                                last_page_offset = char_offset
 
-                            if token_char['dipl_id'] in column_beginnings:
-                                last_column_offset = char_offset
+                token_chars = token.trans.get_parse_with_tokenization()
+                token_chars.insert(0, {'dipl_utf': '', 'dipl_boundary': True, 'anno_boundary': True})
+                token_chars.append({'dipl_utf': '', 'dipl_boundary': True, 'anno_boundary': True})
 
-                            ## update last dipl offset
-                            last_dipl_token_offset = char_offset
+                for token_char in token_chars:
+                    if 'dipl_boundary' in token_char:
 
-                        if 'anno_id' in token_char:
-                            last_anno_token_offset = char_offset
-
-                    elif token_char['type'] == 'token_end':
-
-                        if 'dipl_id' in token_char:
+                        if current_dipl:
+                            ## close last token
+                            last_dipl = current_dipl
                             ## add page annotation
-                            if token_char['dipl_id'] in page_ends:
+                            if last_dipl._id in page_ends:
                                 json_object['entities']['Layout:Page'].append(
                                     {
                                         'indices': [last_page_offset, char_offset],
-                                        'id': page_ends[token_char['dipl_id']].id,
-                                        'name': page_ends[token_char['dipl_id']].name,
-                                        'side': page_ends[token_char['dipl_id']].side
+                                        'id': page_ends[last_dipl._id].id,
+                                        'name': page_ends[last_dipl._id].name,
+                                        'side': page_ends[last_dipl._id].side
                                     }
                                 )
                             ## add column annotation
-                            if token_char['dipl_id'] in column_ends:
+                            if last_dipl._id in column_ends:
                                 json_object['entities']['Layout:Column'].append(
                                     {
                                         'indices': [last_column_offset, char_offset],
-                                        'id': column_ends[token_char['dipl_id']].id,
-                                        'name': column_ends[token_char['dipl_id']].name
+                                        'id': column_ends[last_dipl._id].id,
+                                        'name': column_ends[last_dipl._id].name
                                     }
                                 )
                             ## add line annotation
-                            if token_char['dipl_id'] in line_ends:
+                            if last_dipl._id in line_ends:
                                 json_object['entities']['Layout:Line'].append(
                                     {
                                         'indices': [last_line_offset, char_offset],
-                                        'id': line_ends[token_char['dipl_id']].id,
-                                        'name': line_ends[token_char['dipl_id']].name
+                                        'id': line_ends[last_dipl._id].id,
+                                        'name': line_ends[last_dipl._id].name
                                     }
                                 )
                             ## add dipl token annotation
                             tok_dipl = {
                                     'indices': [last_dipl_token_offset, char_offset],
                             }
-                            tok_dipl_object = tok_dipls.pop()
+                            tok_dipl_object = last_dipl
 
                             tok_dipl['trans'] = tok_dipl_object.trans.trans()
                             tok_dipl['utf'] = tok_dipl_object.trans.utf()
@@ -306,11 +292,35 @@ class GateJsonExporter:
 
                             json_object['entities']['Token:Dipl'].append(tok_dipl)
 
-                        if 'anno_id' in token_char:
+                        if tok_dipls:
+                            current_dipl = tok_dipls.pop()
+                            ## add linebreak or whitespace
+                            if current_dipl._id in line_beginnings:
+                                if last_line_offset is not None: ## ignore first linebreak
+                                    json_object['text'] += '\n'
+                                    char_offset += 1
+                                last_line_offset = char_offset
+                            else:
+                                ## TODO is this correct?
+                                json_object['text'] += ' '
+                                char_offset += 1
+
+                            if current_dipl._id in page_beginnings:
+                                last_page_offset = char_offset
+
+                            if current_dipl._id in column_beginnings:
+                                last_column_offset = char_offset
+
+                            ## update last dipl offset
+                            last_dipl_token_offset = char_offset
+
+                    if 'anno_boundary' in token_char:
+                        ### close last token
+                        if current_anno is not None:
                             tok_anno = {
                                     'indices': [last_anno_token_offset, char_offset],
                             }
-                            tok_anno_object = tok_annos.pop()
+                            tok_anno_object = current_anno
 
                             tok_anno['trans'] = tok_anno_object.trans.trans()
                             tok_anno['utf'] = tok_anno_object.trans.utf()
@@ -325,9 +335,14 @@ class GateJsonExporter:
                             tok_anno['flags'] = list(tok_anno_object.flags)
 
                             json_object['entities']['Token:Anno'].append(tok_anno)
-                    else:
-                        json_object['text'] += token_char['dipl_utf']
-                        char_offset += len(token_char['dipl_utf'])
+
+                        ### start new token
+                        if tok_annos:
+                            current_anno = tok_annos.pop()
+                            last_anno_token_offset = char_offset
+
+                    json_object['text'] += token_char['dipl_utf']
+                    char_offset += len(token_char['dipl_utf'])
 
                 ## add CoraToken annotation
                 json_object['entities']['Token:Cora'].append(
