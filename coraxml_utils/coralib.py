@@ -101,9 +101,10 @@ class Trans(BaseTrans):
         aligned_parse = list(self.parse)
         # add token boundaries to parse
         for bound_position in self.dipl_tok_bounds:
-            aligned_parse[bound_position]['dipl_boundary'] = True
+            aligned_parse[bound_position-1]['dipl_boundary'] = True
         for bound_position in self.anno_tok_bounds:
-            aligned_parse[bound_position]['anno_boundary'] = True
+            # print(bound_position)
+            aligned_parse[bound_position-1]['anno_boundary'] = True
         return aligned_parse
 
 

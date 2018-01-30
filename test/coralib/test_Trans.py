@@ -18,7 +18,7 @@ class TransTest(unittest.TestCase):
             {'trans': 's', 'anno_simple': 's', 'dipl_utf': 's', 'anno_utf': 's', 'type': 'w'},
             {'trans': 'e', 'anno_simple': 'e', 'dipl_utf': 'e', 'anno_utf': 'e', 'type': 'w'},
         ]
-        dipl_boundaries = [4]
+        dipl_boundaries = [5]
 
         expected_alignment = [
             {'trans': 't', 'anno_simple': 't', 'dipl_utf': 't', 'anno_utf': 't', 'type': 'w'},
@@ -52,7 +52,7 @@ class TransTest(unittest.TestCase):
             {'trans': 's', 'anno_simple': 's', 'dipl_utf': 's', 'anno_utf': 's', 'type': 'w'},
             {'trans': 'e', 'anno_simple': 'e', 'dipl_utf': 'e', 'anno_utf': 'e', 'type': 'w'},
         ]
-        anno_boundaries = [4]
+        anno_boundaries = [5]
 
         expected_alignment = [
             {'trans': 't', 'anno_simple': 't', 'dipl_utf': 't', 'anno_utf': 't', 'type': 'w'},
