@@ -29,3 +29,9 @@ class ParserTest(unittest.TestCase):
 
         tok = ParserTest._create_anselm_parse("hymel(=)reich")
         self.assertEquals(len(tok.tokenize_dipl()), 2)
+
+    def test_dot_above_split(self):
+        """Dot above (\.) should not be a separate anno token"""
+
+        tok = ParserTest._create_anselm_parse("fraw\.")
+        self.assertEquals(len(tok.tokenize_anno()), 1)
