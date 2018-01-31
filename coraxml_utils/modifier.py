@@ -18,11 +18,11 @@ def add_tokenization_tags(token):
 
         # multiverbation
         if switch_ML:
-            token_type = _add_val(token_type, "ML" + c)
+            token_type = _add_val(token_type, "ML" + str(c))
             switch_ML = False
             c += 1
         elif switch_MS:
-            token_type = _add_val(token_type, "MS" + c)
+            token_type = _add_val(token_type, "MS" + str(c))
             switch_MS = False
             c += 1
         elif any(c["trans"] == "=|" and c["type"] == "spl" 
