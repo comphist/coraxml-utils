@@ -37,6 +37,21 @@ class CoraXMLImporterTest(unittest.TestCase):
             create_importer('coraxml')._create_anno_token(anno_element)
         )
 
+    def test_anno_from_xml_with_trans_token_mismatch(self):
+
+        anno_element = ET.fromstring(
+            """<token id="t1324" trans="her#aws">
+                 <dipl id="t1324_d1" trans="her#aws" utf="heraws"/>
+                 <mod id="t1324_m1" trans="her#aws" utf="heraws" ascii="heraws" checked="y">
+                   <norm tag="heraus"/>
+                   <pos tag="PTKVZ"/>
+                   <lemma tag="heraus"/>
+                   <comment tag="vorher 2 Token: her + aws (KB) - eig. 1 Token (JN) #&gt;MATCH: heraws"/>
+                 </mod>
+               </token>""")
+
+        with self.assertLogs(None, 'ERROR'):
+            create_importer('coraxml', 'anselm')._create_cora_token(anno_element)
 
     def test_anno_with_doubled_tags(self):
 

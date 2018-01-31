@@ -109,6 +109,13 @@ class CoraXMLImporter:
             anno_tokens.append(self._create_anno_token(anno_element))
 
         parsed_token = self.tokenparser.parse(coratoken_element.attrib['trans'])
+
+        ## test if parse matches with number of dipl and anno elements
+        if len(parsed_token.tokenize_dipl()) != len(dipl_tokens):
+            logging.error("Parse does not match number of dipl tokens for token " + coratoken_element.attrib['id'])
+        if len(parsed_token.tokenize_anno()) != len(anno_tokens):
+            logging.error("Parse does not match number of anno tokens for token " + coratoken_element.attrib['id'])
+
         return CoraToken(parsed_token, dipl_tokens, anno_tokens, extid=coratoken_element.attrib['id'])
 
     def _get_range(self, element):
