@@ -75,6 +75,11 @@ class Trans(BaseTrans):
     #  transcription errors)
     def tokenize_anno(self):
         output_tokens = list()
+
+        ## if anno_utf is empty there are no anno tokens, e.g. in the case of deletions
+        if not "".join(c.get("anno_utf") for c in self.parse):
+            return output_tokens
+
         stack = list()
         for i, c in enumerate(self.parse):
             if i + 1 in self.anno_tok_bounds:

@@ -18,3 +18,9 @@ class ParserTest(unittest.TestCase):
 
         tok = ParserTest._create_anselm_parse("enpei$$en")
         self.assertEquals(tok.tokenize_anno()[0].simple(), "enpeissen")
+
+    def test_strikethrough_tokenization(self):
+        """Make sure that no mod-tokens are created if whole token is marked as strike through."""
+
+        tok = ParserTest._create_anselm_parse("*[$we$ter*]")
+        self.assertEquals(len(tok.tokenize_anno()), 0)
