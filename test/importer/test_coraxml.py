@@ -75,6 +75,3 @@ class CoraXMLImporterTest(unittest.TestCase):
             create_importer('coraxml')._create_cora_token(token_element)
         )
 
-class CoraXMLExporterTest(unittest.TestCase):
-
-    pass

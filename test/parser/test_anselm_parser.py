@@ -26,9 +26,25 @@ class ParserTest(unittest.TestCase):
         self.assertEquals(len(tok.tokenize_anno()), 0)
 
     def test_line_split_preedition(self):
+        """
+        Test handling of (=), should:
+        - only occur at line end (TODO)
+        - result in 2 dipls, 1 mod
+        - be tagged as UL
+        - not co-occur with M* symbols (TODO)
+        - not occur multiple times in succession (TODO)
+        """
 
         tok = ParserTest._create_anselm_parse("hymel(=)reich")
         self.assertEquals(len(tok.tokenize_dipl()), 2)
+
+        # co-occurence with `|` should result in an error
+        with self.assertRaises(ParseError):
+            ParserTest._create_anselm_parse("hymel(=)|reich")
+
+        with self.assertRaises(ParseError):
+            ParserTest._create_anselm_parse("hymel|(=)reich")
+
 
     def test_dot_above_split(self):
         """Dot above (\.) should not be a separate anno token"""

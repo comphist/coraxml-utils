@@ -302,7 +302,10 @@ class TransImporter:
 
         headertext = "\n".join(header_lines)
         header = parse_header(headertext)
-        sigle = re.search(r"[^:\s]:\s+([\w\d]+)", headertext).group(1)
+        try:
+            sigle = re.search(r"[^:\s]:\s+([\w\d]+)", headertext).group(1)
+        except AttributeError:
+            sigle = ""
 
         this_line = None
         this_col = None

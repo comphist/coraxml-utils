@@ -12,6 +12,12 @@ class ParserTest(unittest.TestCase):
         tok = PlainParser().parse(test_string)
         self.assertEquals(str(tok), test_string)
 
+    def test_basic_parsing_anselm(self):
+        """Make sure that parser preserves input transcription"""
+        test_string = "t[ok]en.(?)"
+        tok = AnselmParser().parse(test_string)
+        self.assertEquals(str(tok), test_string)    
+
     def test_tokenize_anno(self):
 
         tok = RefParser().parse("foo bar")
