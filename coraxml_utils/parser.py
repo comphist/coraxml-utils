@@ -306,6 +306,9 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
             if last_char["type"] == "spl" and last_char["trans"].endswith('#'):
                 dipl_tok_bounds.append(i)
 
+            if last_char["type"] == "spl" and last_char["trans"] == '(=)':
+                dipl_tok_bounds.append(i)
+
             if this_char["type"] == "dd":
                 dipl_tok_bounds.append(i)
 

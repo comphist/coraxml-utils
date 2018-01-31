@@ -24,3 +24,8 @@ class ParserTest(unittest.TestCase):
 
         tok = ParserTest._create_anselm_parse("*[$we$ter*]")
         self.assertEquals(len(tok.tokenize_anno()), 0)
+
+    def test_line_split_preedition(self):
+
+        tok = ParserTest._create_anselm_parse("hymel(=)reich")
+        self.assertEquals(len(tok.tokenize_dipl()), 2)
