@@ -241,9 +241,7 @@ class GateJsonExporter:
                 current_dipl = None
 
 
-                token_chars = token.trans.get_parse_with_tokenization()
-                token_chars.insert(0, {'dipl_utf': '', 'dipl_boundary': True, 'anno_boundary': True})
-                token_chars.append({'dipl_utf': '', 'dipl_boundary': True, 'anno_boundary': True})
+                token_chars = token.trans.get_parse_with_tokenization(outer_boundaries=True)
 
                 for token_char in token_chars:
                     if 'dipl_boundary' in token_char:
