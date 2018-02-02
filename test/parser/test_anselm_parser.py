@@ -45,9 +45,18 @@ class ParserTest(unittest.TestCase):
         with self.assertRaises(ParseError):
             ParserTest._create_anselm_parse("hymel|(=)reich")
 
+    def test_multiverbation(self):
+        tok = ParserTest._create_anselm_parse("dy\:|es")
+        self.assertEquals(len(tok.tokenize_dipl()), 1)
 
     def test_dot_above_split(self):
         """Dot above (\.) should not be a separate anno token"""
 
         tok = ParserTest._create_anselm_parse("fraw\.")
         self.assertEquals(len(tok.tokenize_anno()), 1)
+
+    def test_illgible_token(self):
+
+        tok = ParserTest._create_anselm_parse("<...>")
+        self.assertEquals(len(tok.tokenize_anno()), 1)
+        self.assertEquals(len(tok.tokenize_dipl()), 1)

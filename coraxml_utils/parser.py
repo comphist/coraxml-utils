@@ -334,7 +334,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                 anno_tok_bounds.append(i)
 
             # rule for periods (which can be periods or unreadable chars)
-            if (last_char["type"] not in {"spc", "spl"} and
+            if (last_char["type"] not in {"spc", "spl", "<"} and
                   this_char["trans"] == "." and 
                   next_char["type"] != "w" and 
                   this_char["trans"] != last_char["trans"] and # group same chars
