@@ -53,6 +53,29 @@ class CoraXMLImporterTest(unittest.TestCase):
         with self.assertLogs(None, 'ERROR'):
             create_importer('coraxml', 'anselm')._create_cora_token(anno_element)
 
+
+    def test_anno_from_xml_with_transcription_mismatch(self):
+
+        anno_element = ET.fromstring(
+            """<token id="t924" trans="hin#cz&#xFC;|hin">
+                 <dipl id="t924_d1" trans="hin#cz&#xFC;|" utf="hincz&#xFC;"/>
+                 <dipl id="t924_d2" trans="hin" utf="hin"/>
+                 <mod id="t924_m1" trans="hin#cz&#xFC;|" utf="hincz&#xFC;" ascii="hincz&#xFC;" checked="y">
+                   <comment tag="#&gt;DEL: hin #&gt;DEL: cz&#xFC; #&gt;DEL: hin #&gt;MATCH: cham"/>
+                   <norm tag="hinzu"/>
+                   <lemma tag="hinzu"/>
+                   <pos tag="PAV"/>
+                 </mod>
+                 <mod id="t924_m2" trans="hin" utf="hin" ascii="hin" checked="y">
+                   <norm tag="hin"/>
+                   <pos tag="PTKVZ"/>
+                   <lemma tag="hin"/>
+                 </mod>
+               </token>""")
+
+        with self.assertLogs(None, 'ERROR'):
+            create_importer('coraxml', 'anselm')._create_cora_token(anno_element)
+
     def test_anno_with_doubled_tags(self):
 
         anno_element = ET.fromstring('<mod id="t1_m1" trans="priuilegien" utf="priuilegien" ascii="priuilegien" checked="y"><pos tag="NA"/><pos tag="NA"/></mod>')
