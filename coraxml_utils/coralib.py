@@ -1,3 +1,4 @@
+from collections import defaultdict
 
 class BaseTrans:
 
@@ -100,7 +101,7 @@ class Trans(BaseTrans):
         output_tokens.append(DiplTrans(stack))
         return output_tokens
 
-    def get_parse_with_tokenization(self):
+    def get_parse_with_tokenization(self, outer_boundaries=False):
 
         # create copy
         aligned_parse = list(self.parse)
@@ -108,8 +109,12 @@ class Trans(BaseTrans):
         for bound_position in self.dipl_tok_bounds:
             aligned_parse[bound_position-1]['dipl_boundary'] = True
         for bound_position in self.anno_tok_bounds:
-            # print(bound_position)
             aligned_parse[bound_position-1]['anno_boundary'] = True
+
+        if outer_boundaries:
+            aligned_parse.insert(0, {'trans': '', 'type': '', 'dipl_utf': '', 'dipl_boundary': True, 'anno_boundary': True})
+            aligned_parse.append({'trans': '', 'type': '','dipl_utf': '', 'dipl_boundary': True, 'anno_boundary': True})
+
         return aligned_parse
 
 
@@ -125,6 +130,29 @@ class SubtokenAnno:
 
     def __repr__(self):
         return str(self)
+
+class IdentifiableObjectMixin:
+
+    id_counter = defaultdict(int)
+
+    def get_external_id(self):
+        if self.id:
+            return self.id
+        else:
+            return self.get_internal_id()
+
+    def get_internal_id(self):
+
+        return self._id
+
+    def _set_id(self, t, extid=""):
+
+        IdentifiableObjectMixin.id_counter[t] += 1
+        self._id = self._id = "{}{}".format(t, IdentifiableObjectMixin.id_counter[t])
+
+        ## TODO this is only to be compatible with existing code
+        ## id should no longer be used to get the id -> use get_external_id
+        self.id = extid if extid else self._id
 
 
 class Document:
@@ -144,14 +172,10 @@ class Document:
         return bool(self.pages and self.tokens)
 
 
-class Page:
-
-    c = 0
+class Page(IdentifiableObjectMixin):
 
     def __init__(self, name, side, columns, extid=""):
-        Page.c += 1
-        self._id = "p{0}".format(Page.c)
-        self.id = extid if extid else self._id
+        self._set_id("p", extid)
         self.name = name
         self.side = side
         self.columns = columns
@@ -168,14 +192,10 @@ class Page:
             return first.id
 
 
-class Column:
-
-    c = 0
+class Column(IdentifiableObjectMixin):
 
     def __init__(self, lines, name="", extid=""):
-        Column.c += 1
-        self._id = "c{0}".format(Column.c)
-        self.id = extid if extid else self._id
+        self._set_id("c", extid)
         self.name = name
         self.lines = lines
 
@@ -193,14 +213,10 @@ class Column:
             return ""
 
 
-class Line:
-
-    c = 0
+class Line(IdentifiableObjectMixin):
 
     def __init__(self, name, dipls, extid=""):
-        Line.c += 1
-        self._id = "l{0}".format(Line.c)
-        self.id = extid if extid else self._id
+        self._set_id("l", extid)
         self.name = name
         self.dipls = dipls
 
@@ -229,14 +245,10 @@ class Line:
             return first.id
 
 
-class CoraToken:
-
-    c = 0
+class CoraToken(IdentifiableObjectMixin):
 
     def __init__(self, trans, tok_dipls, tok_annos, extid=""):
-        CoraToken.c += 1
-        self._id = "t{0}".format(CoraToken.c)
-        self.id = extid if extid else self._id
+        self._set_id("t", extid)
         self.trans = trans
         self.tok_dipls = tok_dipls
         self.tok_annos = tok_annos
@@ -266,14 +278,10 @@ class CoraToken:
         else:
             self.tok_annos.extend(tok.tok_annos)
 
-class TokDipl:
-
-    c = 0
+class TokDipl(IdentifiableObjectMixin):
 
     def __init__(self, trans, extid=""):
-        TokDipl.c += 1
-        self._id = "d{0}".format(TokDipl.c)
-        self.id = extid if extid else self._id
+        self._set_id("d", extid)
         self.trans = trans
 
     def __str__(self):
@@ -291,18 +299,15 @@ class AnnotatableElement:
         self.flags = flags if flags else set()
 
 
-class TokAnno(AnnotatableElement):
+class TokAnno(AnnotatableElement, IdentifiableObjectMixin):
 
     ## TODO: move to coraxml_exporter, dialect="rem"
     # annos_order = ["norm", "token_type", "lemma", "lemma_gen", "lemma_idmwb",
     #                "pos", "pos_gen", "infl", "inflClass", "inflClass_gen",
     #                "punc", "link"]
-    c = 0
 
     def __init__(self, trans, extid="", tags=None, flags=None, checked=False):
-        TokAnno.c += 1
-        self._id = "a{0}".format(TokAnno.c)
-        self.id = extid if extid else self._id
+        self._set_id("a", extid)
         self.trans = trans
         self.checked = checked
         super().__init__(tags=tags, flags=flags)

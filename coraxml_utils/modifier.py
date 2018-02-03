@@ -102,7 +102,7 @@ def update_punct_pos(token):
             if m.tags.get("pos", DEFAULT_VAL) == DEFAULT_VAL:
                 m.tags["pos"] = "$("
 
-def fill_annotation_column(tok_anno, annotation_type, default_value="--"):
+def fill_annotation_column(tok_anno, annotation_type, default_value=DEFAULT_VAL):
     """Add a default value if the token is not annotated with an annotation of the given type."""
     tok_anno.tags[annotation_type] = tok_anno.tags.get(annotation_type, default_value)
 

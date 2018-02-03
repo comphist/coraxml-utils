@@ -16,6 +16,8 @@ def create_exporter(format="coraxml", options=None):
         return TransExporter()
     elif format == "gatejson":
         return GateJsonExporter()
+    elif format == "tei":
+        return TEIExporter()
     else:
         logging.error("No valid exporter selected")
 
@@ -161,6 +163,135 @@ def print_file(self):
         if line:
             print(bibstr + join_char.join(line).strip(), file=self.outfile)
 
+class TEIExporter:
+
+    def __init__(self):
+        pass
+
+    def _add_text(self, character):
+
+        if not character:
+            return
+
+        if not getattr(self._current_text_element, self._current_text_attribute):
+            setattr(self._current_text_element, self._current_text_attribute, '')
+
+        setattr(self._current_text_element, self._current_text_attribute,
+                getattr(self._current_text_element, self._current_text_attribute) + character)
+
+
+    def export(self, doc):
+
+        page = {}
+        column = {}
+        line = {}
+
+        text_root = ET.Element("text")
+        tei_root = etree.SubElement(text_root, "body")
+        tei_doc = ET.ElementTree(text_root)
+        current_parent = tei_root
+
+        ## the xml element to which characters are added
+        self._current_text_element = tei_root
+        ## characters have to added either to tail or to text
+        self._current_text_attribute = 'text'
+
+        ## get layoutinfo
+        for page_object in doc.pages:
+            page[page_object.columns[0].lines[0].dipls[0].get_internal_id()] = page_object.name + page_object.side
+        for column_object in [column for page in doc.pages for column in page.columns]:
+            column[column_object.lines[0].dipls[0].get_internal_id()] = column_object.name
+        for line_object in [line for page in doc.pages for column in page.columns for line in column.lines]:
+            line[line_object.dipls[0].get_internal_id()] = line_object.name
+
+        for token in doc.tokens:
+
+            if type(token) == CoraToken:
+
+                dipl_tokens = list(token.tok_dipls)
+                dipl_tokens.reverse()
+                anno_tokens = list(token.tok_annos)
+                anno_tokens.reverse()
+
+                token_chars = token.trans.get_parse_with_tokenization(outer_boundaries=True)
+                ## TODO subtok spans
+
+                for position, char in enumerate(token_chars):
+
+                    if 'anno_boundary' in char:
+                        current_parent = tei_root
+                        self._current_text_attribute = 'tail'
+
+                    if 'dipl_boundary' in char:
+
+                        if dipl_tokens:
+                            current_dipl = dipl_tokens.pop()
+
+                            ## test for line
+                            if current_dipl.get_internal_id() in line:
+
+                                ## test for column
+                                if current_dipl.get_internal_id() in column:
+
+                                    ## test for page
+                                    if current_dipl.get_internal_id() in page:
+                                        ## add page
+                                        etree.SubElement(current_parent, "pb", n=page[current_dipl.get_internal_id()])
+
+                                    ## add column
+                                    last_element = etree.SubElement(current_parent, "cb")
+                                    if column[current_dipl.get_internal_id()]:
+                                        last_element.attrib['n'] = column[current_dipl.get_internal_id()]
+
+                                ## add line
+                                self._current_text_element = etree.SubElement(current_parent, "lb", n=line[current_dipl.get_internal_id()])
+                                self._current_text_attribute = 'tail'
+
+                            ## test for univerbation without linebreak
+                            elif 'anno_boundary' not in char:
+                                self._current_text_element = etree.SubElement(current_parent, "space", quantity="1", unit="chars")
+                                self._current_text_attribute = 'tail'
+
+                        else:
+                            current_dipl = None
+
+
+                    ## TODO refactor multiverbation - part ("I", "M", "F") is missing
+                    if 'anno_boundary' in char:
+
+                        ## test for multiverbation -- part 1
+                        if 'dipl_boundary' not in char:
+                            ## TODO part!
+                            last_element = etree.SubElement(self._curr_anno_xml, "seg")
+                            last_element.text = self._curr_anno_xml.text
+                            self._curr_anno_xml.text = None
+
+
+                        if anno_tokens:
+                            self._curr_anno = anno_tokens.pop()
+                            self._curr_anno_xml = etree.SubElement(tei_root, "w", nsmap = {"id": self._curr_anno.get_external_id()}, ana=self._curr_anno.tags.get('pos', '--'), lemma=self._curr_anno.tags.get('lemme', '--'), tok=self._curr_anno.trans.simple())
+                            current_parent = self._curr_anno_xml
+                            self._current_text_element = current_parent
+                            self._current_text_attribute = 'text'
+
+
+                            ## test for multiverbation -- part 2
+                            if 'dipl_boundary' not in char:
+                                ## TODO part!
+                                self._current_text_element = etree.SubElement(current_parent, "seg")
+                                self._crrent_text_attribute = 'text'
+
+                        else:
+                            self._curr_anno = None
+
+                    self._add_text(char['dipl_utf'])
+
+            elif type(token) == CoraComment:
+                ## TODO what about type?
+                comment_element = etree.SubElement(tei_root, "comment", type="editorial")
+                comment_element.text = token.content
+
+        return tei_doc
 
 class GateJsonExporter:
 
@@ -241,9 +372,7 @@ class GateJsonExporter:
                 current_dipl = None
 
 
-                token_chars = token.trans.get_parse_with_tokenization()
-                token_chars.insert(0, {'dipl_utf': '', 'dipl_boundary': True, 'anno_boundary': True})
-                token_chars.append({'dipl_utf': '', 'dipl_boundary': True, 'anno_boundary': True})
+                token_chars = token.trans.get_parse_with_tokenization(outer_boundaries=True)
 
                 for token_char in token_chars:
                     if 'dipl_boundary' in token_char:
