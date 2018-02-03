@@ -87,7 +87,8 @@ class Trans(BaseTrans):
                 output_tokens.append(AnnoTrans(stack))
                 stack = list()
             stack.append(c)
-        output_tokens.append(AnnoTrans(stack))
+        if stack:
+            output_tokens.append(AnnoTrans(stack))
         return output_tokens
 
     def tokenize_dipl(self):
@@ -98,7 +99,8 @@ class Trans(BaseTrans):
                 output_tokens.append(DiplTrans(stack, subtoken=self.subtoken_annos))
                 stack = list()
             stack.append(c)
-        output_tokens.append(DiplTrans(stack))
+        if stack:
+            output_tokens.append(DiplTrans(stack))
         return output_tokens
 
     def get_parse_with_tokenization(self, outer_boundaries=False):

@@ -55,8 +55,17 @@ class ParserTest(unittest.TestCase):
         tok = ParserTest._create_anselm_parse("fraw\.")
         self.assertEquals(len(tok.tokenize_anno()), 1)
 
-    def test_illgible_token(self):
+    def test_illegible_token(self):
 
         tok = ParserTest._create_anselm_parse("<...>")
         self.assertEquals(len(tok.tokenize_anno()), 1)
         self.assertEquals(len(tok.tokenize_dipl()), 1)
+
+    def test_tokenization(self):
+
+        tok = ParserTest._create_anselm_parse("t<o>k#en(=)iz=a|tion%....")
+        self.assertEquals([x.simple() for x in tok.tokenize_anno()],
+                          ["tokeniza", "tion", ".", "..."])
+
+        self.assertEquals([str(x) for x in tok.tokenize_dipl() if x],
+                          ["t<o>k#", "en(=)", "iz=", "a|tion%...."])
