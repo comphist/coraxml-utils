@@ -336,8 +336,8 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
             # rule for periods (which can be periods or unreadable chars)
             if (last_char["type"] not in {"spc", "spl"} and
                   this_char["trans"] == "." and 
-                  next_char["type"] != "w" and 
                   this_char["trans"] != last_char["trans"] and # group same chars
+                  next_char["type"] != "w" and 
                   next_char["trans"] not in {'(=)', '#'} and
                    # tokenize when period not in missing char parens
                   (my_bracket not in self.missing_br_open or
