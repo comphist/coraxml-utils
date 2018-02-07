@@ -173,7 +173,7 @@ if __name__ == "__main__":
     if _: logging.warn("Unknown args: %s", _)
 
     MyImporter = create_importer("trans", args.parser)
-    MyExporter = create_exporter("coraxml", args.parser)
+    MyExporter = create_exporter("coraxml")
 
     doc = None
     if os.path.splitext(args.infile)[-1].lower() == '.docx':
