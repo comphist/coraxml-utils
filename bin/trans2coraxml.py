@@ -175,6 +175,7 @@ if __name__ == "__main__":
     MyImporter = create_importer("trans", args.parser)
     MyExporter = create_exporter("coraxml")
 
+    print("~BEGIN CHECK")
     doc = None
     if os.path.splitext(args.infile)[-1].lower() == '.docx':
         trans = importTextFromDocx(Path(args.infile))
@@ -183,15 +184,29 @@ if __name__ == "__main__":
         with open(args.infile, "r", encoding="utf-8") as infile:
             doc = MyImporter.import_from_string(infile.read().replace("\ufeff", ""))
 
+
     if doc:
-        output_xml = MyExporter.export(doc)
+        print("~SUCCESS CHECK")
 
-        if not args.outfile:
-            args.outfile = doc.sigle + ".xml"
+        print("~BEGIN XMLCALL")
+        try:
+            output_xml = MyExporter.export(doc)
 
-        with open(args.outfile, "wb") as outfile:
-            output_xml.write(outfile, xml_declaration=True,
-                             pretty_print=True, encoding='utf-8')
+            if not args.outfile:
+                args.outfile = doc.sigle + ".xml"
+
+            with open(args.outfile, "wb") as outfile:
+                output_xml.write(outfile, xml_declaration=True,
+                                 pretty_print=True, encoding='utf-8')
+
+        except Exception as e:
+            print("~ERROR XMLCALL")
+            print(str(e))
+            sys.exit(1)
 
     else:
-        print("document missing?")
+        print("~ERROR CHECK")
+        print("Dokument konnte nicht eingelesen werden.")
+
+
+    print("~SUCCESS XMLCALL")
