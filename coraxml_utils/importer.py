@@ -376,7 +376,7 @@ class TransImporter:
                   in_comment = True
                 elif re.match(r"@([KEZ])", tok):
                   in_comment = False
-                  tokens.append(CoraComment(tok[1], comment_stack))
+                  tokens.append(CoraComment(tok[1], " ".join(comment_stack)))
                   comment_stack = list()
 
                 # tokens
