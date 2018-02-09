@@ -363,6 +363,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
 class RediParser(RexParser):
     def init_parser(self):
         self.missing_br_open = {'[[', '<<'}
+        self.allowed.update("()")
 
 
 class AnselmParser(RexParser):
