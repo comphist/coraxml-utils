@@ -1,13 +1,10 @@
 
 import logging
 
-from lxml import etree
+from lxml import etree as ET
+
 from coraxml_utils.coralib import *
 
-try:
-    from lxml import etree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET
 
 def create_exporter(format="coraxml", options=None):
     if format == "coraxml":
@@ -190,7 +187,7 @@ class TEIExporter:
         line = {}
 
         text_root = ET.Element("text")
-        tei_root = etree.SubElement(text_root, "body")
+        tei_root = ET.SubElement(text_root, "body")
         tei_doc = ET.ElementTree(text_root)
         current_parent = tei_root
 
@@ -239,20 +236,20 @@ class TEIExporter:
                                     ## test for page
                                     if current_dipl.get_internal_id() in page:
                                         ## add page
-                                        etree.SubElement(current_parent, "pb", n=page[current_dipl.get_internal_id()])
+                                        ET.SubElement(current_parent, "pb", n=page[current_dipl.get_internal_id()])
 
                                     ## add column
-                                    last_element = etree.SubElement(current_parent, "cb")
+                                    last_element = ET.SubElement(current_parent, "cb")
                                     if column[current_dipl.get_internal_id()]:
                                         last_element.attrib['n'] = column[current_dipl.get_internal_id()]
 
                                 ## add line
-                                self._current_text_element = etree.SubElement(current_parent, "lb", n=line[current_dipl.get_internal_id()])
+                                self._current_text_element = ET.SubElement(current_parent, "lb", n=line[current_dipl.get_internal_id()])
                                 self._current_text_attribute = 'tail'
 
                             ## test for univerbation without linebreak
                             elif 'anno_boundary' not in char:
-                                self._current_text_element = etree.SubElement(current_parent, "space", quantity="1", unit="chars")
+                                self._current_text_element = ET.SubElement(current_parent, "space", quantity="1", unit="chars")
                                 self._current_text_attribute = 'tail'
 
                         else:
@@ -265,14 +262,14 @@ class TEIExporter:
                         ## test for multiverbation -- part 1
                         if 'dipl_boundary' not in char:
                             ## TODO part!
-                            last_element = etree.SubElement(self._curr_anno_xml, "seg")
+                            last_element = ET.SubElement(self._curr_anno_xml, "seg")
                             last_element.text = self._curr_anno_xml.text
                             self._curr_anno_xml.text = None
 
 
                         if anno_tokens:
                             self._curr_anno = anno_tokens.pop()
-                            self._curr_anno_xml = etree.SubElement(tei_root, "w", nsmap = {"id": self._curr_anno.get_external_id()}, ana=self._curr_anno.tags.get('pos', '--'), lemma=self._curr_anno.tags.get('lemme', '--'), tok=self._curr_anno.trans.simple())
+                            self._curr_anno_xml = ET.SubElement(tei_root, "w", nsmap = {"id": self._curr_anno.get_external_id()}, ana=self._curr_anno.tags.get('pos', '--'), lemma=self._curr_anno.tags.get('lemme', '--'), tok=self._curr_anno.trans.simple())
                             current_parent = self._curr_anno_xml
                             self._current_text_element = current_parent
                             self._current_text_attribute = 'text'
@@ -281,7 +278,7 @@ class TEIExporter:
                             ## test for multiverbation -- part 2
                             if 'dipl_boundary' not in char:
                                 ## TODO part!
-                                self._current_text_element = etree.SubElement(current_parent, "seg")
+                                self._current_text_element = ET.SubElement(current_parent, "seg")
                                 self._crrent_text_attribute = 'text'
 
                         else:
@@ -291,7 +288,7 @@ class TEIExporter:
 
             elif type(token) == CoraComment:
                 ## TODO what about type?
-                comment_element = etree.SubElement(tei_root, "comment", type="editorial")
+                comment_element = ET.SubElement(tei_root, "comment", type="editorial")
                 comment_element.text = token.content
 
         return tei_doc

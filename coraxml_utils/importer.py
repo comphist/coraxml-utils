@@ -11,10 +11,7 @@ from coraxml_utils.coralib import *
 from coraxml_utils.settings import BIBINFO_FORMAT
 import coraxml_utils.parser as parser
 
-try:
-    from lxml import etree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET
+from lxml import etree as ET
 
 
 dialect_mapper = {None: parser.PlainParser,
