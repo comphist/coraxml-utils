@@ -159,7 +159,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                 
                     if val == "*[":
                         new_char = Strikethrough(val, opening=True)
-                        open_spans[Strikethrough].append(match.start())
+                        open_spans["*["].append(match.start())
                     elif val == "*]":
                         if "*[" in open_spans:
                             closing = open_spans["*["].pop()
