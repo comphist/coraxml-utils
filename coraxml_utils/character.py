@@ -296,6 +296,11 @@ class Bracket(MetaChar):
         self.opening = True
         super().__init__(_trans, **kwargs)
 
+class Illegible(Bracket):
+    pass
+
+class Strikethrough(Bracket):
+    pass
 
 class SentBound(MetaChar):
     """ehemalig 'pe' """
