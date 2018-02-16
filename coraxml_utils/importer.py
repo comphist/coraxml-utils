@@ -11,10 +11,7 @@ from coraxml_utils.coralib import *
 from coraxml_utils.settings import BIBINFO_FORMAT
 import coraxml_utils.parser as parser
 
-try:
-    from lxml import etree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET
+from lxml import etree as ET
 
 
 dialect_mapper = {None: parser.PlainParser,
@@ -279,6 +276,8 @@ class TransImporter:
     #   script) -- aka. *checking is default behavior*, new script does conversion
     def import_from_string(self, intext):
 
+        valid_transcription = True
+
         name = str()  # ???
         pages = list()
         columns = list()
@@ -373,7 +372,7 @@ class TransImporter:
                   in_comment = True
                 elif re.match(r"@([KEZ])", tok):
                   in_comment = False
-                  tokens.append(CoraComment(tok[1], comment_stack))
+                  tokens.append(CoraComment(tok[1], " ".join(comment_stack)))
                   comment_stack = list()
 
                 # tokens
@@ -386,7 +385,7 @@ class TransImporter:
                         except parser.ParseError as e:
                             logging.error("Line could not be parsed: %s", line)
                             print(e.message)
-                            sys.exit(1)
+                            valid_transcription = False
 
                         my_tok_dipls = list()
                         my_tok_annos = list()
@@ -427,4 +426,7 @@ class TransImporter:
             # at end of line 
             line_stack.append(Line(linename, this_line_dipls))
 
-        return Document(sigle, name, header, pages, tokens, shifttags, headertext)
+        if valid_transcription:
+            return Document(sigle, name, header, pages, tokens, shifttags, headertext)
+        else:
+            return None

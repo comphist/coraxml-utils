@@ -5,10 +5,7 @@ from coraxml_utils.parser import PlainParser
 from coraxml_utils.importer import create_importer
 from coraxml_utils.exporter import create_exporter
 
-try:
-    from lxml import etree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET
+from lxml import etree as ET
 
 class CoraXMLImporterTest(unittest.TestCase):
 
