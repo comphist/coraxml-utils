@@ -266,6 +266,11 @@ class TextChar(Char):
     """Entspricht ehemaliges 'w' """
     pass
 
+class Majuscule(TextChar):
+    def __init__(self, _trans, size, dipl_utf="", anno_utf="", anno_simple=""):
+
+        super(Majuscule, self).__init__(_trans, dipl_utf, anno_utf, anno_simple)
+        self.size = size
 
 class Whitespace:
     def __init__(self, _trans):

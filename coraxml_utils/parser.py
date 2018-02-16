@@ -215,7 +215,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                 new_char = TextChar(val, dipl_utf=utfchar, anno_utf=utfchar, 
                                                     anno_simple=simplechar)
                         elif key == "maj":
-                            maj_match = re.search(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷](\d*)[})>]")
+                            maj_match = re.search(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷](\d*)[})>]", val)
                             maj_letter = maj_match.group(1)
                             mysize = maj_match.group(2)
 
