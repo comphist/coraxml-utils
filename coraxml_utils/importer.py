@@ -14,18 +14,10 @@ import coraxml_utils.parser as parser
 from lxml import etree as ET
 
 
-dialect_mapper = {None: parser.PlainParser,
-                  "plain": parser.PlainParser,
-                  "rem": parser.RemParser,
-                  "ref": parser.RefParser,
-                  "redi": parser.RediParser,
-                  "anselm": parser.AnselmParser}
-
-
 def create_importer(file_format, dialect=None, **kwargs):
     if file_format == 'coraxml':
-        if dialect in dialect_mapper:
-            cora_importer = CoraXMLImporter(dialect_mapper[dialect])
+        if dialect in parser.dialect_mapper:
+            cora_importer = CoraXMLImporter(parser.dialect_mapper[dialect])
             if dialect == 'rem':
                 cora_importer.tok_dipl_tag = 'tok_dipl'
                 cora_importer.tok_anno_tag = 'tok_anno'
@@ -33,8 +25,8 @@ def create_importer(file_format, dialect=None, **kwargs):
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
     elif file_format == "trans":
-        if dialect in dialect_mapper:
-            return TransImporter(dialect_mapper[dialect], kwargs)
+        if dialect in parser.dialect_mapper:
+            return TransImporter(parser.dialect_mapper[dialect], kwargs)
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
     else:

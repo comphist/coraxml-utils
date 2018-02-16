@@ -445,3 +445,14 @@ class PlainParser(BaseParser):
             result = Trans(myparse, subtoken=subtoken_spans)
         self.validate(result)  # throws ParseError
         return result
+
+
+
+## List of parser for given dialects
+dialect_mapper = {None: PlainParser,
+                  "plain": PlainParser,
+                  "rem": RemParser,
+                  "ref": RefParser,
+                  "redi": RediParser,
+                  "anselm": AnselmParser}
+
