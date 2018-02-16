@@ -4,6 +4,7 @@ import logging
 from lxml import etree as ET
 
 from coraxml_utils.coralib import *
+from coraxml_utils.character import *
 
 
 def create_exporter(format="coraxml", options=None):
@@ -213,16 +214,21 @@ class TEIExporter:
                 anno_tokens = list(token.tok_annos)
                 anno_tokens.reverse()
 
-                token_chars = token.trans.get_parse_with_tokenization(outer_boundaries=True)
+                token_chars = [Char('')] + token.trans.parse + [Char('')]
+                token_chars[0].anno_bound = True
+                token_chars[-1].anno_bound = True
+
+                token_chars[0].dipl_bound = True
+                token_chars[-1].dipl_bound = True
                 ## TODO subtok spans
 
                 for position, char in enumerate(token_chars):
 
-                    if 'anno_boundary' in char:
+                    if char.anno_bound:
                         current_parent = tei_root
                         self._current_text_attribute = 'tail'
 
-                    if 'dipl_boundary' in char:
+                    if char.dipl_bound:
 
                         if dipl_tokens:
                             current_dipl = dipl_tokens.pop()
@@ -248,7 +254,7 @@ class TEIExporter:
                                 self._current_text_attribute = 'tail'
 
                             ## test for univerbation without linebreak
-                            elif 'anno_boundary' not in char:
+                            elif not char.anno_bound:
                                 self._current_text_element = ET.SubElement(current_parent, "space", quantity="1", unit="chars")
                                 self._current_text_attribute = 'tail'
 
@@ -257,10 +263,10 @@ class TEIExporter:
 
 
                     ## TODO refactor multiverbation - part ("I", "M", "F") is missing
-                    if 'anno_boundary' in char:
+                    if char.anno_bound:
 
                         ## test for multiverbation -- part 1
-                        if 'dipl_boundary' not in char:
+                        if not char.dipl_bound:
                             ## TODO part!
                             last_element = ET.SubElement(self._curr_anno_xml, "seg")
                             last_element.text = self._curr_anno_xml.text
@@ -269,14 +275,14 @@ class TEIExporter:
 
                         if anno_tokens:
                             self._curr_anno = anno_tokens.pop()
-                            self._curr_anno_xml = ET.SubElement(tei_root, "w", nsmap = {"id": self._curr_anno.get_external_id()}, ana=self._curr_anno.tags.get('pos', '--'), lemma=self._curr_anno.tags.get('lemme', '--'), tok=self._curr_anno.trans.simple())
+                            self._curr_anno_xml = ET.SubElement(tei_root, "w", nsmap = {"id": self._curr_anno.get_external_id()}, ana=self._curr_anno.tags.get('pos', '--'), lemma=self._curr_anno.tags.get('lemma', '--'), tok=self._curr_anno.trans.simple())
                             current_parent = self._curr_anno_xml
                             self._current_text_element = current_parent
                             self._current_text_attribute = 'text'
 
 
                             ## test for multiverbation -- part 2
-                            if 'dipl_boundary' not in char:
+                            if not char.dipl_bound:
                                 ## TODO part!
                                 self._current_text_element = ET.SubElement(current_parent, "seg")
                                 self._crrent_text_attribute = 'text'
@@ -284,7 +290,7 @@ class TEIExporter:
                         else:
                             self._curr_anno = None
 
-                    self._add_text(char['dipl_utf'])
+                    self._add_text(char.dipl_utf)
 
             elif type(token) == CoraComment:
                 ## TODO what about type?
@@ -372,10 +378,15 @@ class GateJsonExporter:
                 current_dipl = None
 
 
-                token_chars = token.trans.get_parse_with_tokenization(outer_boundaries=True)
+                token_chars = [Char('')] + token.trans.parse + [Char('')]
+                token_chars[0].anno_bound = True
+                token_chars[-1].anno_bound = True
+
+                token_chars[0].dipl_bound = True
+                token_chars[-1].dipl_bound = True
 
                 for token_char in token_chars:
-                    if 'dipl_boundary' in token_char:
+                    if token_char.dipl_bound:
 
                         if current_dipl:
                             ## close last token
@@ -443,7 +454,7 @@ class GateJsonExporter:
                             ## update last dipl offset
                             last_dipl_token_offset = char_offset
 
-                    if 'anno_boundary' in token_char:
+                    if token_char.anno_bound:
                         ### close last token
                         if current_anno is not None:
                             tok_anno = {
@@ -470,8 +481,8 @@ class GateJsonExporter:
                             current_anno = tok_annos.pop()
                             last_anno_token_offset = char_offset
 
-                    json_object['text'] += token_char['dipl_utf']
-                    char_offset += len(token_char['dipl_utf'])
+                    json_object['text'] += token_char.dipl_utf
+                    char_offset += len(token_char.dipl_utf)
 
                 ## add CoraToken annotation
                 json_object['entities']['Token:Cora'].append(

@@ -108,25 +108,6 @@ class Trans(BaseTrans):
             output_tokens.append(DiplTrans(stack))
         return output_tokens
 
-    def get_parse_with_tokenization(self, outer_boundaries=False):
-
-        # create copy
-        aligned_parse = list(self.parse)
-        # add token boundaries to parse
-        for bound_position in self.dipl_tok_bounds:
-            aligned_parse[bound_position-1]['dipl_boundary'] = True
-        for bound_position in self.anno_tok_bounds:
-            aligned_parse[bound_position-1]['anno_boundary'] = True
-
-        if outer_boundaries:
-            aligned_parse.insert(0, {'trans': '', 'type': '', 'dipl_utf': '', 
-                                     'dipl_boundary': True, 'anno_boundary': True})
-            aligned_parse.append({'trans': '', 'type': '','dipl_utf': '', 
-                                  'dipl_boundary': True, 'anno_boundary': True})
-
-        return aligned_parse
-
-
 class SubtokenAnno:
 
     def __init__(self, mytype, start_index, end_index):
