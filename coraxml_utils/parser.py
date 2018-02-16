@@ -410,18 +410,10 @@ class PlainParser(BaseParser):
 
     def tokenize(self, some_parse, split_init_punc=True):
 
-        dipl_tok_bounds = list()
-        anno_tok_bounds = list()
+        some_parse[-1].dipl_bound = True
+        some_parse[-1].anno_bound = True
 
-        for i in range(0, len(some_parse) - 1):
-
-            # tokenize on whitespace
-            if some_parse[i]["type"] == "spc":
-                ## why + 2?
-                anno_tok_bounds.append(i + 2)
-                dipl_tok_bounds.append(i + 2)
-
-        return dipl_tok_bounds, anno_tok_bounds
+        return some_parse
 
     def parse(self, intoken, output_type="trans"):
         """
@@ -436,11 +428,11 @@ class PlainParser(BaseParser):
         for match in re.finditer(self.token_re, intoken):
             for key, val in match.groupdict().items():
                 if val:
-                    new_char = {"trans": val,
-                                "dipl_utf": val,
-                                "anno_utf": val,
-                                "anno_simple": val,
-                                "type": key}
+                    if key == "w":
+                        new_char = TextChar(val, dipl_utf=val, anno_utf=val,
+                                            anno_simple=val)
+                    else:
+                        raise ParseError("Something went wrong!")
 
                     myparse.append(new_char)
 
@@ -449,9 +441,7 @@ class PlainParser(BaseParser):
         elif output_type.startswith("anno"):
             result = AnnoTrans(myparse)
         else:
-            dipl_spl, anno_spl = self.tokenize(myparse)
-            result = Trans(myparse, 
-                           anno_splits=anno_spl, dipl_splits=dipl_spl,
-                           subtoken=subtoken_spans)
+            myparse = self.tokenize(myparse)
+            result = Trans(myparse, subtoken=subtoken_spans)
         self.validate(result)  # throws ParseError
         return result
