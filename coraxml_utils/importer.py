@@ -315,9 +315,6 @@ class TransImporter:
         except AttributeError:
             sigle = ""
 
-        this_line = None
-        this_col = None
-        this_page = None
         last_page = None
         last_side = None
         last_col = None
@@ -424,8 +421,8 @@ class TransImporter:
                                 shifttag_stack.append(t)
                         
                         if new_token.parse:
-                            join_next_mods = new_token.parse[-1]["trans"] in {"(=)", "="}
-                            join_next_dipls = new_token.parse[-1]["trans"] in {"=|"}
+                            join_next_mods = isinstance(new_token.parse[-1], Joiner)
+                            join_next_dipls = isinstance(new_token.parse[-1], DiplJoiner)
 
             # at end of line 
             line_stack.append(Line(linename, this_line_dipls))

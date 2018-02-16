@@ -244,3 +244,70 @@ replacements = [
 
  
 ]
+
+
+
+class Char:
+
+    def __init__(self, _trans, dipl_utf="", anno_utf="", anno_simple=""):
+        self.string = _trans
+        self.dipl_utf = dipl_utf
+        self.anno_utf = anno_utf
+        self.anno_simple = anno_simple
+        self.anno_bound = False
+        self.dipl_bound = False
+        self.line_break = False
+
+    def __str__(self):
+        return "{0}({1})".format(self.__class__.__name__, self.string)
+
+
+class TextChar(Char):
+    """Entspricht ehemaliges 'w' """
+    pass
+
+
+class Whitespace:
+    def __init__(self, _trans):
+        self.string = _trans
+        self.dipl_utf = _trans
+        self.anno_utf = _trans
+        self.anno_simple = _trans
+
+
+class Joiner:
+    pass
+
+
+class Hyphen(TextChar, Joiner):
+    """ehemalig 'dd' """
+    pass
+
+class Punct(Char):
+    """ehemalig 'p' """
+    pass
+
+class MetaChar(Char):
+    """ehemalig ptk, editnum, ill, br, maj, etc. """
+    pass
+
+class Bracket(MetaChar):
+    def __init__(self, _trans, opening=True, **kwargs):
+        self.opening = True
+        super().__init__(_trans, **kwargs)
+
+
+class SentBound(MetaChar):
+    """ehemalig 'pe' """
+    pass
+
+class TokenBound(MetaChar):
+    """ehemalig 'spl' """
+    pass
+
+class EditHyphen(TokenBound, Joiner):
+    pass
+
+
+class DiplJoiner(TokenBound):
+    pass

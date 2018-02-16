@@ -7,7 +7,7 @@ logger = logging.getLogger()
 
 from collections import defaultdict
 
-from coraxml_utils.character import replacements
+from coraxml_utils.character import *
 from coraxml_utils.coralib import Trans, DiplTrans, AnnoTrans, SubtokenAnno
 
 MEDIUS = "\u00b7"
@@ -41,10 +41,9 @@ class BaseParser:
         # and %[A-Z] which is code for a superscript capital
         # note that superscript capitals are unchanged because unicode does
         # not support superscripting of arbitrary characters
-        test_string = "".join(c["anno_simple"] 
+        test_string = "".join(c.anno_simple
                               for c in obj.parse
-                              if c.get("type") not in {"pe", "ptk", "edit", "spl",
-                                                       "[", "[[", "<", "<<", "abbr"})
+                              if not isinstance(c, MetaChar))
         if isinstance(self, RediParser):
             test_string = re.sub(r"{[1-9][0-9]?}", "", test_string)
         else:
@@ -159,118 +158,95 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                         myparse.append({"trans": val, "type": "w"})         
                                 
                     if val == "*[":
-                        open_spans[val].append(match.start())
-                        new_char = {"trans": val, 
-                                    "dipl_utf": "",
-                                    "anno_utf": "",
-                                    "anno_simple": "",
-                                    "type": "*["}
-
+                        new_char = Strikethrough(val, opening=True)
+                        open_spans[Strikethrough].append(match.start())
                     elif val == "*]":
-                        if open_spans["*["]:
+                        if "*[" in open_spans:
                             closing = open_spans["*["].pop()
                         else:
                             raise ParseError("Closed *] is not opened: " + intoken)
                         subtoken_spans.append(SubtokenAnno("*[", closing, match.end()))
-                        new_char = {"trans": val, 
-                                    "dipl_utf": "",
-                                    "anno_utf": "",
-                                    "anno_simple": "",
-                                    "type": "*["}
-
+                        new_char = Strikethrough(val, opening=True)
                     elif val in {"<", "<<"}:
                         open_spans[val].append(match.start())
-                        new_char = {"trans": val, 
-                                    "dipl_utf": "",
-                                    "anno_utf": "",
-                                    "anno_simple": "",
-                                    "type": val}
+                        new_char = Illegible(val, opening=True)
                     elif val in {">", ">>"}:
                         openbr = flip_bracket(val)
                         closing = open_spans[openbr].pop()
                         subtoken_spans.append(SubtokenAnno(openbr, closing, match.end()))
-                        new_char = {"trans": val, 
-                                    "dipl_utf": "",
-                                    "anno_utf": "",
-                                    "anno_simple": "",
-                                    "type": openbr}
+                        new_char = Illegible(val, opening=False)
                     elif val in {"[", "[["}:
                         open_spans[val].append(match.start())
-                        new_char = {"trans": val, 
-                                    "dipl_utf": self.ILLEGIBLE_REPLACEMENT,
-                                    "anno_utf": self.ILLEGIBLE_REPLACEMENT,
-                                    "anno_simple": "",
-                                    "type": val}
+                        new_char = Illegible(val, opening=True,
+                                             dipl_utf=self.ILLEGIBLE_REPLACEMENT,
+                                             anno_utf=self.ILLEGIBLE_REPLACEMENT)
                     elif val in {"]", "]]"}:
                         openbr = flip_bracket(val)
                         if open_spans[openbr]:
                             closing = open_spans[openbr].pop()
                         else:
                             raise ParseError("Closing bracket is not opened: " + intoken)
-                        subtoken_spans.append(SubtokenAnno(openbr, closing, match.end()))                        
-                        new_char = {"trans": val,
-                                    "dipl_utf": "",
-                                    "anno_utf": "",
-                                    "anno_simple": "",
-                                    "type": openbr}
+                        subtoken_spans.append(SubtokenAnno(openbr, closing, match.end())) 
+                        new_char = Illegible(val, opening=False)
 
                     elif key == "dd":
-                        new_char = {"trans": val,
-                                    "dipl_utf": val,
-                                    "anno_utf": "",
-                                    "anno_simple": "",
-                                    "type": "dd"}
+                        new_char = Hyphen(val, dipl_utf=val)
                     elif key in {"pe", "q"}:
-                        new_char = {"trans": val,
-                                    "dipl_utf": "",
-                                    "anno_utf": val,
-                                    "anno_simple": val,
-                                    "type": key}
-                    elif key in {"ptk", "spl"} or val == "*f":
-                        new_char = {"trans": val,
-                                    "dipl_utf": "",
-                                    "anno_utf": "",
-                                    "anno_simple": "",
-                                    "type": key}
+                        # TODO: what to do with qmarks? not sent bounds?
+                        new_char = SentBound(val, anno_utf=val, anno_simple=val)
+                    elif key == "ptk" or val == "*f":
+                        new_char = MetaChar(val)
 
+                    elif key == "spl":
+                        if key == "(=)":
+                            new_char = EditHyphen(val)
+                        elif key == "=|":
+                            new_char = DiplJoiner(val)
+                        else:
+                            new_char = TokenBound(val)
                     else:
                         if key.startswith("uni"):
                             _, utfchar, simplechar = replacements[int(key[3:])]
-                            new_char = {"trans": val,
-                                        "dipl_utf": utfchar,
-                                        "anno_utf": utfchar,
-                                        "anno_simple": simplechar,
-                                        # special case for punc w/ utf conversions
-                                        "type": "p" if val != "\\." and "." in val or "·" in val else "w"}
-                        # elif key.startswith("inu"):
-                        #     _, _, simplechar = replacements[int(key[3:])]
-                        #     new_char = {"trans": val, # for the lack of a better alternative
-                        #                 "dipl_utf": val,
-                        #                 "anno_utf": val,
-                        #                 "anno_simple": simplechar,
-                        #                 "type": "w"}
+                            # special case for punc w/ utf conversions
+                            if val != "\\." and "." in val or "·" in val:
+                                new_char = Punct(val, dipl_utf=utfchar, anno_utf=utfchar,
+                                                 anno_simple=simplechar)
+                            else:
+                                new_char = TextChar(val, dipl_utf=utfchar, anno_utf=utfchar, 
+                                                    anno_simple=simplechar)
                         elif key == "maj":
-                            maj_letter = re.sub(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷]\d*[})>]", 
-                                                r"\1", val)
-                            new_char = {"trans": val,
-                                        "dipl_utf": maj_letter.replace("$", "\u017F"),
-                                        "anno_utf": maj_letter.replace("$", "\u017F"),
-                                        "anno_simple": maj_letter.replace("$", "s"),
-                                        "type": key}
+                            maj_match = re.search(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷](\d*)[})>]")
+                            maj_letter = maj_match.group(1)
+                            mysize = maj_match.group(2)
+
+                            new_char = Majuscule(val, size=mysize,
+                                                 dipl_utf=maj_letter.replace("$", "\u017F"),
+                                                 anno_utf=maj_letter.replace("$", "\u017F"),
+                                                 anno_simple=maj_letter.replace("$", "s"))
                         else:
-                            new_char = {"trans": val,
-                                        "dipl_utf": val,
-                                        "anno_utf": val,
-                                        "anno_simple": val,
-                                        "type": key}
+                            if key == "w":
+                                new_char = TextChar(val, dipl_utf=val, anno_utf=val,
+                                                    anno_simple=val)
+                            elif key == "edit":
+                                new_char = MetaChar(val, dipl_utf=val, anno_utf=val,
+                                                    anno_simple=val)                        
+                            elif key == "p":
+                                # TODO: need some way to recognize periods that stand for missing
+                                        # chars at this point!
+                                new_char = Punct(val, dipl_utf=val, anno_utf=val,
+                                                    anno_simple=val)
+                            else:
+                                ParseError("Unknown key: " + key)
 
                         # process open spans (omit illegible chars as required)
                         if open_spans["["] or open_spans["[["]:
-                            new_char["dipl_utf"] = ""
-                            new_char["anno_utf"] = ""
+                            new_char.dipl_utf = ""
+                            new_char.anno_utf = ""
+                            new_char.illegible = True
                         elif open_spans["*["]:
-                            new_char["anno_utf"] = ""
-                            new_char["anno_simple"] = ""
+                            new_char.anno_utf = ""
+                            new_char.anno_simple = ""
+                            new_char.strikethrough = True
 
                     myparse.append(new_char)
 
@@ -282,81 +258,59 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         elif output_type.startswith("anno"):
             result = AnnoTrans(myparse)
         else:
-            dipl_spl, anno_spl = self.tokenize(myparse)
-            result = Trans(myparse, 
-                           anno_splits=anno_spl, dipl_splits=dipl_spl,
-                           subtoken=subtoken_spans)
+            myparse = self.tokenize(myparse)
+            result = Trans(myparse, subtoken=subtoken_spans)
         self.validate(result)  # throws ParseError
         return result
         
 
     def tokenize(self, some_parse, split_init_punc=True):
 
-        padded_parse = ([{"trans": "", "type": "spc"}] + 
-                        some_parse + 
-                        [{"trans": "", "type": "spc"}])
-        dipl_tok_bounds = list()
-        anno_tok_bounds = list()
+        padded_parse = [Whitespace("")] + some_parse + [Whitespace("")]
 
         for i in range(1, len(padded_parse) - 1):
             last_char, this_char, next_char = padded_parse[i-1:i+2]
 
-            my_bracket = this_char.get("br")
+            if isinstance(last_char, TokenBound):
+                if last_char.string.endswith('#'):
+                    this_char.dipl_bound = True
 
-            if last_char["type"] == "spl" and last_char["trans"].endswith('#'):
-                dipl_tok_bounds.append(i)
+                elif last_char.string == '(=)':
+                    this_char.dipl_bound = True
 
-            if last_char["type"] == "spl" and last_char["trans"] == '(=)':
-                dipl_tok_bounds.append(i)
+                # word split "foo|bar"
+                elif last_char.string.endswith("|"):
+                    this_char.anno_bound = True
 
-            if last_char["type"] == "dd":
-                dipl_tok_bounds.append(i)
+            if isinstance(last_char, Hyphen):
+                this_char.dipl_bound = True
 
-            # word split "foo|bar"
-            if last_char["type"] == "spl" and last_char["trans"].endswith("|"):
-                anno_tok_bounds.append(i)
-
-            if split_init_punc:
-                # initial punctuation "//foo"
-                if last_char["type"] in {"ip", "q"}:
-                    anno_tok_bounds.append(i)
+            #  TODO: reactivate/update (esp. for REM)
+            # if split_init_punc:
+            #     # initial punctuation "//foo"
+            #     if last_char["type"] in {"ip", "q"}:
+            #         anno_tok_bounds.append(i)
 
             # other initial punctuation
-            if (last_char["type"] in {"spc", None} and
-                this_char["type"] == "p" and this_char["trans"] != "." and 
-                next_char["type"] == "w"):
-                anno_tok_bounds.append(i)
+            if (isinstance(last_char, Whitespace) and
+                isinstance(this_char, Punct) and 
+                isinstance(next_char, TextChar)):
+                next_char.anno_bound = True
 
             # final punctuation  "foo%." (NOT "f%.oo")
-            if (last_char["type"] not in {"br", "spc", "spl"} and
-                this_char["type"] in {"ip", "p", "pe", "q"} and this_char["trans"] != '.' and
-                next_char["type"] != "w" and next_char["trans"] not in {'(=)', '#'}):
-                anno_tok_bounds.append(i)
+            if (isinstance(last_char, TextChar) and
+                isinstance(this_char, Punct) and
+                not isinstance(next_char, TextChar)):
+                this_char.anno_bound = True
 
-            # rule for periods (which can be periods or unreadable chars)
-            if (last_char["type"] not in {"spc", "spl", "<"} and
-                  this_char["trans"] == "." and 
-                  this_char["trans"] != last_char["trans"] and # group same chars
-                  next_char["type"] != "w" and 
-                  next_char["trans"] not in {'(=)', '#'} and
-                   # tokenize when period not in missing char parens
-                  (my_bracket not in self.missing_br_open or
-                   # tokenize when period is alone in parens
-                   (this_char.get("before") and 
-                    this_char.get("after") and
-                    this_char.get("brtype") == "ill"))):
-                anno_tok_bounds.append(i)
-
-            # ptk marker after punctuation  "foo.*2"
-            if this_char["type"] == "ptk" and last_char["type"] in {"ip", "p", "pe", "q"}:
-                anno_tok_bounds.append(i)
 
             # always tokenize on whitespace 
-            if this_char["type"] == "spc":
-                anno_tok_bounds.append(i)
-                dipl_tok_bounds.append(i)
+            # TODO: should result in completely new token though, right?
+            # if isinstance(this_char, Whitespace):
+            #     this_char.anno_bound = True
+            #     this_char.dipl_bound = True
 
-        return dipl_tok_bounds, anno_tok_bounds
+        return some_parse
 
 
 

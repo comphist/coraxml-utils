@@ -1,4 +1,9 @@
+
+import abc
+
 from collections import defaultdict
+
+
 
 class BaseTrans:
 
@@ -21,16 +26,16 @@ class BaseTrans:
         return self.__class__(self.parse + other.parse)
 
     def trans(self):
-        return "".join(c.get("trans") for c in self.parse)
+        return "".join(c.string for c in self.parse)
 
-    def keep(self, *types):
-        return self.__class__([c for c in self.parse if c["type"] in types])
+    def keep(self, t):
+        return self.__class__([c for c in self.parse if isinstance(c, t)])
 
-    def has(self, *types):
-        return any(c["type"] in types for c in self.parse)
-        
-    def delete(self, *types):
-        return self.__class__([c for c in self.parse if c["type"] not in types])
+    def delete(self, t):
+        return self.__class__([c for c in self.parse if not isinstance(c, t)])
+
+    def has(self, t):
+        return any(isinstance(c, t) for c in self.parse)    
 
 
 class AnnoTrans(BaseTrans):
@@ -39,10 +44,10 @@ class AnnoTrans(BaseTrans):
         super().__init__(myparse)
 
     def utf(self):
-        return "".join(c.get("anno_utf") for c in self.parse)
+        return "".join(c.anno_utf for c in self.parse)
 
     def simple(self):
-        return "".join(c.get("anno_simple") for c in self.parse)
+        return "".join(c.anno_simple for c in self.parse)
 
 
 class DiplTrans(BaseTrans):
@@ -52,7 +57,7 @@ class DiplTrans(BaseTrans):
         self.subtoken_annos = subtoken
 
     def utf(self):
-        return "".join(c.get("dipl_utf") for c in self.parse)
+        return "".join(c.dipl_utf for c in self.parse)
 
     def get_subtoken_tree(self):
         # TODO
@@ -61,13 +66,13 @@ class DiplTrans(BaseTrans):
 
 class Trans(BaseTrans):
 
-    def __init__(self, myparse, anno_splits=None, dipl_splits=None, subtoken=None):
+    def __init__(self, myparse, subtoken=None):
         super().__init__(myparse)
-        
-        self.dipl_tok_bounds = dipl_splits if dipl_splits else []
-        self.anno_tok_bounds = anno_splits if anno_splits else []
 
         self.subtoken_annos = subtoken
+
+    def __iter__(self):
+        return iter(self.parse)
 
     # TODO: these methods should also close the open brackets
     #  that result from tokenization (since all tokens are 
@@ -78,12 +83,12 @@ class Trans(BaseTrans):
         output_tokens = list()
 
         ## if anno_utf is empty there are no anno tokens, e.g. in the case of deletions
-        if not "".join(c.get("anno_utf") for c in self.parse):
+        if not "".join(c.anno_utf for c in self.parse):
             return output_tokens
 
         stack = list()
-        for i, c in enumerate(self.parse):
-            if i + 1 in self.anno_tok_bounds:
+        for c in self.parse:
+            if c.anno_bound:
                 output_tokens.append(AnnoTrans(stack))
                 stack = list()
             stack.append(c)
@@ -94,8 +99,8 @@ class Trans(BaseTrans):
     def tokenize_dipl(self):
         output_tokens = list()
         stack = list()
-        for i, c in enumerate(self.parse):
-            if i + 1 in self.dipl_tok_bounds:
+        for c in self.parse:
+            if c.dipl_bound:
                 output_tokens.append(DiplTrans(stack, subtoken=self.subtoken_annos))
                 stack = list()
             stack.append(c)
@@ -114,8 +119,10 @@ class Trans(BaseTrans):
             aligned_parse[bound_position-1]['anno_boundary'] = True
 
         if outer_boundaries:
-            aligned_parse.insert(0, {'trans': '', 'type': '', 'dipl_utf': '', 'dipl_boundary': True, 'anno_boundary': True})
-            aligned_parse.append({'trans': '', 'type': '','dipl_utf': '', 'dipl_boundary': True, 'anno_boundary': True})
+            aligned_parse.insert(0, {'trans': '', 'type': '', 'dipl_utf': '', 
+                                     'dipl_boundary': True, 'anno_boundary': True})
+            aligned_parse.append({'trans': '', 'type': '','dipl_utf': '', 
+                                  'dipl_boundary': True, 'anno_boundary': True})
 
         return aligned_parse
 
