@@ -336,7 +336,11 @@ class TransImporter:
             if _: logging.warning("extraneous tab in line: " + line)
 
         mytokenizer = Tokenizer()
-        dipl_tokens = mytokenizer.tokenize("\n".join(transcription_content))
+        tokens = mytokenizer.tokenize("\n".join(transcription_content))
+
+        current_bibinfo = next(bibinfo_lines)
+        for tok in tokens:
+            
 
             for match in BIBINFO_FORMAT.findall(bibinfo):
                 _, pageno, side, col, linename = match
