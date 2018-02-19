@@ -78,7 +78,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                           '\.' + alpha + '\.',
                                           '\[\.{3}\]',
                                           '%[A-Z]']) + ')'
-        comm_re = r'(?P<comm> [+@][KEZ] )'
+        # comm_re = r'(?P<comm> [+@][KEZ] )'
         word_re = r'(?P<w> \*f | \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
                             for i, (x, _, _) in enumerate(replacements) if x) 

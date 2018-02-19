@@ -10,6 +10,7 @@ from collections import defaultdict
 from coraxml_utils.coralib import *
 from coraxml_utils.settings import BIBINFO_FORMAT
 import coraxml_utils.parser as parser
+from coraxml_utils.tokenizer import RexTokenizer
 
 from lxml import etree as ET
 
@@ -262,6 +263,7 @@ class TransImporter:
 
     def __init__(self, parser, options):
         self.TokenParser = parser()
+        self.Tokenizer = RexTokenizer
 
     # TODO: transcription importer should also check bibinfo, shifttags, etc. and
     #   warn or report errors as appropriate (would replace parts of "convert_check"
@@ -323,11 +325,19 @@ class TransImporter:
         line_stack = list()
         column_stack = list()
 
+        bibinfo_lines = list()
+        transcription_content = list()
         for line in text:
             this_line_dipls = list()
 
             bibinfo, content, *_ = line.strip().split("\t")
+            transcription_content.append(content)
+            bibinfo_lines.append(bibinfo)
             if _: logging.warning("extraneous tab in line: " + line)
+
+        mytokenizer = Tokenizer()
+        dipl_tokens = mytokenizer.tokenize("\n".join(transcription_content))
+
             for match in BIBINFO_FORMAT.findall(bibinfo):
                 _, pageno, side, col, linename = match
 
