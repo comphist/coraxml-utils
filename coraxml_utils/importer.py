@@ -9,7 +9,7 @@ from collections import defaultdict
 
 from coraxml_utils.coralib import *
 import coraxml_utils.parser as parser
-from coraxml_utils.tokenizer import RexTokenizer
+import coraxml_utils.tokenizer as tokenizer
 
 from lxml import etree as ET
 
@@ -266,7 +266,7 @@ class TransImporter:
 
     def __init__(self, parser, options):
         self.TokenParser = parser()
-        self.Tokenizer = RexTokenizer
+        self.Tokenizer = tokenizer.RexTokenizer()
 
     # TODO: transcription importer should also check bibinfo, shifttags, etc. and
     #   warn or report errors as appropriate (would replace parts of "convert_check"
@@ -334,104 +334,145 @@ class TransImporter:
             this_line_dipls = list()
 
             bibinfo, content, *_ = line.strip().split("\t")
+            if _: logging.warning("extraneous tab in line: " + line)
             transcription_content.append(content)
             bibinfo_lines.append(bibinfo)
-            if _: logging.warning("extraneous tab in line: " + line)
 
-        mytokenizer = Tokenizer()
-        mylines = mytokenizer.tokenize("\n".join(transcription_content))
+        tokenized_input = self.tokenizer.tokenize("\n".join(transcription_content))
 
-        current_bibinfo = next(bibinfo_lines)
+        next_bibinfo = next(bibinfo_lines)
+        _, pageno, side, col, linename = BIBINFO_FORMAT.match(current_bibinfo).groups()
 
-        for bibinfo, line_content in zip(bibinfo_lines, mylines):
-            _, pageno, side, col, linename = BIBINFO_FORMAT.match(current_bibinfo).groups()
+        current_page = Page(pageno, side, [])
+        current_col = Column([])
+        current_line = Line(linename, [])
 
-            if last_page and (side != last_side or pageno != last_page):
-               # new page and col
-               column_stack.append(Column(line_stack))
-               line_stack = list()
-               pages.append(Page(pageno, side, column_stack))
-               column_stack = list()
+        for chunk in tokenized_input:
+            if isinstance(chunk, tokenizer.Comment):
+                tokens.append(CoraComment(chunk.type, chunk.content))
+            elif isinstance(chunk, tokenizer.ShiftTagOpen):
+                open_shifttags.append(chunk.type)
+            elif isinstance(chunk, tokenizer.ShiftTagClose):
+                closed_shifttag = open_shifttags.pop()
+                shifttags.append(ShiftTag(closed_shifttag, shifttag_stack))
+                if not open_shifttags:
+                    shifttag_stack = list()
 
-            elif last_col and col != last_col:
-                # start new col
-                # (columns started this way have names)
-                column_stack.append(Column(line_stack, name=col))
-                line_stack = list()
+            elif isinstance(chunk, tokenizer.Token):
+                try:
+                    new_token = self.TokenParser.parse(chunk.string)
+                except parser.ParseError as e:
+                    logging.error("Line could not be parsed: %s", line)
+                    print(e.message)
+                    valid_transcription = False
 
+                if any(isinstance(c, Joiner) for c in new_token.parse):
+                    # add first part of dipl to old line
+                    # start a new line
+                    # finish adding dipl
+                            
+            elif isinstance(chunk, tokenizer.Whitespace):
+                if chunk.is_newline:
+                    # open new line
 
-            last_page = pageno
-            last_side = side
-            last_col = col
-
-            for tok in line_content:
-                # shifttags
-                if re.match(r"\+[FLRÜMQ]p?", tok):
-                    open_shifttags.append(tok[1:])
-                elif re.match(r"@([FLRÜMQ]p?)", tok):
-                    closed_shifttag = open_shifttags.pop()
-                    shifttags.append(ShiftTag(closed_shifttag, shifttag_stack))
-                    if not open_shifttags:
-                        shifttag_stack = list()
-
-                # comments
-                elif re.match(r"\+[KEZ]", tok):
-                  in_comment = True
-                elif re.match(r"@([KEZ])", tok):
-                  in_comment = False
-                  tokens.append(CoraComment(tok[1], " ".join(comment_stack)))
-                  comment_stack = list()
-
-                # tokens
                 else:
-                    if in_comment:
-                        comment_stack.append(tok)
-                    else:
-                        try:
-                            new_token = self.TokenParser.parse(tok)
-                        except parser.ParseError as e:
-                            logging.error("Line could not be parsed: %s", line)
-                            print(e.message)
-                            valid_transcription = False
+                    # add new_token to current line
 
-                        my_tok_dipls = list()
-                        my_tok_annos = list()
+                    # if open_shifttags, add new coratoken obj 
+                    if open_shifttags:
+                        shifttag_stack.append(t)
 
-                        # put edition numbering in comments
-                        if new_token.parse[0]["type"] == "edit":
-                            tokens.append(CoraComment("Z", [tok]))
-                            continue
 
-                        for new_dipl in new_token.tokenize_dipl():
-                            d = TokDipl(new_dipl)
-                            my_tok_dipls.append(d)
-                            this_line_dipls.append(d)
 
-                        for new_anno in new_token.tokenize_anno():
-                            my_tok_annos.append(TokAnno(new_anno))
 
-                        t = CoraToken(new_token, my_tok_dipls, my_tok_annos)
-                        if join_next_mods or join_next_dipls:
-                            i = -1
-                            while i > -10:  # arbitrary limit on number of intervening comments
-                                if isinstance(tokens[i], CoraComment):
-                                    i -= 1
-                                else:
-                                    tokens[i].merge_token(t, join_next_dipls, join_next_mods)
-                                    break
-                            join_next_mods = False
-                            join_next_dipls = False
-                        else:
-                            tokens.append(t)
-                            if open_shifttags:
-                                shifttag_stack.append(t)
+        # for bibinfo, line_content in zip(bibinfo_lines, mylines):
+
+        #     if last_page and (side != last_side or pageno != last_page):
+        #        # new page and col
+        #        column_stack.append(Column(line_stack))
+        #        line_stack = list()
+        #        pages.append(Page(pageno, side, column_stack))
+        #        column_stack = list()
+
+        #     elif last_col and col != last_col:
+        #         # start new col
+        #         # (columns started this way have names)
+        #         column_stack.append(Column(line_stack, name=col))
+        #         line_stack = list()
+
+
+        #     last_page = pageno
+        #     last_side = side
+        #     last_col = col
+
+        #     for tok in line_content:
+        #         # shifttags
+        #         if re.match(r"\+[FLRÜMQ]p?", tok):
+        #             open_shifttags.append(tok[1:])
+        #         elif re.match(r"@([FLRÜMQ]p?)", tok):
+        #             closed_shifttag = open_shifttags.pop()
+        #             shifttags.append(ShiftTag(closed_shifttag, shifttag_stack))
+        #             if not open_shifttags:
+        #                 shifttag_stack = list()
+
+        #         # comments
+        #         elif re.match(r"\+[KEZ]", tok):
+        #           in_comment = True
+        #         elif re.match(r"@([KEZ])", tok):
+        #           in_comment = False
+        #           tokens.append(CoraComment(tok[1], " ".join(comment_stack)))
+        #           comment_stack = list()
+
+        #         # tokens
+        #         else:
+        #             if in_comment:
+        #                 comment_stack.append(tok)
+        #             else:
+        #                 try:
+        #                     new_token = self.TokenParser.parse(tok)
+        #                 except parser.ParseError as e:
+        #                     logging.error("Line could not be parsed: %s", line)
+        #                     print(e.message)
+        #                     valid_transcription = False
+
+        #                 my_tok_dipls = list()
+        #                 my_tok_annos = list()
+
+        #                 # put edition numbering in comments
+        #                 if new_token.parse[0]["type"] == "edit":
+        #                     tokens.append(CoraComment("Z", [tok]))
+        #                     continue
+
+        #                 for new_dipl in new_token.tokenize_dipl():
+        #                     d = TokDipl(new_dipl)
+        #                     my_tok_dipls.append(d)
+        #                     this_line_dipls.append(d)
+
+        #                 for new_anno in new_token.tokenize_anno():
+        #                     my_tok_annos.append(TokAnno(new_anno))
+
+        #                 t = CoraToken(new_token, my_tok_dipls, my_tok_annos)
+        #                 if join_next_mods or join_next_dipls:
+        #                     i = -1
+        #                     while i > -10:  # arbitrary limit on number of intervening comments
+        #                         if isinstance(tokens[i], CoraComment):
+        #                             i -= 1
+        #                         else:
+        #                             tokens[i].merge_token(t, join_next_dipls, join_next_mods)
+        #                             break
+        #                     join_next_mods = False
+        #                     join_next_dipls = False
+        #                 else:
+        #                     tokens.append(t)
+        #                     if open_shifttags:
+        #                         shifttag_stack.append(t)
                         
-                        if new_token.parse:
-                            join_next_mods = isinstance(new_token.parse[-1], Joiner)
-                            join_next_dipls = isinstance(new_token.parse[-1], DiplJoiner)
+        #                 if new_token.parse:
+        #                     join_next_mods = isinstance(new_token.parse[-1], Joiner)
+        #                     join_next_dipls = isinstance(new_token.parse[-1], DiplJoiner)
 
-            # at end of line 
-            line_stack.append(Line(linename, this_line_dipls))
+        #     # at end of line 
+        #     line_stack.append(Line(linename, this_line_dipls))
 
         if valid_transcription:
             return Document(sigle, name, header, pages, tokens, shifttags, headertext)

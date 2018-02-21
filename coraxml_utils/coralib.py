@@ -252,6 +252,7 @@ class CoraToken(IdentifiableObjectMixin):
                 self.tok_dipls == other.tok_dipls and
                 self.tok_annos == other.tok_annos)
 
+    # TODO: method is deprecated (due to new tokenizer module)
     def merge_token(self, tok, join_dipls=False, join_mods=False):
         self.trans += tok.trans
 
