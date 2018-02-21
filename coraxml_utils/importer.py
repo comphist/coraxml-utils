@@ -8,7 +8,6 @@ logger = logging.getLogger()
 from collections import defaultdict
 
 from coraxml_utils.coralib import *
-from coraxml_utils.settings import BIBINFO_FORMAT
 import coraxml_utils.parser as parser
 from coraxml_utils.tokenizer import RexTokenizer
 
@@ -261,6 +260,10 @@ class CoraXMLImporter:
 
 class TransImporter:
 
+    # allowed bibinfo format
+    BIBINFO_FORMAT = re.compile(r"^(\S+)[-_]([A-Z0-9]*)([vr]?)([a-q]?),?(\d+)$")
+
+
     def __init__(self, parser, options):
         self.TokenParser = parser()
         self.Tokenizer = RexTokenizer
@@ -336,34 +339,32 @@ class TransImporter:
             if _: logging.warning("extraneous tab in line: " + line)
 
         mytokenizer = Tokenizer()
-        tokens = mytokenizer.tokenize("\n".join(transcription_content))
+        mylines = mytokenizer.tokenize("\n".join(transcription_content))
 
         current_bibinfo = next(bibinfo_lines)
-        for tok in tokens:
-            
 
-            for match in BIBINFO_FORMAT.findall(bibinfo):
-                _, pageno, side, col, linename = match
+        for bibinfo, line_content in zip(bibinfo_lines, mylines):
+            _, pageno, side, col, linename = BIBINFO_FORMAT.match(current_bibinfo).groups()
 
-                if last_page and (side != last_side or pageno != last_page):
-                   # new page and col
-                   column_stack.append(Column(line_stack))
-                   line_stack = list()
-                   pages.append(Page(pageno, side, column_stack))
-                   column_stack = list()
+            if last_page and (side != last_side or pageno != last_page):
+               # new page and col
+               column_stack.append(Column(line_stack))
+               line_stack = list()
+               pages.append(Page(pageno, side, column_stack))
+               column_stack = list()
 
-                elif last_col and col != last_col:
-                    # start new col
-                    # (columns started this way have names)
-                    column_stack.append(Column(line_stack, name=col))
-                    line_stack = list()
+            elif last_col and col != last_col:
+                # start new col
+                # (columns started this way have names)
+                column_stack.append(Column(line_stack, name=col))
+                line_stack = list()
 
 
-                last_page = pageno
-                last_side = side
-                last_col = col
+            last_page = pageno
+            last_side = side
+            last_col = col
 
-            for tok in content.split():
+            for tok in line_content:
                 # shifttags
                 if re.match(r"\+[FLRÜMQ]p?", tok):
                     open_shifttags.append(tok[1:])
