@@ -161,6 +161,27 @@ class Document:
     def __bool__(self):
         return bool(self.pages and self.tokens)
 
+    def add_line(self, bibinfo):
+        new_line = Line(bibinfo["line"], [])
+        if self.pages:
+            last_page = self.pages[-1]
+            last_side = last_page.side
+            last_col = last_page.columns[-1]
+
+            if last_page != bibinfo["page"] or last_side.name != bibinfo["side"]:
+                new_col = Column([new_line], name=bibinfo["col"])
+                new_page = Page(bibinfo["page"], bibinfo["side"], [new_col])
+                self.pages.append(new_page)
+            elif last_col.name != bibinfo["col"]:
+                new_col = Column([new_line], name=bibinfo["col"])
+                last_page.columns.append(new_col)
+        else:
+            new_col = Column([new_line], name=bibinfo["col"])
+            new_page = Page(bibinfo["page"], bibinfo["side"], [new_col])
+            self.pages.append(new_page) 
+
+        return new_line
+
 
 class Page(IdentifiableObjectMixin):
 

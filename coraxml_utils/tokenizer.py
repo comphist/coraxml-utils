@@ -14,10 +14,10 @@ class RexTokenizer:
     def tokenize(self, inputtext):
         result = list()
         open_comment = None
-        self.token_or_line = re.compile("({}|{})".format(self.token_bound.pattern, 
-                                                         self.line_bound.pattern),
-                                        re.VERBOSE)
-        for chunk in self.token_or_line.split(inputtext):
+        token_or_line = re.compile("({}|{})".format(self.token_bound.pattern, 
+                                                    self.line_bound.pattern),
+                                   re.VERBOSE)
+        for chunk in token_or_line.split(inputtext):
             comm_match = self.comment_re.match(chunk)
             stopen_match = self.shifttagopen_re.match(chunk)
             stclose_match = self.shifttagclose_re.match(chunk)
