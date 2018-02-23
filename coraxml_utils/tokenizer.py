@@ -57,6 +57,13 @@ class Token:
     def __repr__(self):
         return self.string
 
+    def __eq__(self, obj):
+
+        if not isinstance(Token, object):
+            return False
+        else:
+            return self.string == obj.string
+
 
 class Whitespace:
     def __init__(self, _mystring, newline=False):
@@ -68,6 +75,13 @@ class Whitespace:
 
     def __repr__(self):
         return self.string
+
+    def __eq__(self, obj):
+
+        if not isinstance(Whitespace, object):
+            return False
+        else:
+            return (self.string == obj.string) and (self.is_newline == obj.is_newline)
 
 
 class Comment: 
