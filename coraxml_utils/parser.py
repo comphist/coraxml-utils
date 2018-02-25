@@ -116,7 +116,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         # LIST OF ALLOWED CHARACTERS FOR validity check
         self.allowed = set(ALPHA)
         self.allowed.update(ALPHA.upper())
-        self.allowed.update('-",.:;\/!?1234567890ßäöüÄÖÜ ')
+        self.allowed.update('-",.:;\/!?1234567890ßäöüÄÖÜ \n')
         # for r-kuerzung
         self.allowed.update("'")
 
@@ -138,7 +138,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         myparse = list()
         subtoken_spans = list() # list of SubtokenAnnos
         open_spans = defaultdict(list)    # list of tuples, (type, start)
-        in_comment = False
+        # in_comment = False
         new_char = None
 
         for match in re.finditer(self.token_re, intoken):
@@ -148,18 +148,20 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                     if key == "spc":
                         if any(val for key, val in open_spans.items()):
                             raise ParseError("Unclosed bracket at end of token: " + intoken)
+                        new_char = Whitespace(val)
 
                     # ensures that nothing in a comment gets processed
-                    if key == "comm":
-                        if val.startswith("+"):
-                            in_comment = True
-                        else:
-                            in_comment = False
-                        myparse.append({"trans": val, "type": key})
-                    elif in_comment:
-                        myparse.append({"trans": val, "type": "w"})         
+                    # elif key == "comm":
+                    #     if val.startswith("+"):
+                    #         in_comment = True
+                    #     else:
+                    #         in_comment = False
+
+                    #     myparse.append({"trans": val, "type": key})
+                    # elif in_comment:
+                    #     myparse.append({"trans": val, "type": "w"})         
                                 
-                    if val == "*[":
+                    elif val == "*[":
                         new_char = Strikethrough(val, opening=True)
                         open_spans["*["].append(match.start())
                     elif val == "*]":

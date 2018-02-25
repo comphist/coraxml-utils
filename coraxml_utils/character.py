@@ -293,7 +293,9 @@ class Whitespace:
         self.dipl_utf = _trans
         self.anno_utf = _trans
         self.anno_simple = _trans
-
+        self.anno_bound = False
+        self.dipl_bound = False
+        self.line_break = False
 
 class Joiner:
     pass

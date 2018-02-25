@@ -18,6 +18,11 @@ class ParserTest(unittest.TestCase):
         tok = AnselmParser().parse(test_string)
         self.assertEquals(str(tok), test_string)    
 
+    def test_anselm_lineend(self):
+        test_string = "ma=\nria"
+        tok = AnselmParser().parse(test_string)
+        self.assertEqual(len(tok.tokenize_dipl()), 2)
+
     def test_tokenize_anno(self):
 
         tok = RefParser().parse("foo bar")
