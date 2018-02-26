@@ -336,5 +336,7 @@ class EditHyphen(TokenBound, Joiner):
     pass
 
 
-class DiplJoiner(TokenBound):
+#  actually both textchar (since "=" present in handschrift)
+#     and meta (since "|" added by editor/transcriber)
+class DiplJoiner(TokenBound, Joiner):
     pass

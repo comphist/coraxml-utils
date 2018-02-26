@@ -82,8 +82,6 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         word_re = r'(?P<w> \*f | \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
                             for i, (x, _, _) in enumerate(replacements) if x) 
-        # inu_re = "|".join("(?P<inu{0}>".format(i) + x + ")"
-        #                     for i, (_, x, _) in enumerate(replacements) if x)
 
         # init_punc_re = r'(?P<ip> // | \*[Cf] )' 
         punc_re = r'(?P<p> %\. | / | ' + punc +')'
@@ -105,9 +103,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         ddash_re = r'(?P<dd> = )'
 
         # specifies which regexes are to be applied, and in what order
-        self.re_parts = [spc_re, abbr_re,
-                         #comm_re,
-                         majuscule_re,
+        self.re_parts = [spc_re, abbr_re, majuscule_re,
                          editnum_re, splitter_re, ddash_re, quotes_re,
                          strk_re, preedit_re,
                          ptk_marker_re, brackets_re, uni_re, punc_re,
@@ -202,9 +198,9 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                         new_char = MetaChar(val)
 
                     elif key == "spl":
-                        if key == "(=)":
+                        if val == "(=)":
                             new_char = EditHyphen(val)
-                        elif key == "=|":
+                        elif val == "=|":
                             new_char = DiplJoiner(val)
                         else:
                             new_char = TokenBound(val)
@@ -287,6 +283,11 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                     this_char.anno_bound = True
 
             if isinstance(last_char, Hyphen):
+                this_char.dipl_bound = True
+
+            # if hyphens are dipl bounds, these should be too
+            #   (also present in handschrift)
+            if isinstance(last_char, DiplJoiner):
                 this_char.dipl_bound = True
 
             #  TODO: reactivate/update (esp. for REM)

@@ -168,13 +168,15 @@ class Document:
             last_side = last_page.side
             last_col = last_page.columns[-1]
 
-            if last_page != bibinfo["page"] or last_side.name != bibinfo["side"]:
+            if last_page.name != bibinfo["page"] or last_side != bibinfo["side"]:
                 new_col = Column([new_line], name=bibinfo["col"])
                 new_page = Page(bibinfo["page"], bibinfo["side"], [new_col])
                 self.pages.append(new_page)
             elif last_col.name != bibinfo["col"]:
                 new_col = Column([new_line], name=bibinfo["col"])
                 last_page.columns.append(new_col)
+            else:
+                last_col.lines.append(new_line)
         else:
             new_col = Column([new_line], name=bibinfo["col"])
             new_page = Page(bibinfo["page"], bibinfo["side"], [new_col])
@@ -233,6 +235,15 @@ class Line(IdentifiableObjectMixin):
 
     def __bool__(self):
         return bool(self.dipls)
+
+    def __iter__(self):
+        return iter(self.dipls)
+
+    def __str__(self):
+        return repr(self)
+
+    def __repr__(self):
+        return "[" + ", ".join(str(d) for d in self.dipls) + "]"
 
     # keep?
     def loc(self):

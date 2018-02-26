@@ -1,7 +1,7 @@
 import unittest
 
 from coraxml_utils.parser import *
-
+from coraxml_utils.coralib import Trans
 
 class ParserTest(unittest.TestCase):
 
@@ -69,3 +69,11 @@ class ParserTest(unittest.TestCase):
 
         self.assertEquals([str(x) for x in tok.tokenize_dipl() if x],
                           ["t<o>k#", "en(=)", "iz=", "a|tion%...."])
+
+    def test_hochstellung(self):
+        tok = ParserTest._create_anselm_parse("de%$")
+        self.assertIsInstance(tok, Trans)
+
+    def test_brackets_lineend(self):
+        tok = ParserTest._create_anselm_parse("*[wi(=)\nder*]")
+        

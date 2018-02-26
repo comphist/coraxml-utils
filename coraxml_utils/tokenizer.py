@@ -58,7 +58,6 @@ class Token:
         return self.string
 
     def __eq__(self, obj):
-
         if not isinstance(Token, object):
             return False
         else:
@@ -77,7 +76,6 @@ class Whitespace:
         return self.string
 
     def __eq__(self, obj):
-
         if not isinstance(Whitespace, object):
             return False
         else:

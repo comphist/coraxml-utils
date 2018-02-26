@@ -315,10 +315,13 @@ class TransImporter:
         bibinfo_lines = list()
         transcription_content = list()
         for line in text:
-            bibinfo, content, *_ = line.strip().split("\t")
-            if _: logging.warning("extraneous tab in line: " + line)
-            transcription_content.append(content)
-            bibinfo_lines.append(bibinfo)
+            try:
+                bibinfo, content, *_ = line.strip().split("\t")
+                if _: logging.warning("extraneous tab in line: " + line)
+                transcription_content.append(content)
+                bibinfo_lines.append(bibinfo)
+            except ValueError:
+                logging.warning("Faulty line: " + repr(line))
         tokenized_input = self.Tokenizer.tokenize("\n".join(transcription_content))
 
         bibinfo_iter = iter(bibinfo_lines)
@@ -372,10 +375,18 @@ class TransImporter:
                     # open new line
                     try:
                         new_bibinfo = self.BIBINFO_FORMAT.match(next(bibinfo_iter)).groupdict()
-                        new_doc.add_line(new_bibinfo)
+                        current_line = new_doc.add_line(new_bibinfo)
                     except StopIteration:
                         pass
 
+        try:
+            leftover_bibinfo = next(bibinfo_iter)
+            if leftover_bibinfo:
+                logging.warning("Bibinfo iterator not empty: line numbers probably wrong")
+                print(leftover_bibinfo)
+                print(list(bibinfo_iter))
+        except StopIteration:
+            pass
         if valid_transcription:
             return new_doc
         else:
