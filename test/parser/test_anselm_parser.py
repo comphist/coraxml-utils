@@ -61,12 +61,15 @@ class ParserTest(unittest.TestCase):
         self.assertEquals(len(tok.tokenize_anno()), 1)
         self.assertEquals(len(tok.tokenize_dipl()), 1)
 
-    def test_tokenization(self):
+    def test_tokenization_anno(self):
 
         tok = ParserTest._create_anselm_parse("t<o>k#en(=)iz=a|tion%....")
         self.assertEquals([x.simple() for x in tok.tokenize_anno()],
                           ["tokeniza", "tion", ".", "..."])
 
+    def test_tokenization_dipl(self):
+
+        tok = ParserTest._create_anselm_parse("t<o>k#en(=)iz=a|tion%....")
         self.assertEquals([str(x) for x in tok.tokenize_dipl() if x],
                           ["t<o>k#", "en(=)", "iz=", "a|tion%...."])
 
@@ -76,4 +79,5 @@ class ParserTest(unittest.TestCase):
 
     def test_brackets_lineend(self):
         tok = ParserTest._create_anselm_parse("*[wi(=)\nder*]")
+        self.assertIsInstance(tok, Trans)
         

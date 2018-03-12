@@ -305,7 +305,8 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
             # final punctuation  "foo%." (NOT "f%.oo")
             if (isinstance(last_char, TextChar) and
                 isinstance(this_char, Punct) and
-                not isinstance(next_char, TextChar)):
+                not isinstance(next_char, TextChar) and 
+                this_char != next_char):
                 this_char.anno_bound = True
 
 

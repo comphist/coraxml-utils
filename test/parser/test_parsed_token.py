@@ -24,7 +24,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(len(tok.tokenize_dipl()), 2)
 
     def test_tokenize_anno(self):
-
+        """ TODO: ist dieser test mit dem neuen tokenizer veraltet? """
         tok = RefParser().parse("foo bar")
         self.assertEquals("|".join(str(x) for x in tok.tokenize_anno()), 
                           "foo| bar")
