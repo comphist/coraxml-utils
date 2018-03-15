@@ -74,10 +74,12 @@ class ParserTest(unittest.TestCase):
                           ["t<o>k#", "en(=)", "iz=", "a|tion%...."])
 
     def test_hochstellung(self):
-        tok = ParserTest._create_anselm_parse("de%$")
-        self.assertIsInstance(tok, Trans)
+        with self.assertRaises(ParseError):
+            tok = ParserTest._create_anselm_parse("de%$")
+            # self.assertIsInstance(tok, Trans)
 
     def test_brackets_lineend(self):
-        tok = ParserTest._create_anselm_parse("*[wi(=)\nder*]")
-        self.assertIsInstance(tok, Trans)
+        with self.assertRaises(ParseError):
+            tok = ParserTest._create_anselm_parse("*[wi(=)\nder*]")
+            # self.assertIsInstance(tok, Trans)
         

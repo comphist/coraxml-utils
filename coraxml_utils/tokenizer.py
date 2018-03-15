@@ -1,12 +1,13 @@
 
 import re
+import logging
 
 class RexTokenizer:
 
     def __init__(self):
 
         self.token_bound = re.compile(r"[ ]+", re.VERBOSE)
-        self.line_bound = re.compile(r"(?<! \(=\) | .=\| | ..= )\n", re.VERBOSE)
+        self.line_bound = re.compile(r"(?<! \(=\) | .=\| | ..= )\s*\n\s*", re.VERBOSE)
         self.comment_re = re.compile(r"[+@]([KEZ])")
         self.shifttagopen_re = re.compile(r"\+([FLRÜMQ]p?)")
         self.shifttagclose_re = re.compile(r"@([FLRÜMQ]p?)")
@@ -17,6 +18,7 @@ class RexTokenizer:
         token_or_line = re.compile("({}|{})".format(self.token_bound.pattern, 
                                                     self.line_bound.pattern),
                                    re.VERBOSE)
+        last_chunk = ""
         for chunk in token_or_line.split(inputtext):
             comm_match = self.comment_re.match(chunk)
             stopen_match = self.shifttagopen_re.match(chunk)
@@ -28,22 +30,28 @@ class RexTokenizer:
                     open_comment = None
                 else:
                     open_comment = Comment(comm_match.group(1))
+            elif open_comment:
+                    open_comment.content.append(chunk)
 
             elif stopen_match:
                 result.append(ShiftTagOpen(stopen_match.group(1)))
-
             elif stclose_match:
                 result.append(ShiftTagClose(stclose_match.group(1)))
 
-            elif open_comment:
-                    open_comment.content.append(chunk)
             elif self.token_bound.match(chunk):
                 result.append(Whitespace(chunk))
             elif self.line_bound.match(chunk):
-                result.append(Whitespace(chunk, newline=True))
-            else:   
-                result.append(Token(chunk))
-            
+                if chunk != "\n":
+                    logging.warning("Extraneous whitespace character after " +  last_chunk)
+                result.append(Whitespace("\n", newline=True))
+
+            else:                
+                if chunk:
+                    result.append(Token(chunk))
+                else:
+                    logging.warning("Empty token near " +  last_chunk)
+
+            last_chunk = chunk
         return result
 
 

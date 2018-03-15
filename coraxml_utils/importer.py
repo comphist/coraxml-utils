@@ -278,7 +278,7 @@ class TransImporter:
     def import_from_string(self, intext):
 
         new_doc = Document("", "", None, list(), list())
-        valid_transcription = True
+        self.valid_transcription = True
 
         # read header
         header_open = False
@@ -343,24 +343,46 @@ class TransImporter:
                 try:
                     new_token = self.TokenParser.parse(chunk.string)
                 except parser.ParseError as e:
-                    logging.error("Transcription could not be parsed: %s", chunk.string)
+                    logging.error("Transcription could not be parsed: {0}\t{1}".format(new_bibinfo,
+                                                                                       chunk.string))
                     print(e.message)
-                    new_token = None
-                    valid_transcription = False
+                    self.valid_transcription = False
+
+                    #  in case the erroneous transcription also contains a newline
+                    for c in chunk.string:
+                        if c == "\n":
+                             # start a new line
+                            try:
+                                new_bibinfo = self.BIBINFO_FORMAT.match(next(bibinfo_iter)).groupdict()
+                                current_line = new_doc.add_line(new_bibinfo)
+                            except StopIteration:
+                                print(new_bibinfo)
+                                logging.error("Document appears truncated: " + str(new_token))                           
+
+                    continue
 
                 t = CoraToken(new_token, [], [])
-                for dipl in new_token.tokenize_dipl():
-                    d = TokDipl(dipl)
-                    t.tok_dipls.append(d)
-                    current_line.dipls.append(d)
-                    if isinstance(dipl.parse[-1], Joiner):
+                mydipls = [TokDipl(dipl) for dipl in new_token.tokenize_dipl()]
+                t.tok_dipls = list(mydipls)
+
+                mydipls.reverse()
+                for c in new_token.parse:
+                    if c.dipl_bound:
+                        current_line.dipls.append(mydipls.pop())
+
+                    if c.string == "\n":
                         # start a new line
                         try:
                             new_bibinfo = self.BIBINFO_FORMAT.match(next(bibinfo_iter)).groupdict()
                             current_line = new_doc.add_line(new_bibinfo)
                         except StopIteration:
                             print(new_bibinfo)
-                            logging.error("Document appears truncated: " + str(dipl))
+                            logging.error("Document appears truncated: " + str(new_token))
+
+                current_line.dipls.append(mydipls.pop())
+                # make sure that mydipls is empty
+                if mydipls:
+                    logging.error("Too few dipl bounds: " + str(new_token))
 
                 for anno in new_token.tokenize_anno():
                     t.tok_annos.append(TokAnno(anno))
@@ -369,6 +391,8 @@ class TransImporter:
                 # if open_shifttags, add new coratoken obj 
                 if open_shifttags:
                     shifttag_stack.append(t)
+
+
                             
             elif isinstance(chunk, tokenizer.Whitespace):
                 if chunk.is_newline:
@@ -387,7 +411,7 @@ class TransImporter:
                 print(list(bibinfo_iter))
         except StopIteration:
             pass
-        if valid_transcription:
+        if self.valid_transcription:
             return new_doc
         else:
             return None

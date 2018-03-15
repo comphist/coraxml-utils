@@ -23,9 +23,9 @@ class ParserTest(unittest.TestCase):
         tok = AnselmParser().parse(test_string)
         self.assertEqual(len(tok.tokenize_dipl()), 2)
 
-    def test_tokenize_anno(self):
-        """ TODO: ist dieser test mit dem neuen tokenizer veraltet? """
-        tok = RefParser().parse("foo bar")
-        self.assertEquals("|".join(str(x) for x in tok.tokenize_anno()), 
-                          "foo| bar")
-
+    def test_tokenbound_intoken(self):
+        """ RexParsers only want to see tokens and tokens may not contain
+             token boundaries, i.e. spaces """
+        with self.assertRaises(ParseError):
+            tok = RefParser().parse("foo bar")
+        

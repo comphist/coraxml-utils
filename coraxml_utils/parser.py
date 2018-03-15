@@ -112,7 +112,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         # LIST OF ALLOWED CHARACTERS FOR validity check
         self.allowed = set(ALPHA)
         self.allowed.update(ALPHA.upper())
-        self.allowed.update('-",.:;\/!?1234567890ßäöüÄÖÜ \n')
+        self.allowed.update('-",.:;\/!?1234567890ßäöüÄÖÜ\n')
         # for r-kuerzung
         self.allowed.update("'")
 
@@ -144,18 +144,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                     if key == "spc":
                         if any(val for key, val in open_spans.items()):
                             raise ParseError("Unclosed bracket at end of token: " + intoken)
-                        new_char = Whitespace(val)
-
-                    # ensures that nothing in a comment gets processed
-                    # elif key == "comm":
-                    #     if val.startswith("+"):
-                    #         in_comment = True
-                    #     else:
-                    #         in_comment = False
-
-                    #     myparse.append({"trans": val, "type": key})
-                    # elif in_comment:
-                    #     myparse.append({"trans": val, "type": "w"})         
+                        new_char = Whitespace(val) 
                                 
                     elif val == "*[":
                         new_char = Strikethrough(val, opening=True)
@@ -308,13 +297,6 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                 not isinstance(next_char, TextChar) and 
                 this_char != next_char):
                 this_char.anno_bound = True
-
-
-            # always tokenize on whitespace 
-            # TODO: should result in completely new token though, right?
-            # if isinstance(this_char, Whitespace):
-            #     this_char.anno_bound = True
-            #     this_char.dipl_bound = True
 
         return some_parse
 
