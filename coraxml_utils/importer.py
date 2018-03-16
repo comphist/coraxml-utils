@@ -316,8 +316,8 @@ class TransImporter:
         transcription_content = list()
         for line in text:
             try:
-                bibinfo, content, *_ = line.strip().split("\t")
-                if _: logging.warning("extraneous tab in line: " + line)
+                bibinfo, content = re.split(r"\t+", line.strip(), maxsplit=1)
+                # if _: logging.warning("extraneous tab in line: " + line)
                 transcription_content.append(content)
                 bibinfo_lines.append(bibinfo)
             except ValueError:

@@ -41,6 +41,10 @@ class BaseParser:
         # and %[A-Z] which is code for a superscript capital
         # note that superscript capitals are unchanged because unicode does
         # not support superscripting of arbitrary characters
+        if any(x is None for x in obj.parse):
+            for x in obj.parse:
+                print(len(obj.parse))
+                print(x.__class__.__name__, x.string, sep="\t")
         test_string = "".join(c.anno_simple
                               for c in obj.parse
                               if not isinstance(c, MetaChar))
@@ -74,8 +78,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         no_pq = r'(?![.;!?:,"«»])'
 
         spc_re = r"(?P<spc> \s+ )"
-        abbr_re = '(?P<abbr>' + '|'.join(['%\.' + alpha + '%\.', 
-                                          '\.' + alpha + '\.',
+        abbr_re = r'(?P<abbr>' + '|'.join(['\.' + alpha + '\.',
                                           '\[\.{3}\]',
                                           '%[A-Z]']) + ')'
         word_re = r'(?P<w> \*f | \\ . | . )'
@@ -223,6 +226,9 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                             if key == "w":
                                 new_char = TextChar(val, dipl_utf=val, anno_utf=val,
                                                     anno_simple=val)
+                            elif key == "abbr":
+                                new_char = TextChar(val, dipl_utf=val, anno_utf=val,
+                                                    anno_simple=val)
                             elif key == "edit":
                                 new_char = MetaChar(val, dipl_utf=val, anno_utf=val,
                                                     anno_simple=val)                        
@@ -244,6 +250,8 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                             new_char.anno_simple = ""
                             new_char.strikethrough = True
 
+                    if new_char is None:
+                        logging.warning("Empty char results from " + intoken)
                     myparse.append(new_char)
 
         if any(val for key, val in open_spans.items()):

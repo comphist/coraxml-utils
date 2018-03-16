@@ -147,7 +147,8 @@ class IdentifiableObjectMixin:
 
 class Document:
 
-    def __init__(self, sigle, name, header, pages, tokens, shifttags=None, header_string=None, annospans=None):
+    def __init__(self, sigle, name, header, pages, tokens, 
+                 shifttags=None, header_string=None, annospans=None):
         self.sigle = sigle
         self.name = name
         self.header = header

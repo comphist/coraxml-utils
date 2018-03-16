@@ -116,6 +116,9 @@ replacements = [
     [ r"\.\\[7'^]",   "\uF161",    "."         ],      # PUNCTUS ELEVATUS
     [ r"∙",          "\u00B7",     "."         ],      # bullet operator => middle dot
 
+    # middle dot in abbreviations 
+    [r"%\.([A-Za-zÄÖÜäöüß$])%\.", "\u00B7\\1\u00B7", r".\1."],
+
     # combining diacritics
     [ r"\\`",        "\u0300",     ""          ],      # combining grave
     [ r"\\['´]",     "\u0301",     ""          ],      # combining acute
