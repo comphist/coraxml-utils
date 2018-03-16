@@ -3,7 +3,7 @@ import abc
 
 from collections import defaultdict
 
-
+from coraxml_utils.character import Whitespace
 
 class BaseTrans:
 
@@ -26,7 +26,7 @@ class BaseTrans:
         return self.__class__(self.parse + other.parse)
 
     def trans(self):
-        return "".join(c.string for c in self.parse)
+        return "".join([c.string for c in self.parse if not isinstance(c, Whitespace)])
 
     def keep(self, t):
         return self.__class__([c for c in self.parse if isinstance(c, t)])
@@ -89,11 +89,11 @@ class Trans(BaseTrans):
         stack = list()
         for c in self.parse:
             if c.anno_bound:
-                output_tokens.append(AnnoTrans(stack))
+                output_tokens.append(AnnoTrans(stack).delete(Whitespace))
                 stack = list()
             stack.append(c)
         if stack:
-            output_tokens.append(AnnoTrans(stack))
+            output_tokens.append(AnnoTrans(stack).delete(Whitespace))
         return output_tokens
 
     def tokenize_dipl(self):
@@ -101,11 +101,11 @@ class Trans(BaseTrans):
         stack = list()
         for c in self.parse:
             if c.dipl_bound:
-                output_tokens.append(DiplTrans(stack, subtoken=self.subtoken_annos))
+                output_tokens.append(DiplTrans(stack, subtoken=self.subtoken_annos).delete(Whitespace))
                 stack = list()
             stack.append(c)
         if stack:
-            output_tokens.append(DiplTrans(stack))
+            output_tokens.append(DiplTrans(stack).delete(Whitespace))
         return output_tokens
 
 class SubtokenAnno:

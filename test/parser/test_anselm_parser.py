@@ -73,9 +73,9 @@ class ParserTest(unittest.TestCase):
     def test_multiline_tokenization(self):
         tok = ParserTest._create_anselm_parse("token(=)\nizat=\nion.")
         self.assertEquals([x.simple() for x in tok.tokenize_anno()],
-                          ["token\nizat\nion", "."])
+                          ["tokenization", "."])
         self.assertEquals([str(x) for x in tok.tokenize_dipl() if x],
-                          ["token(=)", "\nizat=", "\nion."])
+                          ["token(=)", "izat=", "ion."])
 
 
     def test_hochstellung(self):
