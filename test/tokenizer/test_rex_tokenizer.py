@@ -92,3 +92,18 @@ class RexTokenizerTests(unittest.TestCase):
                 Token("next"), Whitespace(" "), Token("one"), Whitespace(" "), comment_6
             ]
             )
+
+
+    def test_linebreak_whitespace(self):
+        """ Test that tokenizer handles mixed whitespace situations appropriately
+              for instance, when a line begins with a space character """
+        test_string = "owe\n alsdkfj"
+        mytokenizer = RexTokenizer()
+        
+        with self.assertLogs(level=logging.WARN):
+            result = mytokenizer.tokenize(test_string)
+
+        self.assertEquals(result, [Token("owe"), 
+                                   Whitespace("\n", newline=True),
+                                   Token("alsdkfj")])
+
