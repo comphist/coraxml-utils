@@ -17,7 +17,7 @@ class BaseTrans:
         return self.parse == other.parse
 
     def __repr__(self):
-        return str(self.parse)
+        return str([str(x) for x in self.parse])
 
     def __str__(self):
         return self.trans()

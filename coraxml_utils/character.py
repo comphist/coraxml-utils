@@ -119,6 +119,9 @@ replacements = [
     # middle dot in abbreviations 
     [r"%\.([A-Za-zÄÖÜäöüß$])%\.", "\u00B7\\1\u00B7", r".\1."],
 
+    # long s in abbreviation
+    [r"\.\$\.",       ".\u017F.",  ".s."       ],
+
     # combining diacritics
     [ r"\\`",        "\u0300",     ""          ],      # combining grave
     [ r"\\['´]",     "\u0301",     ""          ],      # combining acute

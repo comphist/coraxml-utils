@@ -78,7 +78,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         no_pq = r'(?![.;!?:,"«»])'
 
         spc_re = r"(?P<spc> \s+ )"
-        abbr_re = r'(?P<abbr>' + '|'.join(['\.' + alpha + '\.',
+        abbr_re = r'(?P<abbr>' + '|'.join(['\.[a-zA-Z]\.',
                                           '\[\.{3}\]',
                                           '%[A-Z]']) + ')'
         word_re = r'(?P<w> \*f | \\ . | . )'
