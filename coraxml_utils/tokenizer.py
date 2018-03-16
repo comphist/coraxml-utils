@@ -11,6 +11,9 @@ class RexTokenizer:
         self.comment_re = re.compile(r"([+@])([KEZ])")
         self.shifttagopen_re = re.compile(r"\+([FLRÜMQ]p?)")
         self.shifttagclose_re = re.compile(r"@([FLRÜMQ]p?)")
+        self.secedit_number_re = re.compile(r"^(\{ [^{}]* [^ {}\*÷] \})", re.VERBOSE)
+        # self.secedit_open_re = re.compile(r"^\{[^{}*÷ ]")
+        # self.secedit_close_re = re.compile(r"[^{}*÷ ]\}$")
 
     def tokenize(self, inputtext):
         result = list()
@@ -23,12 +26,13 @@ class RexTokenizer:
             comm_match = self.comment_re.match(chunk)
             stopen_match = self.shifttagopen_re.match(chunk)
             stclose_match = self.shifttagclose_re.match(chunk)
+            secedit_number = self.secedit_number_re.match(chunk)
 
             if comm_match:
                 if comm_match.group(1) == "+":
                     if open_comment:
                         logging.error("Comment of type '{0}' opens inside '{1}'-type comment".format(
-                                        comm_match.group(2), open_comment.type))
+                                      comm_match.group(2), open_comment.type))
                     else:
                         # open new comment
                         open_comment = Comment(comm_match.group(2))
@@ -45,12 +49,15 @@ class RexTokenizer:
                         logging.error("Comment '%s' closed but wasn't opened", comm_match.group(2))
 
             elif open_comment:
-                result.append(chunk)
+                result.append(chunk)              
 
             elif stopen_match:
                 result.append(ShiftTagOpen(stopen_match.group(1)))
             elif stclose_match:
                 result.append(ShiftTagClose(stclose_match.group(1)))
+            
+            elif secedit_number:
+                result.append(Comment("Z", content=[secedit_number.group(1)]))
 
             elif self.token_bound.match(chunk):
                 if "\t" in chunk:
@@ -69,6 +76,13 @@ class RexTokenizer:
 
             last_chunk = chunk
         return result
+
+
+class RediTokenizer(RexTokenizer):
+
+    def __init__(self):
+        super(self).__init__()
+        self.secedit_number_re = re.compile(r"^\{ (?!\d\d?\}) (\{ [^{}]* [^ {}\*÷] \})", re.VERBOSE)
 
 
 class Token:
@@ -123,6 +137,16 @@ class Comment:
 
     def __repr__(self):
         return str(self)
+
+    def __eq__(self, other):
+        if other:
+            if isinstance(other, self.__class__):
+                return (self.type == other.type and 
+                        self.content == other.content)
+            else:
+                False
+        else:
+            return False
 
 
 class ShiftTag:

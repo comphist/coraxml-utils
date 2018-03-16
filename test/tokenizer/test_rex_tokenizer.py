@@ -63,35 +63,40 @@ class RexTokenizerTests(unittest.TestCase):
     def test_edition_numbering(self):
 
 
-        comment_1 = Comment("E")
+        comment_1 = Comment("Z")
         comment_1.content.append("{5}")
 
-        comment_2 = Comment("E")
+        comment_2 = Comment("Z")
         comment_2.content.append("{9}")
 
-        comment_3 = Comment("E")
+        comment_3 = Comment("Z")
         comment_3.content.append("{1vf,2}")
 
-        comment_4 = Comment("E")
+        comment_4 = Comment("Z")
         comment_4.content.append("{Kap.6,I}")
 
-        comment_5 = Comment("E")
-        comment_5.content.append("{Kap.6,I}")
-
-        comment_6 = Comment("E")
+        comment_6 = Comment("Z")
         comment_6.content.append("{V.10,V}")
 
+
         self.assertEquals(
-            self.tokenizer.tokenize("edition numbering {5} here\nhere {9} words\nhere {1vf,2} too\nlook {Kap.6,I} here\n{Str 7,X} another\nnext one {V.10,V}"),
+            self.tokenizer.tokenize("edition numbering {5} here\nhere {9} words\nhere {1vf,2} too\nlook {Kap.6,I} here\nnext one {V.10,V}"),
             [
                 Token("edition"), Whitespace(" "), Token("numbering"), Whitespace(" "), comment_1, Whitespace(" "), Token("here"), Whitespace("\n", True),
                 Token("here"), Whitespace(" "), comment_2, Whitespace(" "), Token("words"), Whitespace("\n", True),
                 Token("here"), Whitespace(" "), comment_3, Whitespace(" "), Token("too"), Whitespace("\n", True),
                 Token("look"), Whitespace(" "), comment_4, Whitespace(" "), Token("here"), Whitespace("\n", True),
-                comment_5, Whitespace(" "), Token("another"), Whitespace("\n", True),
                 Token("next"), Whitespace(" "), Token("one"), Whitespace(" "), comment_6
             ]
             )
+
+
+    def test_secedit_whitespace(self):
+        #  in case this actually happens (REDI?)
+        #  (was allowed in old tests, but not sure if actually necessary)
+        test_string = "{Str 7,X} another"
+        with self.assertLogs(level=logging.WARN):
+            self.tokenizer.tokenize(test_string)
 
 
     def test_linebreak_whitespace(self):
