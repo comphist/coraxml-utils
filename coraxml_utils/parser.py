@@ -78,7 +78,6 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                           '\.' + alpha + '\.',
                                           '\[\.{3}\]',
                                           '%[A-Z]']) + ')'
-        # comm_re = r'(?P<comm> [+@][KEZ] )'
         word_re = r'(?P<w> \*f | \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
                             for i, (x, _, _) in enumerate(replacements) if x) 
@@ -93,13 +92,12 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                             ',\(' + no_pq,
                                             ',,']) + ')'
         ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
-        brackets_re = r'(?P<br> \[+ (?![ ]) | (?<![ ]) \]+ | <+ (?![ ]) | (?<![ ]) >+ )'
-        # brackets_re = r'(?P<br> \[+ | \]+ | <+ | >+ )'
+        # brackets_re = r'(?P<br> \[{1,2} (?![ ]) | (?<![ ]) \]{1,2} | <{1,2} (?![ ]) | (?<![ ]) >{1,2} | \( (?![ ]) | (?<![ ]) \) )'
+        brackets_re = r'(?P<br> \[{1,2} | \]{1,2} | <{1,2} | >{1,2} | \( | \) )'        
         quotes_re = r'(?P<q> \( ' + quotes + r' \) | ' + quotes + ')'
         majuscule_re = r'(?P<maj> [*÷] [{(<]' + alpha + r'{,3} [*÷] \d* [})>] )'
-        # majuscule_re = r'(?P<maj> [*÷] [{(<] | (?<= [*÷] [{(<] ' + alpha + r'+) [*÷] \d* [})>] )'
         editnum_re = r'(?P<edit> (?<![\*÷]) \{ [^{}]+ (?<![\*÷]) \} )'
-        splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | (?<!\|) \(=\) (?!\|) | =\|+ | \# | \|+ (?!=) )'
+        splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | (?<!\|) \(=\) | =\|+ | \# | \|+ (?!=) )'
         ddash_re = r'(?P<dd> = )'
 
         # specifies which regexes are to be applied, and in what order
@@ -178,6 +176,15 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                         subtoken_spans.append(SubtokenAnno(openbr, closing, match.end())) 
                         new_char = Illegible(val, opening=False)
 
+                    elif val in {"(", ")"}:
+                        # TODO figure what should be done here
+                        if val == ")":
+                            new_char = Bracket(val, dipl_utf=val, anno_utf=val,
+                                               anno_simple=val, opening=False)
+                        else:
+                            new_char = Bracket(val, dipl_utf=val, anno_utf=val,
+                                               anno_simple=val)
+
                     elif key == "dd":
                         new_char = Hyphen(val, dipl_utf=val)
                     elif key in {"pe", "q"}:
@@ -187,9 +194,9 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                         new_char = MetaChar(val)
 
                     elif key == "spl":
-                        if val == "(=)":
+                        if val.startswith("(=)"):
                             new_char = EditHyphen(val)
-                        elif val == "=|":
+                        elif val.startswith("=|"):
                             new_char = DiplJoiner(val)
                         else:
                             new_char = TokenBound(val)
@@ -264,7 +271,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                 if last_char.string.endswith('#'):
                     this_char.dipl_bound = True
 
-                elif last_char.string == '(=)':
+                elif isinstance(last_char, EditHyphen):
                     this_char.dipl_bound = True
 
                 # word split "foo|bar"
@@ -294,8 +301,13 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
             # final punctuation  "foo%." (NOT "f%.oo")
             if (isinstance(last_char, TextChar) and
                 isinstance(this_char, Punct) and
-                not isinstance(next_char, TextChar) and 
-                this_char != next_char):
+                not isinstance(next_char, TextChar)):
+                this_char.anno_bound = True
+
+            # separate punct from punct
+            if (isinstance(last_char, Punct) and
+                isinstance(this_char, Punct) and
+                last_char.string != this_char.string):
                 this_char.anno_bound = True
 
         return some_parse

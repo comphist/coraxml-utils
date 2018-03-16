@@ -28,14 +28,14 @@ class ParserTest(unittest.TestCase):
     def test_line_split_preedition(self):
         """
         Test handling of (=), should:
-        - only occur at line end (TODO)
+        - only occur at line end
         - result in 2 dipls, 1 mod
         - be tagged as UL
-        - not co-occur with M* symbols (TODO)
-        - not occur multiple times in succession (TODO)
+        - not co-occur with M* symbols
+        - not occur multiple times in succession
         """
 
-        tok = ParserTest._create_anselm_parse("hymel(=)reich")
+        tok = ParserTest._create_anselm_parse("hymel(=)\nreich")
         self.assertEquals(len(tok.tokenize_dipl()), 2)
 
         # co-occurence with `|` should result in an error
@@ -61,17 +61,22 @@ class ParserTest(unittest.TestCase):
         self.assertEquals(len(tok.tokenize_anno()), 1)
         self.assertEquals(len(tok.tokenize_dipl()), 1)
 
-    def test_tokenization_anno(self):
+    def test_single_tokenization(self):
 
-        tok = ParserTest._create_anselm_parse("t<o>k#en(=)iz=a|tion%....")
+        tok = ParserTest._create_anselm_parse("tok#en.iza|tion%....")
         self.assertEquals([x.simple() for x in tok.tokenize_anno()],
-                          ["tokeniza", "tion", ".", "..."])
+                          ["token.iza", "tion", ".", "..."])
 
-    def test_tokenization_dipl(self):
-
-        tok = ParserTest._create_anselm_parse("t<o>k#en(=)iz=a|tion%....")
         self.assertEquals([str(x) for x in tok.tokenize_dipl() if x],
-                          ["t<o>k#", "en(=)", "iz=", "a|tion%...."])
+                          ["tok#", "en.iza|tion%...."])
+    
+    def test_multiline_tokenization(self):
+        tok = ParserTest._create_anselm_parse("token(=)\nizat=\nion.")
+        self.assertEquals([x.simple() for x in tok.tokenize_anno()],
+                          ["token\nizat\nion", "."])
+        self.assertEquals([str(x) for x in tok.tokenize_dipl() if x],
+                          ["token(=)", "\nizat=", "\nion."])
+
 
     def test_hochstellung(self):
         with self.assertRaises(ParseError):
