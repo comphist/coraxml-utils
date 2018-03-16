@@ -144,7 +144,7 @@ class Comment:
                 return (self.type == other.type and 
                         self.content == other.content)
             else:
-                False
+                return False
         else:
             return False
 
