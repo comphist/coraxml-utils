@@ -66,7 +66,9 @@ class Token:
         return self.string
 
     def __eq__(self, obj):
-        if not isinstance(Token, object):
+        if obj is None:
+            return False
+        elif not isinstance(obj, Token):
             return False
         else:
             return self.string == obj.string
@@ -84,7 +86,9 @@ class Whitespace:
         return self.string
 
     def __eq__(self, obj):
-        if not isinstance(Whitespace, object):
+        if obj is None:
+            return False
+        elif not isinstance(obj, Whitespace):
             return False
         else:
             return (self.string == obj.string) and (self.is_newline == obj.is_newline)
