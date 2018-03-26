@@ -45,6 +45,22 @@ class BaseParser:
             for x in obj.parse:
                 print(len(obj.parse))
                 print(x.__class__.__name__, x.string, sep="\t")
+
+        last_char = None
+        for c in obj.parse:
+            if isinstance(last_char, Joiner) and not isinstance(c, Whitespace):
+                # allows = mid-line as required by legacy tests
+                if last_char.string != "=":
+                    raise ParseError("%s not at line end" % last_char.string)
+            elif isinstance(last_char, Joiner) and isinstance(c, Whitespace):
+                if not c.line_break:
+                    raise ParseError("%s not at line end" % last_char.string)
+            elif isinstance(last_char, Joiner) and isinstance(c, TokenBound):
+                raise ParseError("Contradictory annotations in transcription:" + obj.trans())
+            elif isinstance(c, Joiner) and isinstance(last_char, TokenBound):
+                raise ParseError("Contradictory annotations in transcription:" + obj.trans())
+            last_char = c
+
         test_string = "".join(c.anno_simple
                               for c in obj.parse
                               if not isinstance(c, MetaChar))
@@ -54,9 +70,6 @@ class BaseParser:
             test_string = re.sub(r"{[1-9]}", "", test_string)
         test_string = re.sub(r"%[A-Z]", "", test_string)
         test_string = re.sub(self.ESCAPE_CHAR, "", test_string)
-
-        # allow foreign language marking
-        test_string = re.sub(r"\*f", "", test_string)
         invalid_chars = set(test_string) - self.allowed
 
         if invalid_chars:
@@ -78,14 +91,14 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         no_pq = r'(?![.;!?:,"«»])'
 
         spc_re = r"(?P<spc> \s+ )"
-        abbr_re = r'(?P<abbr>' + '|'.join(['\.[a-zA-Z]\.',
-                                          '\[\.{3}\]',
-                                          '%[A-Z]']) + ')'
+        abbr_re = r'(?P<abbr>' + '|'.join([r'\.[a-zA-Z]\.',
+                                          r'\[\.{3}\]',
+                                          r'%[A-Z]']) + ')'
         word_re = r'(?P<w> \*f | \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
                             for i, (x, _, _) in enumerate(replacements) if x) 
 
-        # init_punc_re = r'(?P<ip> // | \*[Cf] )' 
+        # init_punc_re = r'(?P<ip> // | \*C )' 
         punc_re = r'(?P<p> %\. | / | ' + punc +')'
         strk_re = r'(?P<strk>  \*[\[ | \*\]] )'
         preedit_re = r'(?P<pe>' + '|'.join(['\(' + punc + '\)',
@@ -100,13 +113,13 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         quotes_re = r'(?P<q> \( ' + quotes + r' \) | ' + quotes + ')'
         majuscule_re = r'(?P<maj> [*÷] [{(<]' + alpha + r'{,3} [*÷] \d* [})>] )'
         editnum_re = r'(?P<edit> (?<![\*÷]) \{ [^{}]+ (?<![\*÷]) \} )'
-        splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | (?<!\|) \(=\) | =\|+ | \# | \|+ (?!=) )'
+        splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | \(=\) | =\|+ | \# | \|+ (?!=) )'
         ddash_re = r'(?P<dd> = )'
 
         # specifies which regexes are to be applied, and in what order
         self.re_parts = [spc_re, abbr_re, majuscule_re,
                          editnum_re, splitter_re, ddash_re, quotes_re,
-                         strk_re, preedit_re,
+                         strk_re, preedit_re, 
                          ptk_marker_re, brackets_re, uni_re, punc_re,
                          word_re]
 
@@ -146,6 +159,8 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                         if any(val for key, val in open_spans.items()):
                             raise ParseError("Unclosed bracket at end of token: " + intoken)
                         new_char = Whitespace(val) 
+                        if "\n" in val:
+                            new_char.line_break = True
                                 
                     elif val == "*[":
                         new_char = Strikethrough(val, opening=True)
@@ -208,6 +223,9 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                             _, utfchar, simplechar = replacements[int(key[3:])]
                             # special case for punc w/ utf conversions
                             if val != "\\." and "." in val or "·" in val:
+                                new_char = Punct(val, dipl_utf=utfchar, anno_utf=utfchar,
+                                                 anno_simple=simplechar)
+                            elif "*C" in val:
                                 new_char = Punct(val, dipl_utf=utfchar, anno_utf=utfchar,
                                                  anno_simple=simplechar)
                             else:
@@ -303,7 +321,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
             # other initial punctuation
             if (isinstance(last_char, Whitespace) and
                 isinstance(this_char, Punct) and 
-                isinstance(next_char, TextChar)):
+                not isinstance(next_char, Punct)):
                 next_char.anno_bound = True
 
             # final punctuation  "foo%." (NOT "f%.oo")

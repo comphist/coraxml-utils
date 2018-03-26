@@ -1,88 +1,91 @@
 
-import re
+import regex
 import logging
 
+
 class RexTokenizer:
-
     def __init__(self):
+        self.token_re = r"(?P<tok> [^\s{+@][^\s+@]* )"
+        self.joiner_re = r"\[?\[? ( \(=\) | =\| | = ) \]?\]? [ \t]*\n[ \t]*"
+        self.token_lineend_re = r"(?P<tokl> " + self.token_re + self.joiner_re + self.token_re + r")"
+        self.lineend_re = r"(?P<end> [ \t]*\n[ \t]* )"
+        self.wspace_re = r"(?P<sp> [ \t] )"
+        self.secedit_number_re = r"(?P<secedit> \{ [^}*÷]+ \} )"
+        self.shifttagopen_re = r"(?P<sto> \+(?P<sotyp>[FLRÜMQ]p?) )"
+        self.shifttagclose_re = r"(?P<stc> @(?P<sctyp>[FLRÜMQ]p?) )"
+        self.comment_re = r"(?P<com> \+(?P<cotyp>[KEZ]) (?P<ctxt>[^\n@]+) @(?P<cctyp>[KEZ]) )"
 
-        self.token_bound = re.compile(r"[ \t]+", re.VERBOSE)
-        self.line_bound = re.compile(r"(?<! \(=\) | .=\| | ..= )[ \t]*\n[ \t]*", re.VERBOSE)
-        self.comment_re = re.compile(r"([+@])([KEZ])")
-        self.shifttagopen_re = re.compile(r"\+([FLRÜMQ]p?)")
-        self.shifttagclose_re = re.compile(r"@([FLRÜMQ]p?)")
-        self.secedit_number_re = re.compile(r"^(\{ [^{}]* [^ {}\*÷] \})", re.VERBOSE)
-        # self.secedit_open_re = re.compile(r"^\{[^{}*÷ ]")
-        # self.secedit_close_re = re.compile(r"[^{}*÷ ]\}$")
+        re_parts = [self.comment_re, self.shifttagopen_re, self.shifttagclose_re, self.token_lineend_re,
+                    self.token_re,  self.secedit_number_re, self.wspace_re, self.lineend_re]
+        self.tokenize_re = regex.compile("|".join(re_parts), flags=regex.VERBOSE)
 
     def tokenize(self, inputtext):
         result = list()
-        open_comment = None
-        token_or_line = re.compile("({}|{})".format(self.token_bound.pattern, 
-                                                    self.line_bound.pattern),
-                                   re.VERBOSE)
-        last_chunk = ""
-        for chunk in token_or_line.split(inputtext):
-            comm_match = self.comment_re.match(chunk)
-            stopen_match = self.shifttagopen_re.match(chunk)
-            stclose_match = self.shifttagclose_re.match(chunk)
-            secedit_number = self.secedit_number_re.match(chunk)
+        last_token = ""
+        for match in self.tokenize_re.scanner(inputtext):
+            matchlabels = match.capturesdict()
 
-            if comm_match:
-                if comm_match.group(1) == "+":
-                    if open_comment:
-                        logging.error("Comment of type '{0}' opens inside '{1}'-type comment".format(
-                                      comm_match.group(2), open_comment.type))
-                    else:
-                        # open new comment
-                        open_comment = Comment(comm_match.group(2))
+            if matchlabels["com"]:
+                if matchlabels["cotyp"] != matchlabels["cctyp"]:
+                    logging.error("Comment opening and closing tag types do not match")
 
-                else:
-                    if open_comment:
-                        # close comment
-                        if open_comment.type != comm_match.group(2):
-                            logging.error("Comment of type '{0}' closes with '{1}' tag".format(
-                                                open_comment.type, comm_match.group(2)))
-                        result.append(open_comment)
-                        open_comment = None
-                    else:
-                        logging.error("Comment '%s' closed but wasn't opened", comm_match.group(2))
+                if not isinstance(result[-1], Whitespace):
+                    logging.warning("Comment after {0} is not preceded by whitespace".format(result[-1]))
 
-            elif open_comment:
-                result.append(chunk)              
-
-            elif stopen_match:
-                result.append(ShiftTagOpen(stopen_match.group(1)))
-            elif stclose_match:
-                result.append(ShiftTagClose(stclose_match.group(1)))
+                result.append(Comment(matchlabels["cotyp"][0], 
+                                      matchlabels["ctxt"][0].strip()))
             
-            elif secedit_number:
-                result.append(Comment("Z", content=[secedit_number.group(1)]))
+            elif matchlabels["sto"]:
+                result.append(ShiftTagOpen(matchlabels["sotyp"][0]))
+                last_shifttag = matchlabels["sotyp"][0]
 
-            elif self.token_bound.match(chunk):
+            elif matchlabels["stc"]:
+                if last_shifttag != matchlabels["sctyp"][0]:
+                    logging.error("Shifttag opening and closing tag types do not match")
+                result.append(ShiftTagClose(matchlabels["sctyp"][0]))
+            
+            elif matchlabels["secedit"]:
+                result.append(Comment("Z", matchlabels["secedit"][0]))
+
+            elif matchlabels["tokl"]:
+                result.append(Token(matchlabels["tokl"][0]))
+                last_token = matchlabels["tokl"][0]
+
+            elif matchlabels["tok"]:
+                result.append(Token(matchlabels["tok"][0]))
+                last_token = matchlabels["tok"][0]
+
+            elif matchlabels["sp"]:
+                chunk = matchlabels["sp"][0]
                 if "\t" in chunk:
-                    logging.warning("Tab used to separate tokens after " + last_chunk)
+                    logging.warning("Tab used to separate tokens after " + last_token)
                 result.append(Whitespace(chunk))
-            elif self.line_bound.match(chunk):
+
+            elif matchlabels["end"]:
+                chunk = matchlabels["end"][0]
                 if chunk != "\n":
-                    logging.warning("Extra whitespace at line break after " + last_chunk)
-                result.append(Whitespace("\n", newline=True))
+                    logging.warning("Extra whitespace at line break after " + last_token) 
+                result.append(Whitespace(chunk, newline=True))
 
-            else:                
-                if chunk:
-                    result.append(Token(chunk))
-                else:
-                    logging.warning("Empty token near " +  last_chunk)
+            else:
+                logging.warning("Unknown entity in " + matchlabels)
 
-            last_chunk = chunk
+                        
         return result
 
 
 class RediTokenizer(RexTokenizer):
 
     def __init__(self):
-        super(self).__init__()
-        self.secedit_number_re = re.compile(r"^\{ (?!\d\d?\}) (\{ [^{}]* [^ {}\*÷] \})", re.VERBOSE)
+        super().__init__()
+        # self.secedit_number_re = re.compile(r"^\{ (?!\d\d?\}) (\{ [^{}]* [^ {}\*÷] \})", re.VERBOSE)
+
+        # accounts for special abbrevs. in Redi texts, e.g. {2}
+        self.token_re = r"(?P<tok> [^\s{][^\s]* | \{\d\d?\} )"
+        # secedit ordered later so token regex can find abbrevs
+        re_parts = [self.comment_re, self.shifttagopen_re, self.shifttagclose_re, self.token_lineend_re,
+            self.token_re,  self.secedit_number_re, self.wspace_re, self.lineend_re]
+        self.tokenize_re = regex.compile("|".join(re_parts), flags=regex.VERBOSE)
 
 
 class Token:
@@ -130,10 +133,10 @@ class Comment:
         if content:
             self.content = content
         else:
-            self.content = list()
+            self.content = str()
 
     def __str__(self):
-        return "<{0} content={1}>".format(self.type, " ".join(self.content))
+        return "<{0} content={1}>".format(self.type, self.content)
 
     def __repr__(self):
         return str(self)

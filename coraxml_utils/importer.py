@@ -56,6 +56,7 @@ class CoraXMLImporter:
 
 
     def _create_dipl_token(self, dipl_element):
+        # TODO: report parser errors and skip token instead of crashing
         return TokDipl(self.tokenparser.parse(dipl_element.attrib['trans'], output_type="dipl"), 
                        extid=dipl_element.attrib['id'])
 
@@ -78,7 +79,7 @@ class CoraXMLImporter:
                 if tagname in tags:
                     logging.warning('Tag ' + tagname + 
                                     ' is set twice for anno-token ' + anno_element.attrib['id'] + '.')
-                tags[tagname] = annotation_element.attrib['tag']
+                tags[tagname] = annotation_element.attrib.get('tag', "")
 
         ## the attribute checked is not obligatory
         checked = 'checked' in anno_element.attrib and anno_element.attrib['checked'] == 'y'

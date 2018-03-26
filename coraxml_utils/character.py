@@ -303,6 +303,25 @@ class Whitespace:
         self.dipl_bound = False
         self.line_break = False
 
+    def __str__(self):
+        return "{0}({1})".format(self.__class__.__name__, self.string)
+
+    def __eq__(self, obj):
+
+        if not isinstance(obj, self.__class__):
+            return False
+        else:
+            return (
+                self.string == obj.string and
+                self.dipl_utf == obj.dipl_utf and
+                self.anno_utf == obj.anno_utf and
+                self.anno_simple == obj.anno_simple and
+                self.anno_bound == obj.anno_bound and
+                self.dipl_bound == obj.dipl_bound and
+                self.line_break == obj.line_break
+            )
+
+
 class Joiner:
     pass
 
