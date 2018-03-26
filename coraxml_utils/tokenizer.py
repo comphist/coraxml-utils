@@ -65,6 +65,8 @@ class RexTokenizer:
                 chunk = matchlabels["end"][0]
                 if chunk != "\n":
                     logging.warning("Extra whitespace at line break after " + last_token) 
+                    # corrects anomalous line breaks
+                    chunk = "\n"
                 result.append(Whitespace(chunk, newline=True))
 
             else:

@@ -91,14 +91,11 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         no_pq = r'(?![.;!?:,"«»])'
 
         spc_re = r"(?P<spc> \s+ )"
-        abbr_re = r'(?P<abbr>' + '|'.join([r'\.[a-zA-Z]\.',
-                                          r'\[\.{3}\]',
-                                          r'%[A-Z]']) + ')'
+        abbr_re = r'(?P<abbr> \.[a-zA-Z]\. | \[\.{3}\] | %[A-Z] )'
         word_re = r'(?P<w> \*f | \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
                             for i, (x, _, _) in enumerate(replacements) if x) 
 
-        # init_punc_re = r'(?P<ip> // | \*C )' 
         punc_re = r'(?P<p> %\. | / | ' + punc +')'
         strk_re = r'(?P<strk>  \*[\[ | \*\]] )'
         preedit_re = r'(?P<pe>' + '|'.join(['\(' + punc + '\)',
@@ -482,3 +479,214 @@ dialect_mapper = {None: PlainParser,
                   "redi": RediParser,
                   "anselm": AnselmParser}
 
+import regex
+class NewParser(RexParser):
+
+    def __init__(self):
+        self.ILLEGIBLE_REPLACEMENT = "[...]"
+        self.missing_br_open = {'['}
+
+        alpha = r"[A-Za-zÄÖÜäöüß$]"
+        punc = r'[.;!?:,]'
+        quotes = r'["«»]'
+        no_pq = r'(?![.;!?:,"«»])'
+
+        spc_re = r"(?P<spc> \s+ )"
+        abbr_re = r'(?P<abbr> \.[a-zA-Z]\. | \[\.{3}\] | %[A-Z] )'
+        word_re = r'(?P<w> \*f | \\ . | ' + alpha + ' )'
+        uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
+                            for i, (x, _, _) in enumerate(replacements) if x) 
+        punc_re = r'(?P<p> %\. | / | ' + punc +')'
+        ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
+        splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | \(=\) | =\|+ | \# | \|+ )'
+        ddash_re = r'(?P<dd> = )'
+        preedit_re = r'(?P<pe>' + '|'.join(['\(' + punc + '\)', ',,\)', 
+                                            ',,\(' + no_pq, ',\)',
+                                            ',\(' + no_pq, ',,']) + ')'
+        quotes_re = r'(?P<q> \( ' + quotes + r' \) | ' + quotes + ')'
+        majuscule_re = r'(?P<maj> [*÷] [{(<] (?P<str>' + alpha + r'{,3}) [*÷] \d* [})>] )'
+        
+        strk_re = r'(?P<strk>  \*\[ (?P<str> [^*[]]+ ) \*\] )'
+        sg_sqr_brackets_re = r'(?P<ssbr> \[ (?P<str> [^\[\]<>]+ ) \] )'
+        dbl_sqr_brackets_re = r'(?P<dsbr> \[\[ (?P<str> [^\[\]<>]+ ) \]\] )'
+        sg_agl_brackets_re = r'(?P<ssbr> < (?P<str> [^<>\[\]]+ ) > )'
+        dbl_agl_brackets_re = r'(?P<ssbr> << (?P<str> [^<>\[\]]+ ) >> )'
+        parens_re = r'(?P<par> \( (?P<str> [^()]+ ) \))'
+
+
+        # specifies which regexes are to be applied, and in what order
+        self.re_parts = [spc_re, abbr_re, majuscule_re, splitter_re, 
+                         ddash_re, quotes_re, strk_re, preedit_re, 
+                         ptk_marker_re, 
+                         dbl_sqr_brackets_re, dbl_agl_brackets_re,
+                         sg_sqr_brackets_re, sg_agl_brackets_re, parens_re,
+                         uni_re, punc_re, word_re]
+
+        # LIST OF ALLOWED CHARACTERS FOR validity check
+        self.allowed = set(ALPHA)
+        self.allowed.update(ALPHA.upper())
+        self.allowed.update('-",.:;\/!?1234567890ßäöüÄÖÜ\n')
+        # for r-kuerzung
+        self.allowed.update("'")
+
+        self.ESCAPE_CHAR = regex.compile(r"&([^" + regex.escape("".join(self.allowed)) + r"])")
+
+        self.init_parser()
+
+        self.token_re = regex.compile("|".join(self.re_parts), flags=regex.VERBOSE)
+
+
+    def init_parser(self):
+        pass
+
+    def parse(self, intoken, output_type="trans"):
+        """
+        output_type: {"trans", "dipl", "anno"}
+        """
+        myparse = list()
+        subtoken_spans = list() # list of SubtokenAnnos
+        open_spans = defaultdict(list)    # list of tuples, (type, start)
+        # in_comment = False
+        new_char = None
+
+        for match in self.token_re.scanner(intoken):
+            for key, val in match.capturesdict().items():
+                if val:
+                    if key == "spc":
+                        # disallow brackets that span multiple tokens
+                        if any(val for key, val in open_spans.items()):
+                            raise ParseError("Unclosed bracket at end of token: " + intoken)
+
+                        if "\n" in val:
+                            myparse.append(Whitespace(val, line_break = True))
+                        else:
+                            myparse.append(Whitespace(val)) 
+
+                    if key == "strk":
+                        myparse.append(Strikethrough(match["strko"], opening=True))
+                        for c in match["str"]:
+                            myparse
+                        
+                elif val == "*[":
+                    new_char = Strikethrough(val, opening=True)
+                    open_spans["*["].append(match.start())
+                elif val == "*]":
+                    if "*[" in open_spans:
+                        closing = open_spans["*["].pop()
+                    else:
+                        raise ParseError("Closed *] is not opened: " + intoken)
+                    subtoken_spans.append(SubtokenAnno("*[", closing, match.end()))
+                    new_char = Strikethrough(val, opening=True)
+                elif val in {"<", "<<"}:
+                    open_spans[val].append(match.start())
+                    new_char = Illegible(val, opening=True)
+                elif val in {">", ">>"}:
+                    openbr = flip_bracket(val)
+                    closing = open_spans[openbr].pop()
+                    subtoken_spans.append(SubtokenAnno(openbr, closing, match.end()))
+                    new_char = Illegible(val, opening=False)
+                elif val in {"[", "[["}:
+                    open_spans[val].append(match.start())
+                    new_char = Illegible(val, opening=True,
+                                            dipl_utf=self.ILLEGIBLE_REPLACEMENT,
+                                            anno_utf=self.ILLEGIBLE_REPLACEMENT)
+                elif val in {"]", "]]"}:
+                    openbr = flip_bracket(val)
+                    if open_spans[openbr]:
+                        closing = open_spans[openbr].pop()
+                    else:
+                        raise ParseError("Closing bracket is not opened: " + intoken)
+                    subtoken_spans.append(SubtokenAnno(openbr, closing, match.end())) 
+                    new_char = Illegible(val, opening=False)
+
+                elif val in {"(", ")"}:
+                    # TODO figure what should be done here
+                    if val == ")":
+                        new_char = Bracket(val, dipl_utf=val, anno_utf=val,
+                                            anno_simple=val, opening=False)
+                    else:
+                        new_char = Bracket(val, dipl_utf=val, anno_utf=val,
+                                            anno_simple=val)
+
+                elif key == "dd":
+                    new_char = Hyphen(val, dipl_utf=val)
+                elif key in {"pe", "q"}:
+                    # TODO: what to do with qmarks? not sent bounds?
+                    new_char = SentBound(val, anno_utf=val, anno_simple=val)
+                elif key == "ptk" or val == "*f":
+                    new_char = MetaChar(val)
+
+                elif key == "spl":
+                    if val.startswith("(=)"):
+                        new_char = EditHyphen(val)
+                    elif val.startswith("=|"):
+                        new_char = DiplJoiner(val)
+                    else:
+                        new_char = TokenBound(val)
+                else:
+                    if key.startswith("uni"):
+                        _, utfchar, simplechar = replacements[int(key[3:])]
+                        # special case for punc w/ utf conversions
+                        if val != "\\." and "." in val or "·" in val:
+                            new_char = Punct(val, dipl_utf=utfchar, anno_utf=utfchar,
+                                                anno_simple=simplechar)
+                        elif "*C" in val:
+                            new_char = Punct(val, dipl_utf=utfchar, anno_utf=utfchar,
+                                                anno_simple=simplechar)
+                        else:
+                            new_char = TextChar(val, dipl_utf=utfchar, anno_utf=utfchar, 
+                                                anno_simple=simplechar)
+                    elif key == "maj":
+                        maj_match = re.search(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷](\d*)[})>]", val)
+                        maj_letter = maj_match.group(1)
+                        mysize = maj_match.group(2)
+
+                        new_char = Majuscule(val, size=mysize,
+                                                dipl_utf=maj_letter.replace("$", "\u017F"),
+                                                anno_utf=maj_letter.replace("$", "\u017F"),
+                                                anno_simple=maj_letter.replace("$", "s"))
+                    else:
+                        if key == "w":
+                            new_char = TextChar(val, dipl_utf=val, anno_utf=val,
+                                                anno_simple=val)
+                        elif key == "abbr":
+                            new_char = TextChar(val, dipl_utf=val, anno_utf=val,
+                                                anno_simple=val)
+                        elif key == "edit":
+                            new_char = MetaChar(val, dipl_utf=val, anno_utf=val,
+                                                anno_simple=val)                        
+                        elif key == "p":
+                            # TODO: need some way to recognize periods that stand for missing
+                                    # chars at this point!
+                            new_char = Punct(val, dipl_utf=val, anno_utf=val,
+                                                anno_simple=val)
+                        else:
+                            ParseError("Unknown key: " + key)
+
+                    # process open spans (omit illegible chars as required)
+                    if open_spans["["] or open_spans["[["]:
+                        new_char.dipl_utf = ""
+                        new_char.anno_utf = ""
+                        new_char.illegible = True
+                    elif open_spans["*["]:
+                        new_char.anno_utf = ""
+                        new_char.anno_simple = ""
+                        new_char.strikethrough = True
+
+                if new_char is None:
+                    logging.warning("Empty char results from " + intoken)
+                myparse.append(new_char)
+
+        if any(val for key, val in open_spans.items()):
+            raise ParseError("Unclosed bracket at end of token: " + intoken)
+
+        if output_type.startswith("dipl"):
+            result = DiplTrans(myparse, subtoken=subtoken_spans)
+        elif output_type.startswith("anno"):
+            result = AnnoTrans(myparse)
+        else:
+            myparse = self.tokenize(myparse)
+            result = Trans(myparse, subtoken=subtoken_spans)
+        self.validate(result)  # throws ParseError
+        return result
+        
