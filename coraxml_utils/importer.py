@@ -344,7 +344,8 @@ class TransImporter:
                 try:
                     new_token = self.TokenParser.parse(chunk.string)
                 except parser.ParseError as e:
-                    logging.error("Transcription could not be parsed: {0}\t{1}".format(new_bibinfo,
+                    bibstr = "{sigle}-{page}{side},{col}{line}".format(**new_bibinfo)
+                    logging.error("Transcription could not be parsed: {0}\t{1}".format(bibstr,
                                                                                        chunk.string))
                     print(e.message)
                     self.valid_transcription = False

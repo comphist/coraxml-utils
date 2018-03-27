@@ -11,9 +11,11 @@ class RexTokenizerTests(unittest.TestCase):
         self.tokenizer = RexTokenizer()
 
     ## legacy: comment-tags
-    def test_nested_comments(self):
-        with self.assertLogs(level=logging.ERROR):
-            self.tokenizer.tokenize('+R Das ander Capittel der vor#rede(.)+K vor#rede(.): folgt Zeilenfüllung @K @R')
+    # ## This example poses no problems for the tokenizer (that I'm aware of) and 
+    #  thus shouldn't trigger an error 
+    # def test_nested_comments(self):
+    #     with self.assertLogs(level=logging.ERROR):
+    #         self.tokenizer.tokenize('+R Das ander Capittel der vor#rede(.)+K vor#rede(.): folgt Zeilenfüllung @K @R')
 
     def test_missing_whitespace_before_comment(self):
         with self.assertLogs(level=logging.WARNING):

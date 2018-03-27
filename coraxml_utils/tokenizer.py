@@ -22,12 +22,15 @@ class RexTokenizer:
     def tokenize(self, inputtext):
         result = list()
         last_token = ""
+        last_shifttags = list()
         for match in self.tokenize_re.scanner(inputtext):
             matchlabels = match.capturesdict()
 
             if matchlabels["com"]:
-                if matchlabels["cotyp"] != matchlabels["cctyp"]:
-                    logging.error("Comment opening and closing tag types do not match")
+                if matchlabels["cotyp"][0] != matchlabels["cctyp"][0]:
+                    logging.error("Comment opening ({0}) and closing ({1}) tag types do not match".format(
+                        matchlabels["cotyp"][0], matchlabels["cctyp"][0]
+                    ))
 
                 if not isinstance(result[-1], Whitespace):
                     logging.warning("Comment after {0} is not preceded by whitespace".format(result[-1]))
@@ -37,11 +40,17 @@ class RexTokenizer:
             
             elif matchlabels["sto"]:
                 result.append(ShiftTagOpen(matchlabels["sotyp"][0]))
-                last_shifttag = matchlabels["sotyp"][0]
+                last_shifttags.append(matchlabels["sotyp"][0])
 
             elif matchlabels["stc"]:
+                try:
+                    last_shifttag = last_shifttags.pop()
+                except IndexError:
+                    logging.error("Shifttag '{0}' closes but wasn't opened".format(matchlabels["sctyp"][0]))
                 if last_shifttag != matchlabels["sctyp"][0]:
-                    logging.error("Shifttag opening and closing tag types do not match")
+                    logging.error("Shifttag opening ({0}) and closing ({1}) tag types do not match".format(
+                        last_shifttag, matchlabels["sctyp"][0]
+                    ))
                 result.append(ShiftTagClose(matchlabels["sctyp"][0]))
             
             elif matchlabels["secedit"]:
@@ -58,13 +67,13 @@ class RexTokenizer:
             elif matchlabels["sp"]:
                 chunk = matchlabels["sp"][0]
                 if "\t" in chunk:
-                    logging.warning("Tab used to separate tokens after " + last_token)
+                    logging.warning("Tab used to separate tokens after '{0}'".format(last_token))
                 result.append(Whitespace(chunk))
 
             elif matchlabels["end"]:
                 chunk = matchlabels["end"][0]
                 if chunk != "\n":
-                    logging.warning("Extra whitespace at line break after " + last_token) 
+                    logging.warning("Extra whitespace at line break after '{0}'".format(last_token))
                     # corrects anomalous line breaks
                     chunk = "\n"
                 result.append(Whitespace(chunk, newline=True))
@@ -72,6 +81,8 @@ class RexTokenizer:
             else:
                 logging.warning("Unknown entity in " + matchlabels)
 
+        if last_shifttags:
+            logging.error("Shifttags {0} still open at end of document".format(last_shifttags))
                         
         return result
 

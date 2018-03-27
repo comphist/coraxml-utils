@@ -6,7 +6,6 @@ from coraxml_utils.coralib import Trans
 class ParserTest(unittest.TestCase):
 
     def _create_anselm_parse(test_string):
-
         tok = AnselmParser().parse(test_string)
         return tok
 
@@ -80,11 +79,25 @@ class ParserTest(unittest.TestCase):
 
     def test_hochstellung(self):
         with self.assertRaises(ParseError):
-            tok = ParserTest._create_anselm_parse("de%$")
+            ParserTest._create_anselm_parse("de%$")
 
     def test_brackets_lineend(self):
         with self.assertRaises(ParseError):
-            tok = ParserTest._create_anselm_parse("*[wi(=)\nder*]")
+            ParserTest._create_anselm_parse("*[wi(=)\nder*]")
         
     def test_abbreviations(self):
-        self.assertIsInstance(ParserTest._create_anselm_parse("h<.$.>"), Trans)
+        tok = AnselmParser().parse("h<.$.>")
+        self.assertIsInstance(tok, Trans)
+
+        self.assertEqual(tok.tokenize_anno()[0].simple(), "h.s.")
+
+    def test_majuskels(self):
+        tok = AnselmParser().parse("*{D*}iz")
+        self.assertEqual(tok.parse, [Majuscule("*{D*}", "", 
+                                     anno_simple="D", anno_utf="D", dipl_utf="D"), 
+                                     TextChar("i", anno_simple="i", anno_utf="i", dipl_utf="i"), 
+                                     TextChar("z", anno_simple="z", anno_utf="z", dipl_utf="z")])
+
+    def test_legalbrackets_lineend(self):
+        tok = AnselmParser().parse("[[ge(=)]]\ntan")
+        self.assertIsInstance(tok, Trans)
