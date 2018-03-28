@@ -1,5 +1,5 @@
 
-import re
+import regex
 import abc
 import logging
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -32,7 +32,7 @@ class ParseError(Exception):
 class BaseParser:
 
     def __init__(self):
-        self.token_re = re.compile(r"( (?x) " + "|".join(self.re_parts) + ")")
+        self.token_re = regex.compile(r"( (?x) " + "|".join(self.re_parts) + ")")
 
     def validate(self, obj):
         # remove all valid characters, now everything that remains
@@ -65,11 +65,11 @@ class BaseParser:
                               for c in obj.parse
                               if not isinstance(c, MetaChar))
         if isinstance(self, RediParser):
-            test_string = re.sub(r"{[1-9][0-9]?}", "", test_string)
+            test_string = regex.sub(r"{[1-9][0-9]?}", "", test_string)
         else:
-            test_string = re.sub(r"{[1-9]}", "", test_string)
-        test_string = re.sub(r"%[A-Z]", "", test_string)
-        test_string = re.sub(self.ESCAPE_CHAR, "", test_string)
+            test_string = regex.sub(r"{[1-9]}", "", test_string)
+        test_string = regex.sub(r"%[A-Z]", "", test_string)
+        test_string = regex.sub(self.ESCAPE_CHAR, "", test_string)
         invalid_chars = set(test_string) - self.allowed
 
         if invalid_chars:
@@ -98,23 +98,17 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
 
         punc_re = r'(?P<p> %\. | / | ' + punc +')'
         strk_re = r'(?P<strk>  \*[\[ | \*\]] )'
-        preedit_re = r'(?P<pe>' + '|'.join(['\(' + punc + '\)',
-                                            ',,\)', 
-                                            ',,\(' + no_pq,
-                                            ',\)',
-                                            ',\(' + no_pq,
-                                            ',,']) + ')'
+        preedit_re = r'(?P<pe> \(' + punc + r'\) | ,,\) | ,,\(' + no_pq + r'| ,\) | ,\(' + no_pq + r' | ,, )'
         ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
         brackets_re = r'(?P<br> \[{1,2} | \]{1,2} | <{1,2} | >{1,2} | \( | \) )'        
         quotes_re = r'(?P<q> \( ' + quotes + r' \) | ' + quotes + ')'
-        majuscule_re = r'(?P<maj> [*÷] [{(<]' + alpha + r'{,3} [*÷] \d* [})>] )'
-        editnum_re = r'(?P<edit> (?<![\*÷]) \{ [^{}]+ (?<![\*÷]) \} )'
+        majuscule_re = r'(?P<maj> [*÷] [{(<] (?P<majc>' + alpha + r'{,3}) [*÷] (?P<majs>\d*) [})>] )'
         splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | \(=\) | =\|+ | \# | \|+ (?!=) )'
         ddash_re = r'(?P<dd> = )'
 
         # specifies which regexes are to be applied, and in what order
         self.re_parts = [spc_re, abbr_re, majuscule_re,
-                         editnum_re, splitter_re, ddash_re, quotes_re,
+                         splitter_re, ddash_re, quotes_re,
                          strk_re, preedit_re, 
                          ptk_marker_re, brackets_re, uni_re, punc_re,
                          word_re]
@@ -126,7 +120,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         # for r-kuerzung
         self.allowed.update("'")
 
-        self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
+        self.ESCAPE_CHAR = regex.compile(r"&([^" + regex.escape("".join(self.allowed)) + r"])")
 
         self.init_parser()
 
@@ -144,9 +138,10 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         myparse = list()
         subtoken_spans = list() # list of SubtokenAnnos
         open_spans = defaultdict(list)    # list of tuples, (type, start)
-        new_char = None
 
-        for match in re.finditer(self.token_re, intoken):
+        for match in self.token_re.scanner(intoken):
+            new_char = None
+            skip_this_char = False
             for key, val in match.groupdict().items():
                 if val:
                     # disallow brackets that span multiple tokens
@@ -230,10 +225,8 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                 new_char = TextChar(val, dipl_utf=utfchar, anno_utf=utfchar, 
                                                     anno_simple=simplechar)
                         elif key == "maj":
-                            maj_match = re.search(r"[*÷][{(<]([A-Za-zÄÖÜäöüß$]{,3})[*÷](\d*)[})>]", val)
-                            maj_letter = maj_match.group(1)
-                            mysize = maj_match.group(2)
-
+                            maj_letter = match.group("majc")
+                            mysize = match.group("majs")
                             new_char = Majuscule(val, size=mysize,
                                                  dipl_utf=maj_letter.replace("$", "\u017F"),
                                                  anno_utf=maj_letter.replace("$", "\u017F"),
@@ -253,8 +246,10 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                         # chars at this point!
                                 new_char = Punct(val, dipl_utf=val, anno_utf=val,
                                                     anno_simple=val)
+                            elif key in {"majc", "majs"}:
+                                skip_this_char = True
                             else:
-                                ParseError("Unknown key: " + key)
+                                raise ParseError("Unknown key: '{0}' in token '{1}'".format(key, intoken))
 
                         # process open spans (omit illegible chars as required)
                         if open_spans["["] or open_spans["[["]:
@@ -268,7 +263,8 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
 
                     if new_char is None:
                         logging.warning("Empty char results from " + intoken)
-                    myparse.append(new_char)
+                    if not skip_this_char:
+                        myparse.append(new_char)
 
         if any(val for key, val in open_spans.items()):
             raise ParseError("Unclosed bracket at end of token: " + intoken)
@@ -415,7 +411,7 @@ class PlainParser(BaseParser):
         self.allowed.update('-",.:;\/!?1234567890ßäöüÄÖÜ ')
         self.allowed.update("'()[]{}")
 
-        self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
+        self.ESCAPE_CHAR = regex.compile(r"&([^" + regex.escape("".join(self.allowed)) + r"])")
 
         self.dipl_utf_opts = None
         self.anno_utf_opts = None
@@ -439,11 +435,9 @@ class PlainParser(BaseParser):
         """
         myparse = list()
         subtoken_spans = list() # list of SubtokenAnnos
-        open_spans = defaultdict(list)    # list of tuples, (type, start)
-        in_comment = False
         new_char = None
 
-        for match in re.finditer(self.token_re, intoken):
+        for match in self.token_re.scanner(intoken):
             for key, val in match.groupdict().items():
                 if val:
                     if key == "w":

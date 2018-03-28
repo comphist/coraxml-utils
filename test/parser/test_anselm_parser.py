@@ -76,10 +76,9 @@ class ParserTest(unittest.TestCase):
         self.assertEquals([str(x) for x in tok.tokenize_dipl() if x],
                           ["token(=)", "izat=", "ion."])
 
-
     def test_hochstellung(self):
-        with self.assertRaises(ParseError):
-            ParserTest._create_anselm_parse("de%$")
+        tok = ParserTest._create_anselm_parse("de%$")
+        self.assertIsInstance(tok, Trans)
 
     def test_brackets_lineend(self):
         with self.assertRaises(ParseError):
