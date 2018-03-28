@@ -188,6 +188,7 @@ replacements = [
     [ r"[\\%]n",     "\u1DE0",     "n"         ],
     [ r"[\\%]r",     "\u1DE2",     "r"         ],
     [ r"[\\%]s",     "\u1DE4",     "s"         ],
+    [ r"[\\%]\$",     "\u017F",     "s"         ], ## appears twice in anselm
     [ r"[\\%]z",     "\u1DE6",     "z"         ],
 
     # still missing from official unicode
