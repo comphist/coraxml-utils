@@ -121,31 +121,31 @@ class CoraXMLExporter:
         return  ET.ElementTree(root)
 
 
-class TransExporter:
+# class TransExporter:
 
-    def __init__(self):
-        pass
+#     def __init__(self):
+#         pass
 
-    def export(self, doc, token_form="trans"):
+#     def export(self, doc, token_form="trans"):
 
-        # list of strings to be joined at end of method
-        output = list()
+#         # list of strings to be joined at end of method
+#         output = list()
 
-        output.append("+H")
-        ## TODO improve export of the header
-        if doc.header_string:
-            output.append(doc.header_string)
-        else:
-            for key, value in doc.header:
-                output.append(key + ':' + value)
-        output.append("@H")
+#         output.append("+H")
+#         ## TODO improve export of the header
+#         if doc.header_string:
+#             output.append(doc.header_string)
+#         else:
+#             for key, value in doc.header:
+#                 output.append(key + ':' + value)
+#         output.append("@H")
 
-        for p in doc.pages:
-            for c in p.columns:
-                for l in c.lines:
-                    for d in l.dipls:
-                        if token_form == "dipls"
-                        tok = d.get_token() # ??
+#         for p in doc.pages:
+#             for c in p.columns:
+#                 for l in c.lines:
+#                     for d in l.dipls:
+#                         if token_form == "dipls"
+#                         tok = d.get_token() # ??
                         
                         
 def print_file(self):

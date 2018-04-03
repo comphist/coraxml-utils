@@ -278,7 +278,11 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
         else:
             myparse = self.tokenize(myparse)
             result = Trans(myparse, subtoken=subtoken_spans)
-        self.validate(result)  # throws ParseError
+        try:
+            self.validate(result)  # throws ParseError
+        except ParseError as e:
+            logging.error("the token '{0}' could not be parsed:\n\t{1}".format(intoken,
+                e.message))
         return result
         
 

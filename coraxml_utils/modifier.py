@@ -1,12 +1,10 @@
 import json
+import re
+import logging
 
 from coraxml_utils.settings import DEFAULT_VAL
-<<<<<<< HEAD
 from coraxml_utils.character import *
 from coraxml_utils.coralib import ShiftTag
-=======
-from coraxml_utils.character import Whitespace
->>>>>>> 2d39fa0377eccd98d271cf2bd272a7bef4fe5026
 
 def _add_val(instr, newval, sep=' '):
     if instr != DEFAULT_VAL:
@@ -121,35 +119,33 @@ def change_tags(tok_anno, annotation_type, rename_dict):
 
 
 # für REF
-import re
-import logging
-def add_punc_tags(mydoc):
-    for token in mydoc.tokens:
-        last_anno = None
-        keep_annos = list()
-        open_quote = False
-        shifttag_stack = list()
-        for anno in token.tok_annos:
-            if re.match(r"\([.;!?:,]\)", anno.trans()):
-                keep_annos[-1].tags.set("punc", anno.trans.parse[0].string.replace("(", "").replace(")", ""))
-            
-            elif anno.trans() == '(")':
-                if last_anno:
-                    if re.match(r"\([.;!?:,]\)", last_anno.trans()):
-                        # set this token as end of span
-                        mydoc.shifttags.append(ShiftTag("Q", shifttag_stack))
-                        shifttag_stack = list()
-                    else:
-                        logging.warning("Unexpected quotation mark in token: " + str(token))
+def add_punc_tags(token):
+    last_anno = None
+    keep_annos = list()
+    open_quote = False
+    shifttag_stack = list()
+    for tokanno in token.tok_annos:
+        anno_string = str(tokanno.trans)
+        if re.match(r"\([.;!?:,]\)", anno_string):
+            keep_annos[-1].tags["punc"] = tokanno.trans.parse[0].string.replace("(", "").replace(")", "")
+            keep_annos[-1].trans += tokanno.trans
+
+        elif anno_string == '(")':
+            if last_anno:
+                if re.match(r"\([.;!?:,]\)", str(last_anno.trans)):
+                    # set this token as end of span
+                    mydoc.shifttags.append(ShiftTag("Q", shifttag_stack))
+                    shifttag_stack = list()
                 else:
-                    # set this token as beginning of span
-                    open_quote = True
+                    logging.warning("Unexpected quotation mark in token: " + str(token))
             else:
-                if open_quote:
-                    shifttag_stack.append(token)
-                keep_annos.append(anno)
-        token.tok_annos = keep_annos
-    return mydoc
+                # set this token as beginning of span
+                open_quote = True
+        else:
+            if open_quote:
+                shifttag_stack.append(token)
+            keep_annos.append(tokanno)
+    token.tok_annos = keep_annos
 
 
 def trans_to_cora_json(trans):
