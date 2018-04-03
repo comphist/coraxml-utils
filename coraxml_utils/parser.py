@@ -198,9 +198,11 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
 
                     elif key == "dd":
                         new_char = Hyphen(val, dipl_utf=val)
-                    elif key in {"pe", "q"}:
-                        # TODO: what to do with qmarks? not sent bounds?
+                    elif key == "pe":
                         new_char = SentBound(val, anno_utf=val, anno_simple=val)
+                    elif key == "q":
+                        new_char = QuotationMark(val, anno_utf=val, anno_simple=val)
+
                     elif key == "ptk" or val == "*f":
                         new_char = MetaChar(val)
 

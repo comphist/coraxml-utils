@@ -98,5 +98,6 @@ class ParserTest(unittest.TestCase):
                                      TextChar("z", anno_simple="z", anno_utf="z", dipl_utf="z")])
 
     def test_legalbrackets_lineend(self):
-        tok = AnselmParser().parse("[[ge(=)]]\ntan")
-        self.assertIsInstance(tok, Trans)
+        #  should be '[[ge]](=)\ntan'
+        with self.assertRaises(ParseError):
+            AnselmParser().parse("[[ge(=)]]\ntan")

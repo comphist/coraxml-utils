@@ -33,7 +33,7 @@ class RexTokenizer:
                     ))
 
                 if not isinstance(result[-1], Whitespace):
-                    logging.warning("Comment after {0} is not preceded by whitespace".format(result[-1]))
+                    logging.warning("Comment after '{0}' is not preceded by whitespace".format(result[-1]))
 
                 result.append(Comment(matchlabels["cotyp"][0], 
                                       matchlabels["ctxt"][0].strip()))

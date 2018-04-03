@@ -1,5 +1,7 @@
 
 from coraxml_utils.settings import DEFAULT_VAL
+from coraxml_utils.character import *
+from coraxml_utils.coralib import ShiftTag
 
 def _add_val(instr, newval, sep=' '):
     if instr != DEFAULT_VAL:
@@ -53,47 +55,47 @@ def add_tokenization_tags(token):
             m.tags["token_type"] = token_type
 
 
-def add_punc_tags(token):
-    mods = token.tok_annos
+# def add_punc_tags(token):
+#     mods = token.tok_annos
     
-    for i, m in enumerate(mods):
-        sent_type = str()
-        nom_type = str()
-        mtrans = str(m.trans)
+#     for i, m in enumerate(mods):
+#         sent_type = str()
+#         nom_type = str()
+#         mtrans = str(m.trans)
         
-        if mtrans == "(.)":
-            sent_type = "DE"
-        elif mtrans == "(?)":
-            sent_type = "QE"
-        elif mtrans == "(!)":
-            sent_type = "EE"
-        elif mtrans == "(;)": # semicolon end
-            sent_type = "SE"
-        elif mtrans == "(:)": # colon end
-            sent_type = "CE"
+#         if mtrans == "(.)":
+#             sent_type = "DE"
+#         elif mtrans == "(?)":
+#             sent_type = "QE"
+#         elif mtrans == "(!)":
+#             sent_type = "EE"
+#         elif mtrans == "(;)": # semicolon end
+#             sent_type = "SE"
+#         elif mtrans == "(:)": # colon end
+#             sent_type = "CE"
 
-        if mtrans == "(,)":
-            nom_type = "C" # modern comma
+#         if mtrans == "(,)":
+#             nom_type = "C" # modern comma
 
-        if sent_type:
-            # TODO: adapt to cases w/multiple punct
-            if mods[i - 1].trans.keep("p") and len(mods) > 2:
-                etree.SubElement(mods[i - 2], "punc", {"tag": sent_type})
-                etree.SubElement(mods[i - 1], "punc", {"tag": "$E"})
-            else:
-                etree.SubElement(mods[i - 1], "punc", {"tag": sent_type})
-            token.remove(m)
+#         if sent_type:
+#             # TODO: adapt to cases w/multiple punct
+#             if mods[i - 1].trans.keep("p") and len(mods) > 2:
+#                 etree.SubElement(mods[i - 2], "punc", {"tag": sent_type})
+#                 etree.SubElement(mods[i - 1], "punc", {"tag": "$E"})
+#             else:
+#                 etree.SubElement(mods[i - 1], "punc", {"tag": sent_type})
+#             token.remove(m)
 
-        if nom_type:
-            if mods[i - 1].trans.keep("p") and len(mods) > 2:
-                etree.SubElement(mods[i - 2], "punc", {"tag": nom_type})
-                etree.SubElement(mods[i - 1], "punc", {"tag": "$C"})
-            else:
-                etree.SubElement(mods[i - 1], "punc", {"tag": nom_type})
-            try:
-                token.remove(m)
-            except ValueError:
-                print(token.id)
+#         if nom_type:
+#             if mods[i - 1].trans.keep("p") and len(mods) > 2:
+#                 etree.SubElement(mods[i - 2], "punc", {"tag": nom_type})
+#                 etree.SubElement(mods[i - 1], "punc", {"tag": "$C"})
+#             else:
+#                 etree.SubElement(mods[i - 1], "punc", {"tag": nom_type})
+#             try:
+#                 token.remove(m)
+#             except ValueError:
+#                 print(token.id)
 
 
 def update_punct_pos(token):
@@ -107,6 +109,39 @@ def fill_annotation_column(tok_anno, annotation_type, default_value=DEFAULT_VAL)
     tok_anno.tags[annotation_type] = tok_anno.tags.get(annotation_type, default_value)
 
 def change_tags(tok_anno, annotation_type, rename_dict):
-    """Change certain tags of the given tpye to a new value that is specified in rename_dict."""
+    """Change certain tags of the given type to a new value that is specified in rename_dict."""
     if annotation_type in tok_anno.tags:
-        tok_anno.tags[annotation_type] = rename_dict.get(tok_anno.tags[annotation_type], tok_anno.tags[annotation_type])
+        tok_anno.tags[annotation_type] = rename_dict.get(tok_anno.tags[annotation_type], 
+                                                         tok_anno.tags[annotation_type])
+
+# für REF
+import re
+import logging
+def add_punc_tags(mydoc):
+    for token in mydoc.tokens:
+        last_anno = None
+        keep_annos = list()
+        open_quote = False
+        shifttag_stack = list()
+        for anno in token.tok_annos:
+            if re.match(r"\([.;!?:,]\)", anno.trans()):
+                keep_annos[-1].tags.set("punc", anno.trans.parse[0].string.replace("(", "").replace(")", ""))
+            
+            elif anno.trans() == '(")':
+                if last_anno:
+                    if re.match(r"\([.;!?:,]\)", last_anno.trans()):
+                        # set this token as end of span
+                        mydoc.shifttags.append(ShiftTag("Q", shifttag_stack))
+                        shifttag_stack = list()
+                    else:
+                        logging.warning("Unexpected quotation mark in token: " + str(token))
+                else:
+                    # set this token as beginning of span
+                    open_quote = True
+            else:
+                if open_quote:
+                    shifttag_stack.append(token)
+                keep_annos.append(anno)
+        token.tok_annos = keep_annos
+    return mydoc
+

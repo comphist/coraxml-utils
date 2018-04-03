@@ -1,6 +1,4 @@
 
-import re
-
 # replacements needs to be an array, since they must be done in the
 # correct order.
 #
@@ -352,6 +350,9 @@ class Strikethrough(Bracket):
 
 class SentBound(MetaChar):
     """ehemalig 'pe' """
+    pass
+
+class QuotationMark(SentBound):
     pass
 
 class TokenBound(MetaChar):

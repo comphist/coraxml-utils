@@ -126,7 +126,7 @@ class TransExporter:
     def __init__(self):
         pass
 
-    def export(self, doc):
+    def export(self, doc, token_form="trans"):
 
         # list of strings to be joined at end of method
         output = list()
@@ -144,6 +144,7 @@ class TransExporter:
             for c in p.columns:
                 for l in c.lines:
                     for d in l.dipls:
+                        if token_form == "dipls"
                         tok = d.get_token() # ??
                         
                         
