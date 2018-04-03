@@ -14,8 +14,7 @@ if __name__ == "__main__":
     description = "Fügt einige extra Annotationen einer CorA-XML-Datei hinzu."
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('infiles', nargs="+", help='Eingabedateien (XML)')
-    parser.add_argument("-o", '--outpath', default=".",
-                        help='Ausgabepfad')
+    parser.add_argument("-o", '--outpath', default=".", help='Ausgabepfad')
     args, _ = parser.parse_known_args()
 
     # name mod -> tok_anno, dipl -> tok_dipl
@@ -36,7 +35,9 @@ if __name__ == "__main__":
             add_tokenization_tags(tok)
 
             # add punc tags
-            add_punc_tags(tok)
+            new_shifttags = add_punc_tags(tok)
+            # (when shifttags result from quotation marks)
+            doc.shifttags.extend(new_shifttags)
 
         output_xml = MyExporter.export(doc)
         outfilepath = str(Path(args.outpath) / (doc.sigle + ".xml"))

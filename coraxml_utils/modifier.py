@@ -30,28 +30,24 @@ def add_tokenization_tags(token):
             token_type = _add_val(token_type, "MS" + str(c))
             switch_MS = False
             c += 1
-        elif any(c["trans"] == "=|" and c["type"] == "spl" 
+        elif any(c.string == "=|" and isinstance(c, TokenBound) 
                  for c in mparse):
             switch_ML = True
             token_type = _add_val(token_type, "ML1")
             c += 1
-        elif any(c["trans"] == "|" and c["type"] == "spl" 
+        elif any(c.string == "|" and isinstance(c, TokenBound) 
                  for c in mparse):
             switch_MS = True
             token_type = _add_val(token_type, "MS1")
             c += 1
 
         # univerbation
-        if any(c["type"] == "dd" for c in mparse):
+        if any(isinstance(c, Hyphen) for c in mparse):
             token_type = _add_val(token_type, 'UH')
-        elif any(c["trans"] == "#" and c["type"] == "spl" 
+        elif any(c.string == "#" and isinstance(c, TokenBound) 
                  for c in mparse):
             token_type = _add_val(token_type, 'US')
-        elif any(c["trans"] == "~(=)" and c["type"] == "spl" 
-                 for c in mparse):
-            pass
-        elif any(c["trans"] == "(=)" and c["type"] == "spl" 
-                 for c in mparse):
+        elif any(isinstance(c, EditHyphen) for c in mparse):
             token_type = _add_val(token_type, 'UL')
 
         if token_type and token_type != DEFAULT_VAL:
@@ -123,18 +119,25 @@ def add_punc_tags(token):
     last_anno = None
     keep_annos = list()
     open_quote = False
+    new_shifttags = list()
     shifttag_stack = list()
     for tokanno in token.tok_annos:
         anno_string = str(tokanno.trans)
         if re.match(r"\([.;!?:,]\)", anno_string):
             keep_annos[-1].tags["punc"] = tokanno.trans.parse[0].string.replace("(", "").replace(")", "")
+
+            # remove PE chars from utf & simple representations
+            for c in tokanno.trans.parse:
+                c.dipl_utf = ""
+                c.anno_utf = ""
+                c.anno_simple = ""
             keep_annos[-1].trans += tokanno.trans
 
         elif anno_string == '(")':
             if last_anno:
                 if re.match(r"\([.;!?:,]\)", str(last_anno.trans)):
                     # set this token as end of span
-                    mydoc.shifttags.append(ShiftTag("Q", shifttag_stack))
+                    new_shifttags.append(ShiftTag("Q", shifttag_stack))
                     shifttag_stack = list()
                 else:
                     logging.warning("Unexpected quotation mark in token: " + str(token))
@@ -146,6 +149,7 @@ def add_punc_tags(token):
                 shifttag_stack.append(token)
             keep_annos.append(tokanno)
     token.tok_annos = keep_annos
+    return new_shifttags
 
 
 def trans_to_cora_json(trans):
