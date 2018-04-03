@@ -1,5 +1,7 @@
+import json
 
 from coraxml_utils.settings import DEFAULT_VAL
+from coraxml_utils.character import Whitespace
 
 def _add_val(instr, newval, sep=' '):
     if instr != DEFAULT_VAL:
@@ -110,3 +112,44 @@ def change_tags(tok_anno, annotation_type, rename_dict):
     """Change certain tags of the given tpye to a new value that is specified in rename_dict."""
     if annotation_type in tok_anno.tags:
         tok_anno.tags[annotation_type] = rename_dict.get(tok_anno.tags[annotation_type], tok_anno.tags[annotation_type])
+
+
+def trans_to_cora_json(trans):
+    """converts a Trans-object to json as expected from CorA from a token editing script
+    https://cora.readthedocs.io/en/latest/admin-projects/#setting-a-token-editing-script
+    """
+
+    json_dict = {
+        'dipl_trans': [''],
+        'dipl_utf': [''],
+        'dipl_breaks': [],
+        'mod_trans': [''],
+        'mod_utf': [''],
+        'mod_ascii': [''],
+    }
+
+    for char in trans.parse:
+
+        if char.dipl_bound:
+            json_dict['dipl_trans'].append('')
+            json_dict['dipl_utf'].append('')
+            if char.line_break:
+                json_dict['dipl_breaks'].append(1)
+            else:
+                json_dict['dipl_breaks'].append(0)
+
+        if char.anno_bound:
+            json_dict['mod_trans'].append('')
+            json_dict['mod_utf'].append('')
+            json_dict['mod_ascii'].append('')
+
+        if not isinstance(char, Whitespace):
+            json_dict['dipl_trans'][-1] += char.string
+            json_dict['dipl_utf'][-1] += char.dipl_utf
+            json_dict['mod_trans'][-1] += char.string
+            json_dict['mod_utf'][-1] += char.anno_utf
+            json_dict['mod_ascii'][-1] += char.anno_simple
+
+    json_dict['dipl_breaks'].append(0)
+
+    return json.dumps(json_dict)
