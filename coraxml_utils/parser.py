@@ -252,7 +252,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                 new_char = Punct(val, dipl_utf=val, anno_utf=val,
                                                     anno_simple=val)
                             elif key in {"majc", "majs"}:
-                                skip_this_char = True
+                                continue
                             else:
                                 raise ParseError("Unknown key: '{0}' in token '{1}'".format(key, intoken))
 
@@ -267,9 +267,13 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                             new_char.strikethrough = True
 
                     if new_char is None:
-                        logging.warning("Empty char results from " + intoken)
-                    if not skip_this_char:
+                        raise RuntimeError("Unexpected parse error. This should never happen! {0}, {1}".format(key, intoken))
+                    else:
                         myparse.append(new_char)
+                    break
+
+            if new_char is None:
+                logging.warning("Empty char results from " + intoken)
 
         if any(val for key, val in open_spans.items()):
             raise ParseError("Unclosed bracket at end of token: " + intoken)
