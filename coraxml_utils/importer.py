@@ -110,7 +110,8 @@ class CoraXMLImporter:
                 logging.error("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
         parsed_anno_toks = parsed_token.tokenize_anno()
         if len(parsed_anno_toks) != len(anno_tokens):
-            logging.error("Parse does not match number of anno tokens for token " + coratoken_element.attrib['id'])
+            logging.error("Parse does not match number of anno tokens for token " + coratoken_element.attrib['id'] +
+                          " " + coratoken_element.attrib['trans'])
         else:
             if any([anno1.trans() != anno2.trans.trans() for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)]):
                 logging.error("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])

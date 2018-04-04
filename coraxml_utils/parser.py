@@ -164,7 +164,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                         else:
                             raise ParseError("Closed *] is not opened: " + intoken)
                         subtoken_spans.append(SubtokenAnno("*[", closing, match.end()))
-                        new_char = Strikethrough(val, opening=True)
+                        new_char = Strikethrough(val, opening=False)
                     elif val in {"<", "<<"}:
                         open_spans[val].append(match.start())
                         new_char = Illegible(val, opening=True)
@@ -242,10 +242,7 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                                                     anno_simple=val)
                             elif key == "abbr":
                                 new_char = TextChar(val, dipl_utf=val, anno_utf=val,
-                                                    anno_simple=val)
-                            elif key == "edit":
-                                new_char = MetaChar(val, dipl_utf=val, anno_utf=val,
-                                                    anno_simple=val)                        
+                                                    anno_simple=val)                     
                             elif key == "p":
                                 # TODO: need some way to recognize periods that stand for missing
                                         # chars at this point!
@@ -331,6 +328,15 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
             if (isinstance(last_char, Punct) and
                 isinstance(this_char, Punct) and
                 last_char.string != this_char.string):
+                this_char.anno_bound = True
+
+            # separate punct after ptk
+            if (last_char.string in {"*1", "*2"} and
+                isinstance(this_char, Punct)):
+                this_char.anno_bound = True
+
+            # preeditionszeichen
+            if (isinstance(this_char, SentBound)):
                 this_char.anno_bound = True
 
         return some_parse
