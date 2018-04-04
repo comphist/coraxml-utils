@@ -124,14 +124,15 @@ def add_punc_tags(token):
     for tokanno in token.tok_annos:
         anno_string = str(tokanno.trans)
         if re.match(r"\([.;!?:,]\)", anno_string):
-            keep_annos[-1].tags["punc"] = tokanno.trans.parse[0].string.replace("(", "").replace(")", "")
+            keep_annos[-1].tags["punc"] = tokanno.trans.parse[0].string
+            keep_annos[-1].flags.add("punc")
+            # remove PE chars by not adding to keep_annos
 
-            # remove PE chars from utf & simple representations
-            for c in tokanno.trans.parse:
-                c.dipl_utf = ""
-                c.anno_utf = ""
-                c.anno_simple = ""
-            keep_annos[-1].trans += tokanno.trans
+            token.trans.parse = [c for c in token.trans.parse 
+                                 if not re.match(r"\([.;!?:,]\)", c.string)]
+            # PE-Zeichen only come at end of token
+            token.tok_dipls[-1].trans.parse = [c for c in token.tok_dipls[-1].trans.parse
+                                         if not re.match(r"\([.;!?:,]\)", c.string)]
 
         elif anno_string == '(")':
             if last_anno:

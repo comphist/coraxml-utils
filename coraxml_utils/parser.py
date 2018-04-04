@@ -169,10 +169,13 @@ class RexParser(BaseParser, metaclass=abc.ABCMeta):
                         open_spans[val].append(match.start())
                         new_char = Illegible(val, opening=True)
                     elif val in {">", ">>"}:
-                        openbr = flip_bracket(val)
-                        closing = open_spans[openbr].pop()
-                        subtoken_spans.append(SubtokenAnno(openbr, closing, match.end()))
-                        new_char = Illegible(val, opening=False)
+                        try: 
+                            openbr = flip_bracket(val)
+                            closing = open_spans[openbr].pop()
+                            subtoken_spans.append(SubtokenAnno(openbr, closing, match.end()))
+                            new_char = Illegible(val, opening=False)
+                        except IndexError:
+                            raise ParseError("Closing bracket is not opened: " + intoken)
                     elif val in {"[", "[["}:
                         open_spans[val].append(match.start())
                         new_char = Illegible(val, opening=True,
