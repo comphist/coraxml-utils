@@ -159,6 +159,12 @@ class Document:
         self.shifttags = shifttags if shifttags else []
         self.annospans = annospans if annospans else []
 
+        ## create index of line beginnings
+        self.index_line_beginnings = frozenset([line.dipls[0]._id
+                                                for page in pages
+                                                for column in page.columns
+                                                for line in column.lines])
+
     def __bool__(self):
         return bool(self.pages and self.tokens)
 
@@ -185,6 +191,8 @@ class Document:
 
         return new_line
 
+    def is_beginning_of_line(self, tok_dipl):
+        return tok_dipl._id in self.index_line_beginnings
 
 class Page(IdentifiableObjectMixin):
 
