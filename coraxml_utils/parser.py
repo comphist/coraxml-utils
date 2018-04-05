@@ -46,7 +46,7 @@ class BaseParser:
                 # allows = mid-line as required by legacy tests
                 if not isinstance(last_char, Hyphen):
                     raise ParseError("%s not at line end" % last_char.string)
-            elif isinstance(last_char, Hyphen) and isinstance(c, MultiverbSpace):
+            elif isinstance(last_char, MultiverbSpace) and isinstance(c, Hyphen):
                 raise ParseError("Transcription contains erroneous tokenization symbol: " + obj.trans())
             elif isinstance(last_char, Univerbation) and isinstance(c, Multiverbation):
                 raise ParseError("Contradictory annotations in transcription: " + obj.trans())
