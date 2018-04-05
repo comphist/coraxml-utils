@@ -122,19 +122,25 @@ def add_punc_tags(token):
     new_shifttags = list()
     shifttag_stack = list()
     for tokanno in token.tok_annos:
-        anno_string = str(tokanno.trans)
-        if re.match(r"\([.;!?:,]\)", anno_string):
-            keep_annos[-1].tags["punc"] = tokanno.trans.parse[0].string
+        
+        # PE-Zeichen only come at end of token
+        first_char = tokanno.trans.parse[0]
+        last_char = tokanno.trans.parse[-1]
+        if isinstance(last_char, SentBound):
+            keep_annos[-1].tags["punc"] = last_char.string
             keep_annos[-1].flags.add("punc")
             # remove PE chars by not adding to keep_annos
 
-            token.trans.parse = [c for c in token.trans.parse 
-                                 if not re.match(r"\([.;!?:,]\)", c.string)]
-            # PE-Zeichen only come at end of token
-            token.tok_dipls[-1].trans.parse = [c for c in token.tok_dipls[-1].trans.parse
-                                         if not re.match(r"\([.;!?:,]\)", c.string)]
+            token.trans = token.trans.delete(SentBound)
+            token.tok_dipls[-1].trans = token.tok_dipls[-1].trans.delete(SentBound)
 
-        elif anno_string == '(")':
+        # quotation marks at beginning
+        elif isinstance(first_char, QuotationMark):
+            # TODO
+            pass
+
+        # quotation marks at end
+        elif isinstance(last_char, QuotationMark):
             if last_anno:
                 if re.match(r"\([.;!?:,]\)", str(last_anno.trans)):
                     # set this token as end of span
@@ -154,7 +160,8 @@ def add_punc_tags(token):
 
 
 def trans_to_cora_json(trans):
-    """converts a Trans-object to json as expected from CorA from a token editing script
+    """
+    Converts a Trans-object to json as expected from CorA from a token editing script
     https://cora.readthedocs.io/en/latest/admin-projects/#setting-a-token-editing-script
     """
 

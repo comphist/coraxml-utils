@@ -300,7 +300,6 @@ class Whitespace:
         self.anno_simple = _trans
         self.anno_bound = False
         self.dipl_bound = False
-        self.line_break = False
 
     def __str__(self):
         return "{0}({1})".format(self.__class__.__name__, self.string)
@@ -316,36 +315,36 @@ class Whitespace:
                 self.anno_utf == obj.anno_utf and
                 self.anno_simple == obj.anno_simple and
                 self.anno_bound == obj.anno_bound and
-                self.dipl_bound == obj.dipl_bound and
-                self.line_break == obj.line_break
-            )
+                self.dipl_bound == obj.dipl_bound
+                )
 
-
-class Joiner:
-    pass
-
-
-class Hyphen(TextChar, Joiner):
-    """ehemalig 'dd' """
+class LineBreak(Whitespace):
     pass
 
 class Punct(Char):
     """ehemalig 'p' """
     pass
 
+class IllegibleChar(TextChar):
+    pass
+
+class Joiner:
+    pass
+
+class Hyphen(TextChar, Joiner):
+    """ehemalig 'dd' """
+    pass
+
+
 class MetaChar(Char):
     """ehemalig ptk, editnum, ill, br, maj, etc. """
     pass
 
-class Bracket(MetaChar):
-    def __init__(self, _trans, opening=True, **kwargs):
-        self.opening = True
-        super().__init__(_trans, **kwargs)
-
-class Illegible(Bracket):
+class ForeignMarker(MetaChar):
     pass
 
-class Strikethrough(Bracket):
+class ParticleLink(MetaChar):
+    """particle marker *1 or *2"""
     pass
 
 class SentBound(MetaChar):
@@ -359,12 +358,47 @@ class TokenBound(MetaChar):
     """ehemalig 'spl' """
     pass
 
-class EditHyphen(TokenBound, Joiner):
+class Univerbation(TokenBound):
     pass
 
+class UniverbSpace(Univerbation):
+    pass
+
+class UniverbNewline(Univerbation, Joiner):
+    pass
+
+class Multiverbation(TokenBound):
+    pass
+
+class MultiverbSpace(Multiverbation):
+    pass
 
 #  actually both textchar (since "=" present in handschrift)
 #     and meta (since "|" added by editor/transcriber)
-class DiplJoiner(TokenBound, Joiner):
-    """ oft =| """
+class MultiverbNewline(Multiverbation, Joiner):
+    """ =| """
+    pass
+
+
+class Bracket(MetaChar):
+    def __init__(self, _trans, opening=True, **kwargs):
+        self.opening = True
+        super().__init__(_trans, **kwargs)
+
+class Parenthesis(Bracket):
+    pass
+
+class Strikethrough(Bracket):
+    pass
+
+class Recognizable(Bracket):
+    pass
+
+class FromEdition(Bracket):
+    pass
+
+class EditorCompleted(Bracket):
+    pass
+
+class Lacuna(Bracket):
     pass
