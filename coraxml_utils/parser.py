@@ -395,7 +395,7 @@ class RexParser(BaseParser):
                 this_char.dipl_bound = True
 
             # word split "foo|bar"
-            elif isinstance(last_char, (MultiverbSpace, MultiverbNewline)):
+            if isinstance(last_char, (MultiverbSpace, MultiverbNewline)):
                 this_char.anno_bound = True
 
             # other initial punctuation
