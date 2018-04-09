@@ -121,32 +121,70 @@ class CoraXMLExporter:
         return  ET.ElementTree(root)
 
 
-# class TransExporter:
+class TransExporter:
 
-#     def __init__(self):
-#         pass
+    def __init__(self):
+        pass
 
-#     def export(self, doc, token_form="trans"):
+    def export(self, doc, token_form="trans"):
 
-#         # list of strings to be joined at end of method
-#         output = list()
+        # list of strings to be joined at end of method
+        output = list()
 
-#         output.append("+H")
-#         ## TODO improve export of the header
-#         if doc.header_string:
-#             output.append(doc.header_string)
-#         else:
-#             for key, value in doc.header:
-#                 output.append(key + ':' + value)
-#         output.append("@H")
+        output.append("+H")
+        ## TODO improve export of the header
+        if doc.header_string:
+            output.append(doc.header_string)
+        else:
+            for key, value in doc.header:
+                output.append(key + ':' + value)
+        output.append("@H")
 
-#         for p in doc.pages:
-#             for c in p.columns:
-#                 for l in c.lines:
-#                     for d in l.dipls:
-#                         if token_form == "dipls"
-#                         tok = d.get_token() # ??
-                        
+        # output.append("\n")
+
+        # for p in doc.pages:
+        #     for c in p.columns:
+        #         for l in c.lines:
+        #             bibinfo = "{sigle}-{page}{side}{col},{line}\t".format(sigle=doc.sigle,
+        #                                                                   page=p.name,
+        #                                                                   side=p.side,
+        #                                                                   col=c.name,
+        #                                                                   line=l.name)
+        #             # TODO: figure out what to do when we don't just want dipls
+        #             line = bibinfo + " ".join(str(d.trans) for d in l.dipls)
+        #             output.append(line)
+
+        pages = iter(doc.pages)
+        current_page = next(pages)
+        columns = iter(current_page.columns)
+        current_col = next(columns)
+        lines = iter(current_col.lines)
+        current_line = next(lines)
+
+        current_line_dipls = set(d.id for d in current_line.dipls)
+        tokens_stack = list()
+
+        for token_or_comment in doc.tokens:
+            if isinstance(token_or_comment, CoraToken):
+                for d in token_or_comment.tok_dipls:
+                    if d.id in current_line_dipls:
+                        tokens_stack.append(str(d.trans))
+                    else:
+                        bibinfo = "{sigle}-{page}{side}{col},{line}\t".format(sigle=doc.sigle,
+                                                                              page=p.name,
+                                                                              side=p.side,
+                                                                              col=c.name,
+                                                                              line=l.name)
+                        new_line = bibinfo + " ".join(tokens_stack)
+                        tokens_stack = list()
+            elif isinstance(token_or_comment, CoraComment):
+                tokens_stack.append(str(token_or_comment))
+            else:
+                logging.warning("Unexpected object in token list of document '%s'" % doc.sigle)
+
+        return "\n".join(output)
+                            
+
                         
 def print_file(self):
     if self.options.bibinfo == "both":

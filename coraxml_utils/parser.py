@@ -241,22 +241,21 @@ class RexParser(BaseParser):
                         except IndexError:
                             raise ParseError("Matching opening bracket missing: " + intoken)
 
-                    elif key in {"edito", "complo", "gapo"}:
-                        if key == "edito":
-                            open_spans[FromEdition].append(match.start())
-                            new_char = FromEdition(val, opening=True,
-                                                   dipl_utf=self.ILLEGIBLE_REPLACEMENT,
-                                                   anno_utf=self.ILLEGIBLE_REPLACEMENT)
-                        elif key == "complo":
-                            open_spans[EditorCompleted].append(match.start())
-                            new_char = EditorCompleted(val, opening=True,
-                                                       dipl_utf=self.ILLEGIBLE_REPLACEMENT,
-                                                       anno_utf=self.ILLEGIBLE_REPLACEMENT)
-                        elif key == "gapo":
-                            open_spans[Lacuna].append(match.start())
-                            new_char = Lacuna(val, opening=True,
+                    elif key == "edito":
+                        open_spans[FromEdition].append(match.start())
+                        new_char = FromEdition(val, opening=True,
                                                dipl_utf=self.ILLEGIBLE_REPLACEMENT,
                                                anno_utf=self.ILLEGIBLE_REPLACEMENT)
+                    elif key == "complo":
+                        open_spans[EditorCompleted].append(match.start())
+                        new_char = EditorCompleted(val, opening=True,
+                                                   dipl_utf=self.ILLEGIBLE_REPLACEMENT,
+                                                   anno_utf=self.ILLEGIBLE_REPLACEMENT)
+                    elif key == "gapo":
+                        open_spans[Lacuna].append(match.start())
+                        new_char = Lacuna(val, opening=True,
+                                           dipl_utf=self.ILLEGIBLE_REPLACEMENT,
+                                           anno_utf=self.ILLEGIBLE_REPLACEMENT)
                     elif key in {"editc", "complc", "gapc"}:
                         try:
                             # TODO update strings

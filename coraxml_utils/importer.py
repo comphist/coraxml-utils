@@ -308,6 +308,8 @@ class TransImporter:
         try:
             new_doc.sigle = re.search(r"[^:\s]:\s+([\w\d]+)", 
                                       new_doc.header_string).group(1)
+            if "_" in new_doc.sigle:
+                new_doc.sigle = new_doc.sigle.split("_")[0]
         except AttributeError:
             logging.warning("No sigle found in document header!")
 
