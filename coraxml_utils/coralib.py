@@ -373,8 +373,7 @@ class CoraComment:
         self.content = content
 
     def __str__(self):
-        return "+{0} {1} @{0}".format(self.type,
-                                      " ".join(self.content))
+        return "+{0} {1} @{0}".format(self.type, self.content)
 
 
 class ShiftTag:

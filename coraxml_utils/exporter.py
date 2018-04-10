@@ -127,8 +127,6 @@ class TransExporter:
         pass
 
     def export(self, doc, token_form="trans"):
-
-        # list of strings to be joined at end of method
         output = list()
 
         output.append("+H")
@@ -139,51 +137,55 @@ class TransExporter:
             for key, value in doc.header:
                 output.append(key + ':' + value)
         output.append("@H")
+        output.append("")  # space between header and text
 
-        # output.append("\n")
+        tokens_and_comments = iter(doc.tokens)
+        seen_dipls = set()
+        dipls_for_nextline = list()
+        for p in doc.pages:
+            for c in p.columns:
+                for l in c.lines:
+                    dipls_in_this_line = {d.id for d in l.dipls}
+                    output_line = dipls_for_nextline
+                    dipls_for_nextline = list()
 
-        # for p in doc.pages:
-        #     for c in p.columns:
-        #         for l in c.lines:
-        #             bibinfo = "{sigle}-{page}{side}{col},{line}\t".format(sigle=doc.sigle,
-        #                                                                   page=p.name,
-        #                                                                   side=p.side,
-        #                                                                   col=c.name,
-        #                                                                   line=l.name)
-        #             # TODO: figure out what to do when we don't just want dipls
-        #             line = bibinfo + " ".join(str(d.trans) for d in l.dipls)
-        #             output.append(line)
+                    # once we've seen all the dipls in this line
+                    # we can move on to the next one
+                    while dipls_in_this_line - seen_dipls:
+                        current_obj = next(tokens_and_comments)
+                        if isinstance(current_obj, CoraComment):
+                            if token_form == "trans":
+                                output_line.append(str(current_obj))
+                            else:
+                                # remove comments
+                                pass
 
-        pages = iter(doc.pages)
-        current_page = next(pages)
-        columns = iter(current_page.columns)
-        current_col = next(columns)
-        lines = iter(current_col.lines)
-        current_line = next(lines)
+                        elif isinstance(current_obj, CoraToken):
+                            for dipl in current_obj.tok_dipls:
+                                if token_form == "dipl":
+                                    if dipl.id in dipls_in_this_line:
+                                            output_line.append(dipl.trans.utf())
+                                    else:
+                                        dipls_for_nextline.append(dipl.trans.utf())
+                                seen_dipls.add(dipl.id)
 
-        current_line_dipls = set(d.id for d in current_line.dipls)
-        tokens_stack = list()
+                            for mod in current_obj.tok_annos:
+                                if token_form == "anno":
+                                    output_line.append(mod.trans.simple())
 
-        for token_or_comment in doc.tokens:
-            if isinstance(token_or_comment, CoraToken):
-                for d in token_or_comment.tok_dipls:
-                    if d.id in current_line_dipls:
-                        tokens_stack.append(str(d.trans))
-                    else:
-                        bibinfo = "{sigle}-{page}{side}{col},{line}\t".format(sigle=doc.sigle,
-                                                                              page=p.name,
-                                                                              side=p.side,
-                                                                              col=c.name,
-                                                                              line=l.name)
-                        new_line = bibinfo + " ".join(tokens_stack)
-                        tokens_stack = list()
-            elif isinstance(token_or_comment, CoraComment):
-                tokens_stack.append(str(token_or_comment))
-            else:
-                logging.warning("Unexpected object in token list of document '%s'" % doc.sigle)
+                            if token_form == "trans":
+                                output_line.append(str(current_obj.trans))
+                        else:
+                            logging.warning("Unexpected object in token list of document '%s'" % doc.sigle)
+
+                    bibinfo = "{sigle}-{page}{side}{col},{line}\t".format(sigle=doc.sigle,
+                                                                          page=p.name,
+                                                                          side=p.side,
+                                                                          col=c.name,
+                                                                          line=l.name)
+                    output.append(bibinfo + " ".join(output_line))
 
         return "\n".join(output)
-                            
 
                         
 def print_file(self):
