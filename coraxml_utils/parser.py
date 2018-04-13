@@ -291,7 +291,7 @@ class RexParser(BaseParser):
                     elif key == "q":
                         new_char = QuotationMark(val, anno_utf=val, anno_simple=val)
                     elif key == "ptk":
-                        new_char == ParticleLink(val)
+                        new_char = ParticleLink(val)
                     elif key == "for":
                         new_char = ForeignMarker(val)
 
