@@ -274,6 +274,27 @@ class TransImporter:
                                              (?P<col>[a-q]?),?
                                              (?P<line>\d+)$""", re.VERBOSE)
 
+    def _parse_bibinfos(self, bibinfo_strings):
+
+        bibinfos = []
+        for line, bibinfo in enumerate(bibinfo_strings):
+            if bibinfo is not None:
+                try:
+                    bibinfos.append(self.BIBINFO_FORMAT.match(bibinfo).groupdict())
+                except:
+                    logging.error("Bibinfo hat falsches Format (Zeile {}): {}".format(line+1, bibinfo))
+                    self.valid_transcription = False
+                    ## use last bibinfo to create current info
+                    curr_bibinfo = bibinfos[-1]
+                    curr_bibinfo['line'] = '%02d' % (int(curr_bibinfo['line']) + 1)
+                    bibinfos.append(curr_bibinfo)
+            else:
+                curr_bibinfo = bibinfos[-1]
+                curr_bibinfo['line'] = '%02d' % (int(curr_bibinfo['line']) + 1)
+                bibinfos.append(curr_bibinfo)
+
+        return bibinfos
+
     # TODO: transcription importer should also check bibinfo, shifttags, etc. and
     #   warn or report errors as appropriate (would replace parts of "convert_check"
     #   script) -- aka. *checking is default behavior*, new script does conversion
@@ -319,17 +340,23 @@ class TransImporter:
         bibinfo_lines = list()
         transcription_content = list()
         for line in text:
-            try:
-                bibinfo, content = re.split(r"\t+", line.strip(), maxsplit=1)
-                # if _: logging.warning("extraneous tab in line: " + line)
-                transcription_content.append(content)
-                bibinfo_lines.append(bibinfo)
-            except ValueError:
-                logging.warning("Faulty line: " + repr(line))
+            if "\t" in line.strip():
+                try:
+                    bibinfo, content = re.split(r"\t+", line.strip(), maxsplit=1)
+                    # if _: logging.warning("extraneous tab in line: " + line)
+                    transcription_content.append(content)
+                    bibinfo_lines.append(bibinfo)
+                except ValueError:
+                    logging.warning("Faulty line: " + repr(line))
+            else:
+                transcription_content.append(line.strip())
+                bibinfo_lines.append(None)
         tokenized_input = self.Tokenizer.tokenize("\n".join(transcription_content))
 
+        bibinfo_lines = self._parse_bibinfos(bibinfo_lines)
+
         bibinfo_iter = iter(bibinfo_lines)
-        new_bibinfo = self.BIBINFO_FORMAT.match(next(bibinfo_iter)).groupdict()
+        new_bibinfo = next(bibinfo_iter)
         current_line = new_doc.add_line(new_bibinfo)
 
         for chunk in tokenized_input:
@@ -358,7 +385,7 @@ class TransImporter:
                         if c == "\n":
                              # start a new line
                             try:
-                                new_bibinfo = self.BIBINFO_FORMAT.match(next(bibinfo_iter)).groupdict()
+                                new_bibinfo = next(bibinfo_iter)
                                 current_line = new_doc.add_line(new_bibinfo)
                             except StopIteration:
                                 print(new_bibinfo)
@@ -378,7 +405,7 @@ class TransImporter:
                     if c.string == "\n":
                         # start a new line
                         try:
-                            new_bibinfo = self.BIBINFO_FORMAT.match(next(bibinfo_iter)).groupdict()
+                            new_bibinfo = next(bibinfo_iter)
                             current_line = new_doc.add_line(new_bibinfo)
                         except StopIteration:
                             print(new_bibinfo)
@@ -403,7 +430,7 @@ class TransImporter:
                 if chunk.is_newline:
                     # open new line
                     try:
-                        new_bibinfo = self.BIBINFO_FORMAT.match(next(bibinfo_iter)).groupdict()
+                        new_bibinfo = next(bibinfo_iter)
                         current_line = new_doc.add_line(new_bibinfo)
                     except StopIteration:
                         pass
