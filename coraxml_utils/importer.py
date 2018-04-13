@@ -285,11 +285,11 @@ class TransImporter:
                     logging.error("Bibinfo hat falsches Format (Zeile {}): {}".format(line+1, bibinfo))
                     self.valid_transcription = False
                     ## use last bibinfo to create current info
-                    curr_bibinfo = bibinfos[-1]
+                    curr_bibinfo = dict(bibinfos[-1])
                     curr_bibinfo['line'] = '%02d' % (int(curr_bibinfo['line']) + 1)
                     bibinfos.append(curr_bibinfo)
             else:
-                curr_bibinfo = bibinfos[-1]
+                curr_bibinfo = dict(bibinfos[-1])
                 curr_bibinfo['line'] = '%02d' % (int(curr_bibinfo['line']) + 1)
                 bibinfos.append(curr_bibinfo)
 
