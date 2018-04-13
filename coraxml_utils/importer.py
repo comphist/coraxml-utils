@@ -274,6 +274,14 @@ class TransImporter:
                                              (?P<col>[a-q]?),?
                                              (?P<line>\d+)$""", re.VERBOSE)
 
+    def _add_line(self, document, bibinfo, dipl_tokens):
+
+        if not dipl_tokens:
+            logging.warning("Line contains no token - skipped: {sigle}-{page}{side}{col},{line}".format(**bibinfo))
+        else:
+            line = document.add_line(bibinfo)
+            line.dipls = dipl_tokens
+
     def _parse_bibinfos(self, bibinfo_strings):
 
         bibinfos = []
@@ -357,7 +365,7 @@ class TransImporter:
 
         bibinfo_iter = iter(bibinfo_lines)
         new_bibinfo = next(bibinfo_iter)
-        current_line = new_doc.add_line(new_bibinfo)
+        current_line_dipls = []
 
         for chunk in tokenized_input:
             if isinstance(chunk, tokenizer.Comment):
@@ -385,8 +393,9 @@ class TransImporter:
                         if c == "\n":
                              # start a new line
                             try:
+                                self._add_line(new_doc, new_bibinfo, current_line_dipls)
                                 new_bibinfo = next(bibinfo_iter)
-                                current_line = new_doc.add_line(new_bibinfo)
+                                current_line_dipls = []
                             except StopIteration:
                                 print(new_bibinfo)
                                 logging.error("Document appears truncated: " + str(new_token))                           
@@ -400,18 +409,19 @@ class TransImporter:
                 mydipls.reverse()
                 for c in new_token.parse:
                     if c.dipl_bound:
-                        current_line.dipls.append(mydipls.pop())
+                        current_line_dipls.append(mydipls.pop())
 
                     if c.string == "\n":
                         # start a new line
                         try:
+                            self._add_line(new_doc, new_bibinfo, current_line_dipls)
                             new_bibinfo = next(bibinfo_iter)
-                            current_line = new_doc.add_line(new_bibinfo)
+                            current_line_dipls = []
                         except StopIteration:
                             print(new_bibinfo)
                             logging.error("Document appears truncated: " + str(new_token))
 
-                current_line.dipls.append(mydipls.pop())
+                current_line_dipls.append(mydipls.pop())
                 # make sure that mydipls is empty
                 if mydipls:
                     logging.error("Too few dipl bounds: " + str(new_token))
@@ -428,12 +438,17 @@ class TransImporter:
                             
             elif isinstance(chunk, tokenizer.Whitespace):
                 if chunk.is_newline:
-                    # open new line
+                    ## add line to document
                     try:
+                        self._add_line(new_doc, new_bibinfo, current_line_dipls)
                         new_bibinfo = next(bibinfo_iter)
-                        current_line = new_doc.add_line(new_bibinfo)
+                        current_line_dipls = []
                     except StopIteration:
                         pass
+
+        ## add last line
+        if current_line_dipls:
+            self._add_line(new_doc, new_bibinfo, current_line_dipls)
 
         try:
             leftover_bibinfo = next(bibinfo_iter)
