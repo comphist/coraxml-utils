@@ -218,7 +218,7 @@ if __name__ == '__main__':
     with open(inputfile, "r", encoding="utf-8") as infile:
         doc = MyImporter.import_from_string(infile.read().replace("\ufeff", ""))
 
-    MyExporter = create_exporter("trans", args.)
+    MyExporter = create_exporter("trans", args.parser)
 
     outputfile = open(args.output, "w", encoding="utf-8") if args.output else sys.stdout
     outputfile.write(MyExporter.export(doc))
