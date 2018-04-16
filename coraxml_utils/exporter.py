@@ -187,23 +187,6 @@ class TransExporter:
 
         return "\n".join(output)
 
-                        
-def print_file(self):
-    if self.options.bibinfo == "both":
-        print(*self.header, sep="\n", file=self.outfile)
-        # print(file=self.outfile)  # empty line after header
-
-    join_char = "\n" if self.options.taggermode else " "
-
-    for l in self.text:
-        line = [x for x in l["line"].split(" ") if x]
-        if self.options.bibinfo in {"both", "line"}:
-            bibstr = l["bibl"] + "\t"
-        else:
-            bibstr = ""
-
-        if line:
-            print(bibstr + join_char.join(line).strip(), file=self.outfile)
 
 class TEIExporter:
 
@@ -339,6 +322,7 @@ class TEIExporter:
                 comment_element.text = token.content
 
         return tei_doc
+
 
 class GateJsonExporter:
 

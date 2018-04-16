@@ -420,6 +420,11 @@ class TransImporter:
                         except StopIteration:
                             print(new_bibinfo)
                             logging.error("Document appears truncated: " + str(new_token))
+                        except AttributeError as e:
+                            if not bibinfo_match:
+                                logging.error("Bibinfo '{0}' has wrong format".format(next_bibinfo))
+                            else:
+                                raise e
 
                 current_line_dipls.append(mydipls.pop())
                 # make sure that mydipls is empty
@@ -445,6 +450,12 @@ class TransImporter:
                         current_line_dipls = []
                     except StopIteration:
                         pass
+                    except AttributeError as e:
+                        if not bibinfo_match:
+                            logging.error("Bibinfo '{0}' has wrong format".format(next_bibinfo))
+                        else:
+                            raise e
+                    
 
         ## add last line
         if current_line_dipls:

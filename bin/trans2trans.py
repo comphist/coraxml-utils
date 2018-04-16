@@ -159,47 +159,23 @@ if __name__ == '__main__':
 
     ap = argparse.ArgumentParser()
     ap.add_argument("inputfile", type=str, nargs='?')
-
-    # these args need to be sent to exporter
-    ap.add_argument('-p', '--preedpunc', choices=['leave', 'delete'], 
-                    default='leave', help="Pre-edition punctuation")
-    ap.add_argument('-r', '--preedtoken', choices=['leave', 'delete'], 
-                    default='delete', help="Pre-edition characters for tokens (including (=))")
-    ap.add_argument('-e', '--editnum', choices=['leave', 'delete'], 
-                    default='delete', help="Edition/secondary numbering")
-    ap.add_argument('-c', '--character', choices=['utf', 'simple', 'orig'],
-                    default='utf', help="Character transformation type")
-    ap.add_argument('-i', '--illegible', choices=['original', 'leave', 'delete', 'character'],
-                    default='leave', help="What to do with illegible characters")
-    ap.add_argument('-d', '--doubledash', choices=['leave', 'delete'],
-                    default='delete', help="What to do with the doubledash")
-    ap.add_argument('-s', '--strikethru', choices=['original', 'leave', 'delete'],
-                    default='leave', help='What to do with struck words')
-
     # exporter
     ap.add_argument('-t', '--tokenize', choices=['none', 'historical', 'medium', 'all'],
                     default='medium', help="Tokenization")
+
     ap.add_argument("-T", "--taggermode", action="store_true",
                     help="Output one token per line, all tokenization, no bibinfo")
     ap.add_argument('-b', '--bibinfo', choices=['line', 'both', 'none'],
                     default='both', help="Bibliographic info in output")
 
     ap.add_argument("-o", "--output", help="Output to file")
-    ap.add_argument("-W", "--nowarnings", action="store_true",
-                    help="Don't output warnings for validity check")
-
-
-    # these args need to go to the importer
-    ap.add_argument("-L", "--lineinfo", action="store_false",
-                    help="File comes without line info (sigle, line number, ...)")
-    ap.add_argument('-S', '--nosyllab', action="store_true",
-                    help="Don't resolve syllabification (double dash at line end)")
-    ap.add_argument("-A", "--allowed", type=str, default="",
-                    help="Additional allowed characters for validity check.")
-    ap.add_argument("-R", "--preprocess", type=str,
-                    help="File with regexes for preprocessing text.")
-    ap.add_argument("-P", "--parser", choices=["rem", "anselm", "ref", "redi", "plain"],
+  
+    ap.add_argument("-p", "--parser", choices=["rem", "anselm", "ref", "redi", "plain"],
                     default="plain", help="Token parser to use, default: %(default)s")
+
+    ap.add_argument("-q", "--nowarnings", help="Quiet mode: show only errors, no warnings", 
+                    action="store_true")
+
     args = ap.parse_args()
 
     if args.taggermode:
@@ -210,18 +186,12 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.ERROR)
 
 
-    MyImporter = create_importer("trans", dialect=args.parser,
-                                 lineinfo=args.lineinfo, nosyllab=args.nosyllab,
-                                 allowed=args.allowed, preprocessing=None)
+    MyImporter = create_importer("trans", dialect=args.parser)
+    MyExporter = create_exporter("trans")
 
     doc = None
-    with open(inputfile, "r", encoding="utf-8") as infile:
+    with open(args.inputfile, "r", encoding="utf-8") as infile:
         doc = MyImporter.import_from_string(infile.read().replace("\ufeff", ""))
 
-    MyExporter = create_exporter("trans", args.parser)
-
-    outputfile = open(args.output, "w", encoding="utf-8") if args.output else sys.stdout
-    outputfile.write(MyExporter.export(doc))
-    outputfile.close()
-
-
+    with open(args.output, "w", encoding="utf-8") as outputfile:
+        outputfile.write(MyExporter.export(doc, token_form=args.format))
