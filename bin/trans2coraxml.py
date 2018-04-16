@@ -8,9 +8,6 @@ import argparse
 from pathlib import Path
 import logging
 logging.basicConfig(format='%(levelname)s: %(message)s')
-logging_handler_err = logging.StreamHandler(sys.stderr)
-logging_handler_err.setLevel(logging.ERROR)
-logging.getLogger().addHandler(logging_handler_err)
 
 from coraxml_utils.importer import create_importer
 from coraxml_utils.exporter import create_exporter
@@ -191,7 +188,7 @@ if __name__ == "__main__":
     if doc:
         print("~SUCCESS CHECK")
 
-        print("~BEGIN XMLCALL")
+        print("~BEGIN XML")
         try:
             output_xml = MyExporter.export(doc)
 
@@ -203,13 +200,15 @@ if __name__ == "__main__":
                                  pretty_print=True, encoding='utf-8')
 
         except Exception as e:
-            print("~ERROR XMLCALL")
+            print("~ERROR XML")
             print(str(e))
             sys.exit(1)
 
     else:
         print("~ERROR CHECK")
         print("Dokument konnte nicht eingelesen werden.")
+        print("~ERROR XML")
+        sys.exit(1)
 
 
-    print("~SUCCESS XMLCALL")
+    print("~SUCCESS XML")
