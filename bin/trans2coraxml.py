@@ -8,6 +8,9 @@ import argparse
 from pathlib import Path
 import logging
 logging.basicConfig(format='%(levelname)s: %(message)s')
+logging_handler_err = logging.StreamHandler(sys.stderr)
+logging_handler_err.setLevel(logging.ERROR)
+logging.getLogger().addHandler(logging_handler_err)
 
 from coraxml_utils.importer import create_importer
 from coraxml_utils.exporter import create_exporter
