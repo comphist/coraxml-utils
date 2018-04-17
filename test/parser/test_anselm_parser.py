@@ -106,3 +106,8 @@ class ParserTest(unittest.TestCase):
     def test_fromedition(self):
         tok = AnselmParser().parse("$wer[t]").tokenize_dipl()[0]
         self.assertEqual(tok.utf(), "ſwer[...]")
+
+
+    def test_editorcompleted(self):
+        tok = AnselmParser().parse("$wer[[t]]").tokenize_dipl()[0]
+        self.assertEqual(tok.utf(), "ſwer[...]")
