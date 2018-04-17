@@ -263,6 +263,9 @@ class Char:
         self.dipl_bound = False
         self.line_break = False
 
+    def __repr__(self):
+        return str(self.__dict__)
+
     def __str__(self):
         return "{0}({1})".format(self.__class__.__name__, self.string)
 
