@@ -185,7 +185,6 @@ if __name__ == '__main__':
     if args.nowarnings:
         logging.basicConfig(level=logging.ERROR)
 
-
     MyImporter = create_importer("trans", dialect=args.parser)
     MyExporter = create_exporter("trans")
 
@@ -193,5 +192,9 @@ if __name__ == '__main__':
     with open(args.inputfile, "r", encoding="utf-8") as infile:
         doc = MyImporter.import_from_string(infile.read().replace("\ufeff", ""))
 
-    with open(args.output, "w", encoding="utf-8") as outputfile:
-        outputfile.write(MyExporter.export(doc, token_form=args.format))
+    export_contents = MyExporter.export(doc, token_form=args.format)
+    if not args.output:
+        sys.stdout.write(export_contents)
+    else:
+        with open(args.output, "wb", encoding="utf-8") as outputfile:
+            outputfile.write(export_contents)

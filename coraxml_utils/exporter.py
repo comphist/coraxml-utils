@@ -139,52 +139,106 @@ class TransExporter:
         output.append("@H")
         output.append("")  # space between header and text
 
-        tokens_and_comments = iter(doc.tokens)
-        seen_dipls = set()
-        dipls_for_nextline = list()
+        # tokens_and_comments = iter(doc.tokens)
+        # seen_dipls = set()
+        # dipls_for_nextline = list()
+        # for p in doc.pages:
+        #     for c in p.columns:
+        #         for l in c.lines:
+        #             dipls_in_this_line = {d.id for d in l.dipls}
+        #             output_line = dipls_for_nextline
+        #             dipls_for_nextline = list()
+
+        #             # once we've seen all the dipls in this line
+        #             # we can move on to the next one
+        #             while dipls_in_this_line - seen_dipls:
+        #                 current_obj = next(tokens_and_comments)
+        #                 if isinstance(current_obj, CoraComment):
+        #                     if token_form == "trans":
+        #                         output_line.append(str(current_obj))
+        #                     else:
+        #                         # remove comments
+        #                         pass
+
+        #                 elif isinstance(current_obj, CoraToken):
+        #                     for dipl in current_obj.tok_dipls:
+        #                         if token_form == "dipl":
+        #                             if dipl.id in dipls_in_this_line:
+        #                                     output_line.append(dipl.trans.utf())
+        #                             else:
+        #                                 dipls_for_nextline.append(dipl.trans.utf())
+        #                         seen_dipls.add(dipl.id)
+
+        #                     for mod in current_obj.tok_annos:
+        #                         if token_form == "anno":
+        #                             output_line.append(mod.trans.simple())
+
+        #                     if token_form == "trans":
+        #                         output_line.append(str(current_obj.trans))
+        #                 else:
+        #                     logging.warning("Unexpected object in token list of document '%s'" % doc.sigle)
+
+        #             bibinfo = "{sigle}-{page}{side}{col},{line}\t".format(sigle=doc.sigle,
+        #                                                                   page=p.name,
+        #                                                                   side=p.side,
+        #                                                                   col=c.name,
+        #                                                                   line=l.name)
+        #             output.append(bibinfo + " ".join(output_line))
+
+
+        bibinfos = list()
         for p in doc.pages:
             for c in p.columns:
                 for l in c.lines:
-                    dipls_in_this_line = {d.id for d in l.dipls}
-                    output_line = dipls_for_nextline
-                    dipls_for_nextline = list()
-
-                    # once we've seen all the dipls in this line
-                    # we can move on to the next one
-                    while dipls_in_this_line - seen_dipls:
-                        current_obj = next(tokens_and_comments)
-                        if isinstance(current_obj, CoraComment):
-                            if token_form == "trans":
-                                output_line.append(str(current_obj))
-                            else:
-                                # remove comments
-                                pass
-
-                        elif isinstance(current_obj, CoraToken):
-                            for dipl in current_obj.tok_dipls:
-                                if token_form == "dipl":
-                                    if dipl.id in dipls_in_this_line:
-                                            output_line.append(dipl.trans.utf())
-                                    else:
-                                        dipls_for_nextline.append(dipl.trans.utf())
-                                seen_dipls.add(dipl.id)
-
-                            for mod in current_obj.tok_annos:
-                                if token_form == "anno":
-                                    output_line.append(mod.trans.simple())
-
-                            if token_form == "trans":
-                                output_line.append(str(current_obj.trans))
-                        else:
-                            logging.warning("Unexpected object in token list of document '%s'" % doc.sigle)
-
-                    bibinfo = "{sigle}-{page}{side}{col},{line}\t".format(sigle=doc.sigle,
+                    bibinfos.append("{sigle}-{page}{side}{col},{line}\t".format(sigle=doc.sigle,
                                                                           page=p.name,
                                                                           side=p.side,
                                                                           col=c.name,
-                                                                          line=l.name)
-                    output.append(bibinfo + " ".join(output_line))
+                                                                          line=l.name))
+        bibinfos_iter = iter(bibinfos)
+        current_line = list()
+        recent_linebreak = False
 
+        for token_or_comment in doc.tokens:
+            if isinstance(token_or_comment, CoraComment):
+                current_line.append(str(token_or_comment))
+
+            elif isinstance(token_or_comment, CoraToken):
+                output_token = list()
+                for c in token_or_comment.trans.parse:
+                    if token_form == "dipl_utf":
+                        char_type = c.dipl_utf
+                    elif token_form == "anno_utf":
+                        char_type = c.anno_utf
+                    elif token_form == "anno_simple":
+                        char_type = c.anno_simple
+                    else: 
+                        char_type = c.string                    
+
+                    if c.line_break:
+                        recent_linebreak = True
+
+                    output_token.append(char_type)
+
+                    if token_form.startswith("anno"):
+                        if c.anno_bound and recent_linebreak:
+                            current_line.append("".join(output_token))
+                            output.append(next(bibinfos_iter) + "\t" + " ".join(current_line))
+                            output_token = list()
+                            current_line = list()
+                            recent_linebreak = False
+                    else:
+                        if c.line_break:
+                            current_line.append("".join(output_token))
+                            output.append(next(bibinfos_iter) + "\t" + " ".join(current_line))
+                            output_token = list()
+                            current_line = list()
+                            recent_linebreak = False
+                current_line.append("".join(output_token))
+                        
+            else:
+                logging.warning("Unexpected object in token list of document '%s'" % doc.sigle)
+        
         return "\n".join(output)
 
 

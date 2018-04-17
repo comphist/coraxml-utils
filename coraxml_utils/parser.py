@@ -142,7 +142,6 @@ class RexParser(BaseParser):
 
         alpha = r"[A-Za-zÄÖÜäöüß$]"
         punc = r'[.;!?:,]'
-        quotes = r'["«»]'
         no_pq = r'(?![.;!?:,"«»])'
 
         # char types
@@ -172,6 +171,7 @@ class RexParser(BaseParser):
 
         # specifies which regexes are to be applied, and in what order
         self.re_parts = [spc_re, majuscule_re, tokenization_re, 
+                         parens_re, lacuna_re,
                          strk_re, hard_to_read_re, edition_re, editor_completed_re,
                          ptk_marker_re, quote_re, preedit_re,
                          uni_re, hyphen_re, period_re, punc_re, foreign_re, word_re

@@ -319,7 +319,10 @@ class Whitespace:
                 )
 
 class LineBreak(Whitespace):
-    pass
+    def __init__(self, _trans):
+        super().__init__(_trans)
+        self.line_break = True
+
 
 class Punct(Char):
     """ehemalig 'p' """
