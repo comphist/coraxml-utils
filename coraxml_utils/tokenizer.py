@@ -76,7 +76,7 @@ class RexTokenizer:
                     logging.warning("Extra whitespace at line break after '{0}'".format(last_token))
                     # corrects anomalous line breaks
                     chunk = "\n"
-                result.append(Whitespace(chunk, newline=True))
+                result.append(Newline(chunk))
 
             else:
                 logging.warning("Unknown entity in " + matchlabels)
@@ -139,6 +139,11 @@ class Whitespace:
         else:
             return (self.string == obj.string) and (self.is_newline == obj.is_newline)
 
+
+class Newline(Whitespace):
+    def __init__(self, _mystring):
+        super().__init__(_mystring, newline=True)
+        
 
 class Comment: 
     def __init__(self, _mytype, content=None):

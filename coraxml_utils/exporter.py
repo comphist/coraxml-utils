@@ -201,40 +201,43 @@ class TransExporter:
 
         for token_or_comment in doc.tokens:
             if isinstance(token_or_comment, CoraComment):
-                current_line.append(str(token_or_comment))
+                if "trans" in token_form:
+                    current_line.append(str(token_or_comment))
 
             elif isinstance(token_or_comment, CoraToken):
                 output_token = list()
                 for c in token_or_comment.trans.parse:
-                    if token_form == "dipl_utf":
-                        char_type = c.dipl_utf
-                    elif token_form == "anno_utf":
-                        char_type = c.anno_utf
-                    elif token_form == "anno_simple":
-                        char_type = c.anno_simple
-                    else: 
-                        char_type = c.string                    
+                    if not isinstance(c, LineBreak):
+                        if token_form == "dipl_utf":
+                            char_type = c.dipl_utf
+                        elif token_form == "anno_utf":
+                            char_type = c.anno_utf
+                        elif token_form == "anno_simple":
+                            char_type = c.anno_simple
+                        else: 
+                            char_type = c.string                    
 
-                    if c.line_break:
-                        recent_linebreak = True
+                        if c.line_break_after:
+                            recent_linebreak = True
 
-                    output_token.append(char_type)
+                        output_token.append(char_type)
 
-                    if token_form.startswith("anno"):
-                        if c.anno_bound and recent_linebreak:
-                            current_line.append("".join(output_token))
-                            output.append(next(bibinfos_iter) + "\t" + " ".join(current_line))
-                            output_token = list()
-                            current_line = list()
-                            recent_linebreak = False
-                    else:
-                        if c.line_break:
-                            current_line.append("".join(output_token))
-                            output.append(next(bibinfos_iter) + "\t" + " ".join(current_line))
-                            output_token = list()
-                            current_line = list()
-                            recent_linebreak = False
-                current_line.append("".join(output_token))
+                        if token_form.startswith("anno"):
+                            if c.anno_bound and recent_linebreak:
+                                current_line.append("".join(output_token))
+                                output.append(next(bibinfos_iter) + " ".join(current_line))
+                                output_token = list()
+                                current_line = list()
+                                recent_linebreak = False
+                        else:
+                            if c.line_break_after:
+                                current_line.append("".join(output_token))
+                                output.append(next(bibinfos_iter) + " ".join(current_line))
+                                output_token = list()
+                                current_line = list()
+                                recent_linebreak = False
+                if output_token:
+                    current_line.append("".join(output_token))
                         
             else:
                 logging.warning("Unexpected object in token list of document '%s'" % doc.sigle)

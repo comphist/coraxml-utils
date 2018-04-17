@@ -204,7 +204,6 @@ class RexParser(BaseParser):
 
         for match in self.token_re.scanner(intoken):
             new_char = None
-            skip_this_char = False
             for key, val in match.groupdict().items():
                 if val:
                     # disallow brackets that span multiple tokens
@@ -424,6 +423,10 @@ class RexParser(BaseParser):
             # preeditionszeichen
             if (isinstance(this_char, SentBound)):
                 this_char.anno_bound = True
+
+        # CoraToken bounds
+        if not (some_parse[-1].anno_bound or some_parse[-1].dipl_bound):
+            some_parse[-1].token_bound = True
 
         return some_parse
 

@@ -101,3 +101,8 @@ class ParserTest(unittest.TestCase):
         #  should be '[[ge]](=)\ntan'
         with self.assertRaises(ParseError):
             AnselmParser().parse("[[ge(=)]]\ntan")
+
+
+    def test_fromedition(self):
+        tok = AnselmParser().parse("$wer[t]").tokenize_dipl()[0]
+        self.assertEqual(tok.utf(), "ſwer[...]")

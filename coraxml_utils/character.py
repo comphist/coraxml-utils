@@ -261,7 +261,8 @@ class Char:
         self.anno_simple = anno_simple
         self.anno_bound = False
         self.dipl_bound = False
-        self.line_break = False
+        self.token_bound = False
+        self.line_break_after = False
 
     def __repr__(self):
         return str(self.__dict__)
@@ -281,7 +282,7 @@ class Char:
                 self.anno_simple == obj.anno_simple and
                 self.anno_bound == obj.anno_bound and
                 self.dipl_bound == obj.dipl_bound and
-                self.line_break == obj.line_break
+                self.line_break_after == obj.line_break_after
             )
 
 
@@ -325,6 +326,8 @@ class LineBreak(Whitespace):
     def __init__(self, _trans):
         super().__init__(_trans)
         self.line_break = True
+        # should only occur within token
+        self.token_bound = False
 
 
 class Punct(Char):

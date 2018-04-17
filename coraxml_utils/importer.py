@@ -8,7 +8,7 @@ logger = logging.getLogger()
 from collections import defaultdict
 
 from coraxml_utils.coralib import *
-from coraxml_utils.character import Joiner
+from coraxml_utils.character import LineBreak, Joiner
 import coraxml_utils.parser as parser
 import coraxml_utils.tokenizer as tokenizer
 
@@ -422,7 +422,6 @@ class TransImporter:
         bibinfo_lines = self._parse_bibinfos(bibinfo_lines)
 
         bibinfo_iter = iter(bibinfo_lines)
-        new_bibinfo = next(bibinfo_iter)
         current_line_dipls = []
 
         for chunk in tokenized_input:
@@ -451,8 +450,8 @@ class TransImporter:
                         if c == "\n":
                              # start a new line
                             try:
-                                self._add_line(new_doc, new_bibinfo, current_line_dipls)
-                                new_bibinfo = next(bibinfo_iter)
+                                current_line_dipls[-1].trans.parse[-1].line_break_after = True
+                                self._add_line(new_doc, next(bibinfo_iter), current_line_dipls)
                                 current_line_dipls = []
                             except StopIteration:
                                 print(new_bibinfo)
@@ -469,11 +468,11 @@ class TransImporter:
                     if c.dipl_bound:
                         current_line_dipls.append(mydipls.pop())
 
-                    if c.string == "\n":
+                    if isinstance(c, LineBreak):
                         # start a new line
                         try:
-                            self._add_line(new_doc, new_bibinfo, current_line_dipls)
-                            new_bibinfo = next(bibinfo_iter)
+                            current_line_dipls[-1].trans.parse[-1].line_break_after = True
+                            self._add_line(new_doc, next(bibinfo_iter), current_line_dipls)
                             current_line_dipls = []
                         except StopIteration:
                             print(new_bibinfo)
@@ -499,25 +498,25 @@ class TransImporter:
 
 
                             
-            elif isinstance(chunk, tokenizer.Whitespace):
-                if chunk.is_newline:
-                    ## add line to document
-                    try:
-                        self._add_line(new_doc, new_bibinfo, current_line_dipls)
-                        new_bibinfo = next(bibinfo_iter)
-                        current_line_dipls = []
-                    except StopIteration:
-                        pass
-                    except AttributeError as e:
-                        if not bibinfo_match:
-                            logging.error("Bibinfo '{0}' has wrong format".format(next_bibinfo))
-                        else:
-                            raise e
+            elif isinstance(chunk, tokenizer.Newline):
+                ## add line to document
+                try:
+                    current_line_dipls[-1].trans.parse[-1].line_break_after = True
+                    self._add_line(new_doc, next(bibinfo_iter), current_line_dipls)
+                    current_line_dipls = []
+                except StopIteration:
+                    pass
+                except AttributeError as e:
+                    if not bibinfo_match:
+                        logging.error("Bibinfo '{0}' has wrong format".format(next_bibinfo))
+                    else:
+                        raise e
                     
 
         ## add last line
         if current_line_dipls:
-            self._add_line(new_doc, new_bibinfo, current_line_dipls)
+            current_line_dipls[-1].trans.parse[-1].line_break_after = True
+            self._add_line(new_doc, next(bibinfo_iter), current_line_dipls)
 
         try:
             leftover_bibinfo = next(bibinfo_iter)

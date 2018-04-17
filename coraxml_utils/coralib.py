@@ -88,7 +88,7 @@ class Trans(BaseTrans):
 
         stack = list()
         for c in self.parse:
-            if c.anno_bound:
+            if c.anno_bound and not c.token_bound:
                 output_tokens.append(AnnoTrans(stack).delete(Whitespace))
                 stack = list()
             stack.append(c)
@@ -100,7 +100,7 @@ class Trans(BaseTrans):
         output_tokens = list()
         stack = list()
         for c in self.parse:
-            if c.dipl_bound:
+            if c.dipl_bound and not c.token_bound:
                 output_tokens.append(DiplTrans(stack, subtoken=self.subtoken_annos).delete(Whitespace))
                 stack = list()
             stack.append(c)
