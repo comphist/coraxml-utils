@@ -18,7 +18,7 @@ from lxml import etree as ET
 def create_importer(file_format, dialect=None, **kwargs):
     if file_format == 'coraxml':
         if dialect in parser.dialect_mapper:
-            cora_importer = CoraXMLImporter(parser.dialect_mapper[dialect])
+            cora_importer = CoraXMLImporter(parser.dialect_mapper[dialect], **kwargs)
             if dialect == 'rem':
                 cora_importer.tok_dipl_tag = 'tok_dipl'
                 cora_importer.tok_anno_tag = 'tok_anno'
@@ -27,7 +27,7 @@ def create_importer(file_format, dialect=None, **kwargs):
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
     elif file_format == "trans":
         if dialect in parser.dialect_mapper:
-            return TransImporter(parser.dialect_mapper[dialect], kwargs)
+            return TransImporter(parser.dialect_mapper[dialect], **kwargs)
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
     else:
@@ -263,7 +263,7 @@ class CoraXMLImporter:
 
 class TransImporter:
 
-    def __init__(self, parser, options):
+    def __init__(self, parser):
         self.TokenParser = parser()
         self.Tokenizer = tokenizer.RexTokenizer()
         # allowed bibinfo format
