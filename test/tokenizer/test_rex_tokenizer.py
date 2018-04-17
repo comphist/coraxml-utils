@@ -93,3 +93,22 @@ class RexTokenizerTests(unittest.TestCase):
                                    Whitespace("\n", newline=True),
                                    Token("alsdkfj")])
 
+    def test_shifttag(self):
+
+        test_string = "+L some latin text @L"
+        result = self.tokenizer.tokenize(test_string)
+
+        self.assertEquals(
+            result,
+            [ShiftTagOpen("L"), Whitespace(" "), Token("some"), Whitespace(" "), Token("latin"), Whitespace(" "), Token("text"), Whitespace(" "), ShiftTagClose("L")]
+        )
+
+
+    def test_erased_words(self):
+
+        test_string = "test *[was*]\nwords and *[est*] more\n*[t*] see another"
+        result = self.tokenizer.tokenize(test_string)
+
+        self.assertEquals(result[2], Token("*[was*]"))
+        self.assertEquals(result[8], Token("*[est*]"))
+        self.assertEquals(result[12], Token("*[t*]"))

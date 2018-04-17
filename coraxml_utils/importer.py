@@ -18,7 +18,7 @@ from lxml import etree as ET
 def create_importer(file_format, dialect=None, **kwargs):
     if file_format == 'coraxml':
         if dialect in parser.dialect_mapper:
-            cora_importer = CoraXMLImporter(parser.dialect_mapper[dialect])
+            cora_importer = CoraXMLImporter(parser.dialect_mapper[dialect], **kwargs)
             if dialect == 'rem':
                 cora_importer.tok_dipl_tag = 'tok_dipl'
                 cora_importer.tok_anno_tag = 'tok_anno'
@@ -27,7 +27,7 @@ def create_importer(file_format, dialect=None, **kwargs):
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
     elif file_format == "trans":
         if dialect in parser.dialect_mapper:
-            return TransImporter(parser.dialect_mapper[dialect], kwargs)
+            return TransImporter(parser.dialect_mapper[dialect], **kwargs)
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
     else:
@@ -49,18 +49,19 @@ def parse_header(header_string):
 
 class CoraXMLImporter:
 
-    def __init__(self, token_parser):
+    def __init__(self, token_parser, strict=True):
         self.tok_dipl_tag = 'dipl'
         self.tok_anno_tag = 'mod'
         self.tokenparser = token_parser()
 
+        self.strict = strict
 
-    def _create_dipl_token(self, dipl_element):
-        # TODO: report parser errors and skip token instead of crashing
-        return TokDipl(self.tokenparser.parse(dipl_element.attrib['trans'], output_type="dipl"), 
-                       extid=dipl_element.attrib['id'])
 
-    def _create_anno_token(self, anno_element):
+    def _create_dipl_token(self, dipl_element, trans):
+
+        return TokDipl(trans, extid=dipl_element.attrib['id'])
+
+    def _create_anno_token(self, anno_element, trans):
 
         # retrieve annotations
         tags = dict()
@@ -84,37 +85,84 @@ class CoraXMLImporter:
         ## the attribute checked is not obligatory
         checked = 'checked' in anno_element.attrib and anno_element.attrib['checked'] == 'y'
 
-        return TokAnno(
-            self.tokenparser.parse(anno_element.attrib['trans'], output_type="anno"),
+        return TokAnno(trans,
             tags=tags, flags=flags, checked=checked, extid=anno_element.attrib['id']
         )
 
-    def _create_cora_token(self, coratoken_element):
+    def _create_cora_token(self, coratoken_element, line_endings):
 
+        ## get dipl and anno elements
         dipl_tokens = []
         anno_tokens = []
 
         for dipl_element in coratoken_element.findall(self.tok_dipl_tag):
-            dipl_tokens.append(self._create_dipl_token(dipl_element))
+            dipl_tokens.append(dipl_element)
         for anno_element in coratoken_element.findall(self.tok_anno_tag):
-            anno_tokens.append(self._create_anno_token(anno_element))
+            anno_tokens.append(anno_element)
 
-        parsed_token = self.tokenparser.parse(coratoken_element.attrib['trans'])
+        ## test that transcriptions are the same for the different levels
+        token_trans = coratoken_element.attrib['trans']
+        dipl_trans = "".join([dipl_element.attrib['trans'] for dipl_element in dipl_tokens])
+        anno_trans = "".join([anno_element.attrib['trans'] for anno_element in anno_tokens])
+
+        if dipl_trans != token_trans:
+            logging.warning("Transcription of virtual token does not equal the concatenation of the dipl-token transcriptions. Dipl transcriptions is used.")
+        if anno_tokens and anno_trans != dipl_trans:
+            logging.warning("Concatenation of anno-token transcriptions does not equal the concatenation of the dipl-token transcriptions. Dipl transcription is used.")
+
+
+        ## create transcription of the token with linebreaks
+        parse_trans = ''
+        for dipl_tok in dipl_tokens:
+            parse_trans += dipl_tok.attrib['trans']
+            if dipl_tok.attrib['id'] in line_endings:
+                parse_trans += '\n'
+        parse_trans = parse_trans.strip()
+
+        parsed_token = self.tokenparser.parse(parse_trans)
+
+        trans_valid = True
 
         ## test if parses match
         parsed_dipl_toks = parsed_token.tokenize_dipl()
         if len(parsed_dipl_toks) != len(dipl_tokens):
-            logging.error("Parse does not match number of dipl tokens for token " + coratoken_element.attrib['id'])
+            logging.warning("Parse does not match number of dipl tokens for token " + coratoken_element.attrib['id'])
+            trans_valid = False
         else:
-            if any([dipl1.trans() != dipl2.trans.trans() for dipl1, dipl2 in zip(parsed_dipl_toks, dipl_tokens)]):
-                logging.error("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
+            if any([dipl1.trans() != dipl2.attrib['trans'] for dipl1, dipl2 in zip(parsed_dipl_toks, dipl_tokens)]):
+                logging.warning("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
         parsed_anno_toks = parsed_token.tokenize_anno()
         if len(parsed_anno_toks) != len(anno_tokens):
-            logging.error("Parse does not match number of anno tokens for token " + coratoken_element.attrib['id'] +
+            logging.warning("Parse does not match number of anno tokens for token " + coratoken_element.attrib['id'] +
                           " " + coratoken_element.attrib['trans'])
+            trans_valid = False
         else:
-            if any([anno1.trans() != anno2.trans.trans() for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)]):
-                logging.error("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
+            if any([anno1.trans() != anno2.attrib['trans'] for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)]):
+                logging.warning("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
+
+        ### Transform XML-Elements into objects
+        if trans_valid:
+
+            dipl_tokens = [self._create_dipl_token(dipl_element, dipl_parse)
+                           for dipl_element, dipl_parse in zip(dipl_tokens, parsed_dipl_toks)]
+
+            anno_tokens = [self._create_anno_token(anno_element, anno_parse)
+                           for anno_element, anno_parse in zip(anno_tokens, parsed_anno_toks)]
+
+        else:
+
+            dipl_tokens = [self._create_dipl_token(dipl_element, self.tokenparser.parse(dipl_element.attrib['trans'], output_type="dipl"))
+                           for dipl_element in dipl_tokens]
+
+            anno_tokens = [self._create_anno_token(anno_element, self.tokenparser.parse(anno_element.attrib['trans'], output_type="anno"))
+                           for anno_element in anno_tokens]
+
+            if self.strict:
+                self.valid_document = False
+                logging.error("Tokenization given in XML does not match tokenization of the given parser.")
+            else:
+                logging.warning("Tokenization given in XML does not match tokenization of the given parser - using tokenization from XML. This might lead to unexpected behaviour!")
+
 
         return CoraToken(parsed_token, dipl_tokens, anno_tokens, extid=coratoken_element.attrib['id'])
 
@@ -178,8 +226,15 @@ class CoraXMLImporter:
 
     def import_from_file(self, filename):
 
+        self.valid_document = True
+
         tree = ET.parse(filename, ET.XMLParser())
         root = tree.getroot()
+
+        ## get all ids of last dipls in line
+        line_endings = set()
+        for element in root.findall("layoutinfo/line"):
+            line_endings.add(self._get_range(element)[-1])
 
         ## Create list of cora_tokens and comments and a list of dipl_tokens for the layout elements
         tokens = []
@@ -187,7 +242,7 @@ class CoraXMLImporter:
         for element in root:
 
             if element.tag == 'token':
-                curr_token = self._create_cora_token(element)
+                curr_token = self._create_cora_token(element, line_endings)
                 tokens.append(curr_token)
                 dipl_tokens.extend(curr_token.tok_dipls)
             elif element.tag == 'comment':
@@ -258,12 +313,15 @@ class CoraXMLImporter:
             for header_part in header_element:
                 header[header_part.tag] = header_part.text
 
-        return Document(sigle, name, header, pages, tokens, shifttags, header_string)
+        if self.valid_document:
+            return Document(sigle, name, header, pages, tokens, shifttags, header_string)
+        else:
+            return None
 
 
 class TransImporter:
 
-    def __init__(self, parser, options):
+    def __init__(self, parser):
         self.TokenParser = parser()
         self.Tokenizer = tokenizer.RexTokenizer()
         # allowed bibinfo format

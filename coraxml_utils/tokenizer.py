@@ -175,6 +175,15 @@ class ShiftTag:
     def __repr__(self):
         return self.type
 
+    def __eq__(self, other):
+        if other:
+            if isinstance(other, self.__class__):
+                return(self.type == other.type)
+            else:
+                return False
+        else:
+            return False
+
 class ShiftTagOpen(ShiftTag):
     pass
 

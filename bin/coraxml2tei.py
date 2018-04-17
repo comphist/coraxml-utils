@@ -14,12 +14,11 @@ if __name__ == "__main__":
                         help='Eingabedatei (XML)')
     parser.add_argument('outfile', nargs="?",
                         help='Ausgabedatei (XML)')
-    ## TODO
-    parser.add_argument("-d", "--dialect", choices=["rem", "anselm", "ref", "redi"],
-                        default=None, help="CorA-XML dialect to use, default: %(default)s")
+    parser.add_argument("-P", "--parser", choices=["rem", "anselm", "ref", "redi"],
+                        default="ref", help="Token parser to use, default: %(default)s")
     args, _ = parser.parse_known_args()
 
-    MyImporter = create_importer("coraxml", args.dialect)
+    MyImporter = create_importer("coraxml", args.parser)
     MyExporter = create_exporter("tei")
 
     doc = MyImporter.import_from_file(args.infile)
