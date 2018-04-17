@@ -219,11 +219,14 @@ class TransExporter:
 
                         if c.line_break_after:
                             recent_linebreak = True
+                        elif c.anno_bound and token_form.startswith("anno"):
+                            # do anno tokenization
+                            output_token.append(" ")
 
                         output_token.append(char_type)
 
                         if token_form.startswith("anno"):
-                            if c.anno_bound and recent_linebreak:
+                            if (c.anno_bound or c.token_bound) and recent_linebreak:
                                 current_line.append("".join(output_token))
                                 output.append(next(bibinfos_iter) + " ".join(current_line))
                                 output_token = list()

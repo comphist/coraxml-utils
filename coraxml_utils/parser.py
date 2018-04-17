@@ -170,9 +170,10 @@ class RexParser(BaseParser):
         lacuna_re = r'(?P<gapo> << ) | (?P<gapc> >> )'
 
         # specifies which regexes are to be applied, and in what order
+        # order longer patterns before shorter ones!!
         self.re_parts = [spc_re, majuscule_re, tokenization_re, 
                          parens_re, lacuna_re,
-                         strk_re, hard_to_read_re, edition_re, editor_completed_re,
+                         editor_completed_re, strk_re, hard_to_read_re, edition_re,
                          ptk_marker_re, quote_re, preedit_re,
                          uni_re, hyphen_re, period_re, punc_re, foreign_re, word_re
                          ]
