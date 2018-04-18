@@ -167,7 +167,8 @@ class RexParser(BaseParser):
         hard_to_read_re = r'(?P<reado> < ) | (?P<readc> > )'
         edition_re = r'(?P<edito> \[ ) | (?P<editc> \] )'
         editor_completed_re = r'(?P<complo> \[\[ ) | (?P<complc> \]\] )'
-        lacuna_re = r'(?P<gapo> << ) | (?P<gapc> >> )'
+        # lacuna_re = r'(?P<gapo> << ) | (?P<gapc> >> )'
+        lacuna_re = r'(?P<gap> <<\.\.\.>> )'
 
         # specifies which regexes are to be applied, and in what order
         # order longer patterns before shorter ones!!
@@ -251,12 +252,11 @@ class RexParser(BaseParser):
                         new_char = EditorCompleted(val, opening=True,
                                                    dipl_utf=self.ILLEGIBLE_REPLACEMENT,
                                                    anno_utf=self.ILLEGIBLE_REPLACEMENT)
-                    elif key == "gapo":
-                        open_spans[Lacuna].append(match.start())
-                        new_char = Lacuna(val, opening=True,
+                    elif key == "gap":
+                        new_char = Lacuna(val,
                                            dipl_utf=self.ILLEGIBLE_REPLACEMENT,
                                            anno_utf=self.ILLEGIBLE_REPLACEMENT)
-                    elif key in {"editc", "complc", "gapc"}:
+                    elif key in {"editc", "complc"}:
                         try:
                             # TODO update strings
                             # openbr = flip_bracket(val)
@@ -268,10 +268,6 @@ class RexParser(BaseParser):
                                 closing = open_spans[EditorCompleted].pop()
                                 subtoken_spans.append(SubtokenAnno(EditorCompleted, closing, match.end())) 
                                 new_char = EditorCompleted(val, opening=False)
-                            elif key == "gapc":
-                                closing = open_spans[Lacuna].pop()
-                                subtoken_spans.append(SubtokenAnno(Lacuna, closing, match.end())) 
-                                new_char = Lacuna(val, opening=False)
                         except IndexError:
                             raise ParseError("Closing bracket is not opened: " + intoken)
 

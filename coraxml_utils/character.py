@@ -409,5 +409,5 @@ class FromEdition(Bracket):
 class EditorCompleted(Bracket):
     pass
 
-class Lacuna(Bracket):
+class Lacuna(MetaChar):
     pass
