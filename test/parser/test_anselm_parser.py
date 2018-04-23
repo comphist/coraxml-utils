@@ -102,12 +102,27 @@ class ParserTest(unittest.TestCase):
         with self.assertRaises(ParseError):
             AnselmParser().parse("[[ge(=)]]\ntan")
 
-
     def test_fromedition(self):
         tok = AnselmParser().parse("$wer[t]").tokenize_dipl()[0]
         self.assertEqual(tok.utf(), "ſwer[...]")
 
-
     def test_editorcompleted(self):
         tok = AnselmParser().parse("$wer[[t]]").tokenize_dipl()[0]
         self.assertEqual(tok.utf(), "ſwer[...]")
+
+    def test_lacuna(self):
+        tok = AnselmParser().parse("foo<<...>>").tokenize_anno()[0]
+        self.assertEqual(tok.utf(), "foo[...]")
+
+    def test_period_grouping(self):
+        tok = AnselmParser().parse("foo...").tokenize_anno()
+        self.assertEqual(len(tok), 2)
+
+    def test_unleserlich_chars(self):
+        tok = AnselmParser().parse("test[..]")
+        self.assertEqual(" ".join(x.simple() for x in tok.tokenize_anno()),
+                         "test..")
+
+    def test_unleserlich_punct(self):
+        tok = AnselmParser().parse("test[.]")
+        self.assertEqual(len(tok.tokenize_anno()), 2)

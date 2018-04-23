@@ -235,7 +235,6 @@ class RexParser(BaseParser):
                         new_char = Recognizable(val, opening=True)
                     elif key == "readc":
                         try: 
-                            # openbr = flip_bracket(val)
                             closing = open_spans[Recognizable].pop()
                             subtoken_spans.append(SubtokenAnno(Recognizable, closing, match.end()))
                             new_char = Recognizable(val, opening=False)
