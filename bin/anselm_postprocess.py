@@ -30,6 +30,10 @@ if __name__ == "__main__":
         print("processing %s..." % filepath)
         doc = MyImporter.import_from_file(filepath)
 
+        if doc is None:
+            print("Error: Could not load document %s" %filepath)
+            continue
+
         for tok in filter(lambda x: isinstance(x, CoraToken), doc.tokens):
 
             for tok_anno in tok.tok_annos:
