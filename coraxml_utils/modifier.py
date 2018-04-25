@@ -47,7 +47,7 @@ def add_tokenization_tags(token):
         elif any(c.string == "#" and isinstance(c, TokenBound) 
                  for c in mparse):
             token_type = _add_val(token_type, 'US')
-        elif any(isinstance(c, EditHyphen) for c in mparse):
+        elif any(isinstance(c, MultiverbNewline) for c in mparse):
             token_type = _add_val(token_type, 'UL')
 
         if token_type and token_type != DEFAULT_VAL:
@@ -99,7 +99,7 @@ def add_tokenization_tags(token):
 
 def update_punct_pos(token):
     for m in token.tok_annos:
-        if any(c["type"] == "p" for c in m.trans.parse):
+        if any(isinstance(c, Punct) for c in m.trans.parse):
             if m.tags.get("pos", DEFAULT_VAL) == DEFAULT_VAL:
                 m.tags["pos"] = "$("
 
