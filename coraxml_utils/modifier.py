@@ -1,10 +1,12 @@
 import json
 import re
 import logging
+import argparse
+from pathlib import Path
 
 from coraxml_utils.settings import DEFAULT_VAL
 from coraxml_utils.character import *
-from coraxml_utils.coralib import ShiftTag
+from coraxml_utils.coralib import ShiftTag, CoraToken
 
 def _add_val(instr, newval, sep=' '):
     if instr != DEFAULT_VAL:
@@ -199,3 +201,83 @@ def trans_to_cora_json(trans):
     json_dict['dipl_breaks'].append(0)
 
     return json.dumps(json_dict)
+
+### project specific postprocessing
+
+def postprocess(MyImporter, MyExporter, postprocesser):
+
+    description = "Fügt einige extra Annotationen einer CorA-XML-Datei hinzu."
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('infiles', nargs="+", help='Eingabedateien (XML)')
+    parser.add_argument("-o", '--outpath', default=".",
+                        help='Ausgabepfad')
+    args, _ = parser.parse_known_args()
+
+    # name mod -> tok_anno, dipl -> tok_dipl
+
+    for filepath in args.infiles:
+
+        print("processing %s..." % filepath)
+        doc = MyImporter.import_from_file(filepath)
+
+        if doc is None:
+            print("Error: Could not load document %s" %filepath)
+            continue
+
+        for tok in filter(lambda x: isinstance(x, CoraToken), doc.tokens):
+
+            postprocesser(tok, doc)
+
+        output_xml = MyExporter.export(doc)
+        outfilepath = str(Path(args.outpath) / (doc.sigle + ".xml"))
+        with open(outfilepath, "wb") as outfile:
+            output_xml.write(outfile, xml_declaration=True,
+                             pretty_print=True, encoding='utf-8')
+
+def ref_postprocess(tok, doc):
+
+    # add tokenization tags
+    add_tokenization_tags(tok)
+
+    # add punc tags
+    new_shifttags = add_punc_tags(tok)
+    # (when shifttags result from quotation marks)
+    doc.shifttags.extend(new_shifttags)
+
+def anselm_postprocess(tok, doc):
+
+    for tok_anno in tok.tok_annos:
+        # remove comment and boundary
+        tok_anno.tags.pop('comment', None)
+        tok_anno.tags.pop('boundary', None)
+        tok_anno.flags.discard('boundary')
+
+        # add "--" if morph is not set
+        fill_annotation_column(tok_anno, 'morph')
+
+        # add norm if it is missing
+        if 'norm' not in tok_anno.tags:
+            print(tok_anno)
+        # set norm_broad to norm if it is not set
+        if 'norm' in tok_anno.tags:
+            fill_annotation_column(tok_anno, 'norm_broad', tok_anno.tags['norm'])
+
+        # rename norm_type-tags
+        change_tags(tok_anno, 'norm_type', {
+            'f': 'inflection',
+            's': 'semantic',
+            'x': 'extinct'
+        })
+
+    # add tokenization tags
+    add_tokenization_tags(tok)
+
+    # add punc tags
+    # ANSELM: as yet no pre-edition punctuation 
+    # (and therefore no sent bounds discernible)
+    # tok = add_punc_tags(tok)
+
+    # alle Satzzeichen (type = p) auf $( setzen (wenn noch nichts gesetzt)
+    update_punct_pos(tok)
+
+
