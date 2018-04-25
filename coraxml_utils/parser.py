@@ -28,7 +28,7 @@ class BaseParser:
         self.token_re = regex.compile(r"({0})".format("|".join(self.re_parts)), 
                                       flags=regex.VERBOSE)
 
-    def validate(self, obj):
+    def validate(self, obj, output_type="trans"):
         # remove all valid characters, now everything that remains
         # is an error. also remove \&1-9 "variables zeichen"
         # which gets simplified to {1-9}
@@ -42,7 +42,7 @@ class BaseParser:
 
         last_char = None
         for c in obj.parse:
-            if isinstance(last_char, Joiner) and not isinstance(c, LineBreak):
+            if isinstance(last_char, Joiner) and not isinstance(c, LineBreak) and output_type!='anno':
                 # allows = mid-line as required by legacy tests
                 if not isinstance(last_char, Hyphen):
                     raise ParseError("%s not at line end" % last_char.string)
@@ -94,7 +94,7 @@ class PlainParser(BaseParser):
 
         super().__init__()
 
-    def validate(self, obj):
+    def validate(self, obj, output_type="trans"):
         pass
 
     def tokenize(self, some_parse, split_init_punc=True):
@@ -130,7 +130,7 @@ class PlainParser(BaseParser):
         else:
             myparse = self.tokenize(myparse)
             result = Trans(myparse, subtoken=subtoken_spans)
-        self.validate(result)  # throws ParseError
+        self.validate(result, output_type)  # throws ParseError
         return result
 
 
@@ -370,7 +370,7 @@ class RexParser(BaseParser):
             myparse = self.tokenize(myparse)
             result = Trans(myparse, subtoken=subtoken_spans)
         try:
-            self.validate(result)  # throws ParseError
+            self.validate(result, output_type)  # throws ParseError
         except ParseError as e:
             raise ParseError("The token '{0}' could not be parsed:\n\t{1}".format(intoken,
                              e.message))

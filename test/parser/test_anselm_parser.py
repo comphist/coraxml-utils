@@ -126,3 +126,8 @@ class ParserTest(unittest.TestCase):
     def test_unleserlich_punct(self):
         tok = AnselmParser().parse("test[.]")
         self.assertEqual(len(tok.tokenize_anno()), 2)
+
+    def test_multiline_tokenization_anno(self):
+        ## should ignore missing linebreak when type is anno
+
+        tok = AnselmParser().parse("mei(=)/nenn", output_type='anno')
