@@ -167,7 +167,11 @@ class CoraXMLImporter:
         return CoraToken(parsed_token, dipl_tokens, anno_tokens, extid=coratoken_element.attrib['id'])
 
     def _get_range(self, element):
-        return element.attrib['range'].split('..')
+        if element.attrib['range']:
+            return element.attrib['range'].split('..')
+        else:
+            ## empty range - should not happen but appears sometimes
+            return None
 
     def _connect_with_layout_elements(self, root, layout_type, subelements, subelement_type, 
                                       extract_from_xml, create_object):
@@ -187,30 +191,44 @@ class CoraXMLImporter:
         layout_elements = []
 
         # get layoutinfo from xml
-        beginnings = dict()
+        beginnings = []
         for element in root.findall("layoutinfo/" + layout_type):
             range = self._get_range(element)
+            if range is None:
+                logging.warn('Dropped empty ' + layout_type + ' (' + element.attrib['id'] + ')')
+                continue
             if range[0] in beginnings:
                 logging.error('Two ' + layout_type + 's that start at the same position: ' + 
                               element.attrib['id'] + ' and ' + beginnings[range[0]]['extid'])
-            beginnings[range[0]] = {**extract_from_xml(element), 
-                                    'end': range[-1], 'subelements': []}
+            beginnings.append({**extract_from_xml(element), 
+                               'beginning': range[0], 
+                               'end': range[-1], 'subelements': []})
 
-        open_element = None
+        beginnings.reverse()
+        next_element = beginnings.pop()
+        open_element = False
+
         for subelement in subelements:
-            if open_element is None:
-                if subelement.id in beginnings:
-                    open_element = beginnings.pop(subelement.id)
+
+            if next_element is None:
+                logging.warn('No more ' + layout_type + 's for ' + subelement_type + ' (' + subelement.id +  ')')
+
+            if not open_element:
+                if subelement.id == next_element['beginning']:
+                    open_element = True
                 else:
                     # warn and continue
-                    logging.warn(subelement_type + ' that is not connected to anything in the layout: ' + 
-                                 subelement.id)
-                    continue
+                    logging.warn('Expected ' + subelement_type + ' with id ' + next_element['beginning'] +
+                                 ' but found ' + subelement_type + ' with id ' + subelement.id)
 
-            open_element['subelements'].append(subelement)
-            if open_element['end'] == subelement.id:
-                layout_elements.append(create_object(open_element))
-                open_element = None
+            next_element['subelements'].append(subelement)
+            if next_element['end'] == subelement.id:
+                layout_elements.append(create_object(next_element))
+                open_element = False
+                if beginnings:
+                    next_element = beginnings.pop()
+                else:
+                    next_element = None
 
         if beginnings:
             logger.warn('Dropped ' + layout_type + 
@@ -219,7 +237,7 @@ class CoraXMLImporter:
         if open_element:
             logger.warn('Dropped ' + layout_type + 
                         '(s) ending with nonexistent ' + subelement_type + 
-                        ': ' + open_element['extid'])
+                        ': ' + next_element['extid'])
 
         return layout_elements
 
@@ -234,7 +252,9 @@ class CoraXMLImporter:
         ## get all ids of last dipls in line
         line_endings = set()
         for element in root.findall("layoutinfo/line"):
-            line_endings.add(self._get_range(element)[-1])
+            range = self._get_range(element)
+            if range is not None:
+                line_endings.add(range[-1])
 
         ## Create list of cora_tokens and comments and a list of dipl_tokens for the layout elements
         tokens = []
