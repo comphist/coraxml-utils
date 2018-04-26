@@ -150,7 +150,7 @@ class RexParser(BaseParser):
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
                             for i, (x, _, _) in enumerate(replacements) if x)
         period_re = r'(?P<period> \. )'
-        punc_re = r'(?P<p> %\. | (?<!\(=\)\n)/ | ' + punc +')'
+        punc_re = r'(?P<p> %\. | / | ' + punc +')'
         majuscule_re = r'(?P<maj> [*÷] [{(<] (?P<majc>' + alpha + r'{,3}) [*÷] (?P<majs>\d*) [})>] )'
         hyphen_re = r'(?P<hyphen> = )'
         parens_re = r'(?P<pareno> &\( ) | (?P<parenc> &\) )'
@@ -395,7 +395,8 @@ class RexParser(BaseParser):
 
             # other initial punctuation
             if (isinstance(last_char, Whitespace) and
-                isinstance(this_char, Punct) and 
+                not isinstance(last_char, LineBreak) and
+                isinstance(this_char, Punct) and
                 not isinstance(next_char, Punct)):
                 next_char.anno_bound = True
 
