@@ -127,6 +127,15 @@ class ParserTest(unittest.TestCase):
         tok = AnselmParser().parse("test[.]")
         self.assertEqual(len(tok.tokenize_anno()), 2)
 
+    def test_virgel(self):
+        tok = AnselmParser().parse("meinenn/")
+        self.assertEqual(len(tok.tokenize_anno()), 2)
+
+    def test_inner_word_virgel(self):
+        ## don't separate virgel after linebreak and joiner
+        tok = AnselmParser().parse("mei(=)\n/nenn")
+        self.assertEqual(len(tok.tokenize_anno()), 1)
+
     def test_multiline_tokenization_anno(self):
         ## should ignore missing linebreak when type is anno
 

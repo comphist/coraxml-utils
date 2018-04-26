@@ -150,7 +150,7 @@ class RexParser(BaseParser):
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
                             for i, (x, _, _) in enumerate(replacements) if x)
         period_re = r'(?P<period> \. )'
-        punc_re = r'(?P<p> %\. | / | ' + punc +')'
+        punc_re = r'(?P<p> %\. | (?<!\(=\)\n)/ | ' + punc +')'
         majuscule_re = r'(?P<maj> [*÷] [{(<] (?P<majc>' + alpha + r'{,3}) [*÷] (?P<majs>\d*) [})>] )'
         hyphen_re = r'(?P<hyphen> = )'
         parens_re = r'(?P<pareno> &\( ) | (?P<parenc> &\) )'
