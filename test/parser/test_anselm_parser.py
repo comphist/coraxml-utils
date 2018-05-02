@@ -147,3 +147,9 @@ class ParserTest(unittest.TestCase):
 
         tok = AnselmParser().parse(".xij.")
         self.assertEqual(len(tok.tokenize_anno()), 1)
+
+    def test_punct_after_bracked(self):
+        ## %. should be separated
+
+        tok = AnselmParser().parse("oli<ueti>%.")
+        self.assertEqual(len(tok.tokenize_anno()), 2)
