@@ -279,6 +279,10 @@ class Line(IdentifiableObjectMixin):
 
 class CoraToken(IdentifiableObjectMixin):
 
+    def from_parse(parse):
+
+        return CoraToken(parse, [TokDipl(x) for x in parse.tokenize_dipl()], [TokAnno(x) for x in parse.tokenize_anno()])
+
     def __init__(self, trans, tok_dipls, tok_annos, extid=""):
         self._set_id("t", extid)
         self.trans = trans
