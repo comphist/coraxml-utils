@@ -105,49 +105,37 @@ def change_tags(tok_anno, annotation_type, rename_dict):
 
 
 # für REF
-def add_punc_tags(token):
-    last_anno = None
+def add_punc_tags(token, tagname='punc'):
+
+    last_annotatable = None
     keep_annos = list()
-    open_quote = False
-    new_shifttags = list()
-    shifttag_stack = list()
+    unresolved_preed_tokens = []
+
     for tokanno in token.tok_annos:
-        
-        # PE-Zeichen only come at end of token
-        first_char = tokanno.trans.parse[0]
-        last_char = tokanno.trans.parse[-1]
-        if isinstance(last_char, SentBound):
-            keep_annos[-1].tags["punc"] = last_char.string
-            keep_annos[-1].flags.add("punc")
-            # remove PE chars by not adding to keep_annos
 
-            token.trans = token.trans.delete(SentBound)
-            token.tok_dipls[-1].trans = token.tok_dipls[-1].trans.delete(SentBound)
-
-        # quotation marks at beginning
-        elif isinstance(first_char, QuotationMark):
-            # TODO
-            pass
-
-        # quotation marks at end
-        elif isinstance(last_char, QuotationMark):
-            if last_anno:
-                if re.match(r"\([.;!?:,]\)", str(last_anno.trans)):
-                    # set this token as end of span
-                    new_shifttags.append(ShiftTag("Q", shifttag_stack))
-                    shifttag_stack = list()
-                else:
-                    logging.warning("Unexpected quotation mark in token: " + str(token))
+        if len(tokanno.trans)==1 and isinstance(tokanno.trans.parse[0], SentBound):
+            if last_annotatable is not None:
+                last_annotatable.append_annotation(tagname, str(tokanno.trans))
+                last_annotatable.flags.add(tagname)
             else:
-                # set this token as beginning of span
-                open_quote = True
-        else:
-            if open_quote:
-                shifttag_stack.append(token)
-            keep_annos.append(tokanno)
-    token.tok_annos = keep_annos
-    return new_shifttags
+                unresolved_preed_tokens.append(tokanno)
 
+        else:
+            if unresolved_preed_tokens:
+                for preed_tok in unresolved_preed_tokens:
+                    tokanno.append_annotation(tagname, str(preed_tok.trans))
+                tokanno.flags.add(tagname)
+                unresolved_preed_tokens = []
+                tokanno.append_annotation(tagname, '|')
+
+            last_annotatable = tokanno
+            keep_annos.append(tokanno)
+
+    token.trans = token.trans.delete(SentBound)
+    for dipl in token.tok_dipls:
+        dipl.trans = dipl.trans.delete(SentBound)
+        ### TODO make sure dipl.trans is not empty
+    token.tok_annos = keep_annos
 
 def trans_to_cora_json(trans):
     """
@@ -214,7 +202,7 @@ def postprocess(MyImporter, MyExporter, postprocesser):
 
         for tok in filter(lambda x: isinstance(x, CoraToken), doc.tokens):
 
-            postprocesser(tok, doc)
+            postprocesser(tok)
 
         output_xml = MyExporter.export(doc)
         outfilepath = str(Path(args.outpath) / (doc.sigle + ".xml"))
@@ -222,15 +210,13 @@ def postprocess(MyImporter, MyExporter, postprocesser):
             output_xml.write(outfile, xml_declaration=True,
                              pretty_print=True, encoding='utf-8')
 
-def ref_postprocess(tok, doc):
+def ref_postprocess(tok):
 
     # add tokenization tags
     add_tokenization_tags(tok)
 
     # add punc tags
-    new_shifttags = add_punc_tags(tok)
-    # (when shifttags result from quotation marks)
-    doc.shifttags.extend(new_shifttags)
+    add_punc_tags(tok)
 
 def anselm_postprocess(tok, doc):
 
