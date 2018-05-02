@@ -140,3 +140,10 @@ class ParserTest(unittest.TestCase):
         ## should ignore missing linebreak when type is anno
 
         tok = AnselmParser().parse("mei(=)/nenn", output_type='anno')
+
+
+    def test_abbreviations(self):
+        ## . should not be separated
+
+        tok = AnselmParser().parse(".xij.")
+        self.assertEqual(len(tok.tokenize_anno()), 1)
