@@ -153,3 +153,13 @@ class ParserTest(unittest.TestCase):
 
         tok = AnselmParser().parse("oli<ueti>%.")
         self.assertEqual(len(tok.tokenize_anno()), 2)
+
+    def test_preed_quotes_tokenization(self):
+        ## (") at the beginning should be separated
+
+        tok = AnselmParser().parse("(\")owe")
+        ## two tokens ...
+        self.assertEqual(len(tok.tokenize_anno()), 2)
+        ## ... with the correct content
+        self.assertEqual(tok.tokenize_anno()[0].trans(), "(\")")
+        self.assertEqual(tok.tokenize_anno()[1].trans(), "owe")

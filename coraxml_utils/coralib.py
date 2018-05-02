@@ -87,6 +87,11 @@ class Trans(BaseTrans):
         if not "".join(c.anno_utf for c in self.parse):
             return output_tokens
 
+        ## TODO quickfix cases where the first character is a tok_anno
+        if self.parse[0].anno_bound:
+            self.parse[0].anno_bound = False
+            self.parse[1].anno_bound = True
+
         stack = list()
         for c in self.parse:
             if c.anno_bound and not c.token_bound:
