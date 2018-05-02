@@ -119,26 +119,32 @@ class CoraXMLImporter:
                 parse_trans += '\n'
         parse_trans = parse_trans.strip()
 
-        parsed_token = self.tokenparser.parse(parse_trans)
-
         trans_valid = True
 
-        ## test if parses match
-        parsed_dipl_toks = parsed_token.tokenize_dipl()
-        if len(parsed_dipl_toks) != len(dipl_tokens):
-            logging.warning("Parse does not match number of dipl tokens for token " + coratoken_element.attrib['id'])
+        try:
+            parsed_token = self.tokenparser.parse(parse_trans)
+            ## test if parses match
+            parsed_dipl_toks = parsed_token.tokenize_dipl()
+            if len(parsed_dipl_toks) != len(dipl_tokens):
+                logging.warning("Parse does not match number of dipl tokens for token " + coratoken_element.attrib['id'])
+                trans_valid = False
+            else:
+                if any([dipl1.trans() != dipl2.attrib['trans'] for dipl1, dipl2 in zip(parsed_dipl_toks, dipl_tokens)]):
+                    logging.warning("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
+            parsed_anno_toks = parsed_token.tokenize_anno()
+            if len(parsed_anno_toks) != len(anno_tokens):
+                logging.warning("Parse does not match number of anno tokens for token " + coratoken_element.attrib['id'] +
+                              " " + coratoken_element.attrib['trans'])
+                trans_valid = False
+            else:
+                if any([anno1.trans() != anno2.attrib['trans'] for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)]):
+                    logging.warning("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
+        except parser.ParseError as e:
+            ## parse error - return an empty token
+            logging.error("Token could not be parsed: " + parse_trans + " Message: " + e.message)
             trans_valid = False
-        else:
-            if any([dipl1.trans() != dipl2.attrib['trans'] for dipl1, dipl2 in zip(parsed_dipl_toks, dipl_tokens)]):
-                logging.warning("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
-        parsed_anno_toks = parsed_token.tokenize_anno()
-        if len(parsed_anno_toks) != len(anno_tokens):
-            logging.warning("Parse does not match number of anno tokens for token " + coratoken_element.attrib['id'] +
-                          " " + coratoken_element.attrib['trans'])
-            trans_valid = False
-        else:
-            if any([anno1.trans() != anno2.attrib['trans'] for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)]):
-                logging.warning("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
+            return CoraToken(None, [], [], extid=coratoken_element.attrib['id'])
+
 
         ### Transform XML-Elements into objects
         if trans_valid:
@@ -233,7 +239,7 @@ class CoraXMLImporter:
         if beginnings:
             logger.warn('Dropped ' + layout_type + 
                         '(s) starting with nonexistent ' + subelement_type + 
-                        ': ' + str(list(beginnings.keys())))
+                        ': ' + str([beginning['extid'] for beginning in reversed(beginnings)]))
         if open_element:
             logger.warn('Dropped ' + layout_type + 
                         '(s) ending with nonexistent ' + subelement_type + 
