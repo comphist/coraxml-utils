@@ -8,53 +8,41 @@ from coraxml_utils.settings import DEFAULT_VAL
 from coraxml_utils.character import *
 from coraxml_utils.coralib import ShiftTag, CoraToken
 
-def _add_val(instr, newval, sep=' '):
-    if instr != DEFAULT_VAL:
-        return (instr + sep + newval).strip()
-    else:
-        return newval
-
-
 def add_tokenization_tags(token):
     c = 1
     switch_ML = False
     switch_MS = False
     for m in token.tok_annos:
-        token_type = m.tags.get("token_type", DEFAULT_VAL)
         mparse = m.trans.parse
 
         # multiverbation
         if switch_ML:
-            token_type = _add_val(token_type, "ML" + str(c))
+            m.append_annotation("token_type", "ML" + str(c))
             switch_ML = False
             c += 1
         elif switch_MS:
-            token_type = _add_val(token_type, "MS" + str(c))
+            m.append_annotation("token_type", "MS" + str(c))
             switch_MS = False
             c += 1
         elif any(c.string == "=|" and isinstance(c, TokenBound) 
                  for c in mparse):
             switch_ML = True
-            token_type = _add_val(token_type, "ML1")
+            m.append_annotation("token_type", "ML1")
             c += 1
         elif any(c.string == "|" and isinstance(c, TokenBound) 
                  for c in mparse):
             switch_MS = True
-            token_type = _add_val(token_type, "MS1")
+            m.append_annotation("token_type", "MS1")
             c += 1
 
         # univerbation
         if any(isinstance(c, Hyphen) for c in mparse):
-            token_type = _add_val(token_type, 'UH')
+            m.append_annotation("token_type", "UH")
         elif any(c.string == "#" and isinstance(c, TokenBound) 
                  for c in mparse):
-            token_type = _add_val(token_type, 'US')
+            m.append_annotation("token_type", "US")
         elif any(isinstance(c, MultiverbNewline) for c in mparse):
-            token_type = _add_val(token_type, 'UL')
-
-        if token_type and token_type != DEFAULT_VAL:
-            m.tags["token_type"] = token_type
-
+            m.append_annotation("token_type", "UL")
 
 # def add_punc_tags(token):
 #     mods = token.tok_annos

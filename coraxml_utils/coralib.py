@@ -4,6 +4,7 @@ import abc
 from collections import defaultdict
 
 from coraxml_utils.character import Whitespace
+from coraxml_utils.settings import DEFAULT_VAL
 
 class BaseTrans:
 
@@ -329,6 +330,17 @@ class AnnotatableElement:
 
         self.tags = tags if tags else dict()
         self.flags = flags if flags else set()
+
+
+    def append_annotation(self, tagname, tag, sep=' '):
+
+        oldval = self.tags.get(tagname, DEFAULT_VAL)
+
+        if oldval != DEFAULT_VAL:
+            self.tags[tagname] = oldval + sep + tag
+        else:
+            self.tags[tagname] = tag
+
 
 
 class TokAnno(AnnotatableElement, IdentifiableObjectMixin):
