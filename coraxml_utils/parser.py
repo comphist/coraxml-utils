@@ -159,7 +159,7 @@ class RexParser(BaseParser):
         foreign_re = r'(?P<for> \*f )'
         preedit_re = r'(?P<pe> \(' + punc + r'\) | ,,\) | ,,\(' + no_pq + r'| ,\) | ,\(' + no_pq + r' | ,, )'
         ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
-        quote_re = r'(?P<q> \("\) )'
+        quote_re = r'(?P<q> \(["«»]\) )'
         tokenization_re = r'(?P<ul> \(=\) ) | (?P<ml> =\| ) | (?P<ms> \|+ ) | (?P<us> \# )'
 
         # sequence annotations
