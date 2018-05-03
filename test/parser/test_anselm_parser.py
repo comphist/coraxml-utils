@@ -127,6 +127,10 @@ class ParserTest(unittest.TestCase):
         tok = AnselmParser().parse("test[.]")
         self.assertEqual(len(tok.tokenize_anno()), 2)
 
+    def test_from_edition_punct(self):
+        tok = AnselmParser().parse("test<.>")
+        self.assertEqual(len(tok.tokenize_anno()), 2)
+
     def test_virgel(self):
         tok = AnselmParser().parse("meinenn/")
         self.assertEqual(len(tok.tokenize_anno()), 2)
@@ -163,3 +167,25 @@ class ParserTest(unittest.TestCase):
         ## ... with the correct content
         self.assertEqual(tok.tokenize_anno()[0].trans(), "(\")")
         self.assertEqual(tok.tokenize_anno()[1].trans(), "owe")
+
+
+    def test_preed_quotes_tokenization_only_one_character(self):
+        ## (") at the beginning should be separated
+
+        tok = AnselmParser().parse("(\")o")
+        ## two tokens ...
+        self.assertEqual(len(tok.tokenize_anno()), 2)
+        ## ... with the correct content
+        self.assertEqual(tok.tokenize_anno()[0].trans(), "(\")")
+        self.assertEqual(tok.tokenize_anno()[1].trans(), "o")
+
+    def test_punct_and_preed_punct(self):
+
+        tok = AnselmParser().parse("wi$$e[n].(.)")
+        ## 3 tokens ...
+        self.assertEqual(len(tok.tokenize_anno()), 3)
+        ## ... with the correct content
+        self.assertEqual(tok.tokenize_anno()[0].trans(), "wi$$e[n]")
+        self.assertEqual(tok.tokenize_anno()[1].trans(), ".")
+        self.assertEqual(tok.tokenize_anno()[2].trans(), "(.)")
+
