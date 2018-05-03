@@ -391,7 +391,7 @@ class MultiverbNewline(Multiverbation, Joiner):
 
 class Bracket(MetaChar):
     def __init__(self, _trans, opening=True, **kwargs):
-        self.opening = True
+        self.opening = opening
         super().__init__(_trans, **kwargs)
 
 class Parenthesis(Bracket):
