@@ -405,7 +405,7 @@ class RexParser(BaseParser):
                 next_char.anno_bound = True
 
             # final punctuation  "foo%." (NOT "f%.oo")
-            if (isinstance(last_char, TextChar) and
+            if ((isinstance(last_char, TextChar) or (isinstance(last_char, Bracket) and not last_char.opening)) and
                 isinstance(this_char, Punct) and
                 not isinstance(next_char, TextChar)):
                 this_char.anno_bound = True
