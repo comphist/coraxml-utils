@@ -139,38 +139,39 @@ class CoraXMLImporter:
             else:
                 if any([anno1.trans() != anno2.attrib['trans'] for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)]):
                     logging.warning("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
+
+            ### Transform XML-Elements into objects
+            if trans_valid:
+
+                dipl_tokens = [self._create_dipl_token(dipl_element, dipl_parse)
+                               for dipl_element, dipl_parse in zip(dipl_tokens, parsed_dipl_toks)]
+
+                anno_tokens = [self._create_anno_token(anno_element, anno_parse)
+                               for anno_element, anno_parse in zip(anno_tokens, parsed_anno_toks)]
+
+            else:
+
+                dipl_tokens = [self._create_dipl_token(dipl_element, self.tokenparser.parse(dipl_element.attrib['trans'], output_type="dipl"))
+                               for dipl_element in dipl_tokens]
+
+                anno_tokens = [self._create_anno_token(anno_element, self.tokenparser.parse(anno_element.attrib['trans'], output_type="anno"))
+                               for anno_element in anno_tokens]
+
+                if self.strict:
+                    self.valid_document = False
+                    logging.error("Tokenization given in XML does not match tokenization of the given parser.")
+                else:
+                    logging.warning("Tokenization given in XML does not match tokenization of the given parser - using tokenization from XML. This might lead to unexpected behaviour!")
+
+
+            return CoraToken(parsed_token, dipl_tokens, anno_tokens, extid=coratoken_element.attrib['id'])
+
         except parser.ParseError as e:
             ## parse error - return an empty token
             logging.error("Token could not be parsed: " + parse_trans + " Message: " + e.message)
             trans_valid = False
             return CoraToken(None, [], [], extid=coratoken_element.attrib['id'])
 
-
-        ### Transform XML-Elements into objects
-        if trans_valid:
-
-            dipl_tokens = [self._create_dipl_token(dipl_element, dipl_parse)
-                           for dipl_element, dipl_parse in zip(dipl_tokens, parsed_dipl_toks)]
-
-            anno_tokens = [self._create_anno_token(anno_element, anno_parse)
-                           for anno_element, anno_parse in zip(anno_tokens, parsed_anno_toks)]
-
-        else:
-
-            dipl_tokens = [self._create_dipl_token(dipl_element, self.tokenparser.parse(dipl_element.attrib['trans'], output_type="dipl"))
-                           for dipl_element in dipl_tokens]
-
-            anno_tokens = [self._create_anno_token(anno_element, self.tokenparser.parse(anno_element.attrib['trans'], output_type="anno"))
-                           for anno_element in anno_tokens]
-
-            if self.strict:
-                self.valid_document = False
-                logging.error("Tokenization given in XML does not match tokenization of the given parser.")
-            else:
-                logging.warning("Tokenization given in XML does not match tokenization of the given parser - using tokenization from XML. This might lead to unexpected behaviour!")
-
-
-        return CoraToken(parsed_token, dipl_tokens, anno_tokens, extid=coratoken_element.attrib['id'])
 
     def _get_range(self, element):
         if element.attrib['range']:
