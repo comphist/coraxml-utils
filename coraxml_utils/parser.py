@@ -273,7 +273,7 @@ class RexParser(BaseParser):
 
 
                     elif key == "pareno":
-                        # TODO figure what should be done here
+                        # TODO figure out what should be done here
                         new_char = Parenthesis(val, dipl_utf="(", anno_utf="(",
                                                anno_simple="(")
                     elif key == "parenc":
