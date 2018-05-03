@@ -145,8 +145,9 @@ class RexParser(BaseParser):
         no_pq = r'(?![.;!?:,"«»])'
 
         # char types
+        abbr_re = r"(?P<abbr> \.[a-zA-Z]\. | e%\.e%\. | %[A-Z] ) " 
         spc_re = r"(?P<spc> [ \t]+ ) | (?P<newline> \n )"
-        word_re = r'(?P<w> \.[a-zA-Z]\. | %[A-Z] | \\ . | . )'
+        word_re = r'(?P<w>  \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
                             for i, (x, _, _) in enumerate(replacements) if x)
         period_re = r'(?P<period> \. )'
@@ -172,7 +173,7 @@ class RexParser(BaseParser):
 
         # specifies which regexes are to be applied, and in what order
         # order longer patterns before shorter ones!!
-        self.re_parts = [spc_re, majuscule_re, tokenization_re, 
+        self.re_parts = [spc_re, abbr_re, majuscule_re, tokenization_re, 
                          parens_re, lacuna_re,
                          editor_completed_re, strk_re, hard_to_read_re, edition_re,
                          ptk_marker_re, quote_re, preedit_re,
@@ -324,11 +325,14 @@ class RexParser(BaseParser):
                             if key == "w":
                                 new_char = TextChar(val, dipl_utf=val, anno_utf=val,
                                                     anno_simple=val)
+                            elif key == "abbr":
+                                new_char = TextChar(val, dipl_utf=val, anno_utf=val,
+                                                    anno_simple=val)
                             elif key == "p":
                                 new_char = Punct(val, dipl_utf=val, anno_utf=val,
                                                  anno_simple=val)                    
                             elif key == "period":
-                                if open_spans.get(FromEdition) or open_spans.get(EditorCompleted):
+                                if open_spans.get(EditorCompleted):
                                     new_char = IllegibleChar(val, dipl_utf=val, anno_utf=val,
                                                              anno_simple=val)
                                 else:
@@ -418,7 +422,11 @@ class RexParser(BaseParser):
                 this_char.anno_bound = True
 
             # preeditionszeichen
-            if (isinstance(this_char, SentBound)):
+            #  (with special handling of initial quotation marks)
+            if (isinstance(last_char, Whitespace) and
+                isinstance(this_char, QuotationMark)):
+                next_char.anno_bound = True
+            elif (isinstance(this_char, SentBound)):
                 this_char.anno_bound = True
 
         # CoraToken bounds
