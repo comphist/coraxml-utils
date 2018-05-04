@@ -76,7 +76,7 @@ class PlainParser(BaseParser):
         self.ILLEGIBLE_REPLACEMENT = "[...]"
         self.missing_br_open = {}
 
-        spc_re = r"(?P<spc> \s+ )"
+        spc_re = r"(?P<spc> [ \t]+ ) | (?P<newline> \n )"
         word_re = r'(?P<w> . )'
         self.re_parts = [spc_re, word_re]
 
@@ -118,6 +118,8 @@ class PlainParser(BaseParser):
                     if key == "w":
                         new_char = TextChar(val, dipl_utf=val, anno_utf=val,
                                             anno_simple=val)
+                    elif key == "newline":
+                        new_char = LineBreak(val)
                     else:
                         raise ParseError("Something went wrong!")
 
