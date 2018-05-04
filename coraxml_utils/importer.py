@@ -138,7 +138,7 @@ class CoraXMLImporter:
                 trans_valid = False
             else:
                 if any([anno1.trans() != anno2.attrib['trans'] for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)]):
-                    logging.warning("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
+                    logging.warning("Transcriptions of annos are not equal for token " + coratoken_element.attrib['id'])
 
             ### Transform XML-Elements into objects
             if trans_valid:
