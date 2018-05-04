@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+# coding: utf-8
+import functools
+
+from coraxml_utils.importer import create_importer
+from coraxml_utils.exporter import create_exporter
+from coraxml_utils.modifier import postprocess, split_annos
+
+if __name__ == "__main__":
+
+   tokenization_rule='\(«\)'
+
+   postprocess(
+        create_importer("coraxml", strict=False),
+        create_exporter("coraxml"),
+        functools.partial(split_annos, split_rule=tokenization_rule)
+    )
