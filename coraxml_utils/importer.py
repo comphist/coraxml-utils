@@ -1,5 +1,6 @@
 
 import re
+import itertools
 import sys
 import logging
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -466,7 +467,11 @@ class TransImporter:
                 try:
                     new_token = self.TokenParser.parse(chunk.string)
                 except parser.ParseError as e:
+                    ## get next line
+                    new_bibinfo = next(bibinfo_iter)
                     bibstr = "{sigle}-{page}{side}{col},{line}".format(**new_bibinfo)
+                    ## put line back to iterator
+                    bibinfo_iter = itertools.chain([new_bibinfo], bibinfo_iter)
                     logging.error("Transcription could not be parsed: {0}\t{1}".format(bibstr,
                                                                                        chunk.string))
                     print(e.message)
