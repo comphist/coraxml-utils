@@ -11,6 +11,8 @@ logging.basicConfig(format='%(levelname)s: %(message)s')
 
 from coraxml_utils.importer import create_importer
 from coraxml_utils.exporter import create_exporter
+import coraxml_utils.modifier
+from coraxml_utils.coralib import CoraToken
 
 
 __version__ = "2018.01.09"
@@ -169,6 +171,9 @@ if __name__ == "__main__":
                         help='Genusliste für ambige Nomina benutzen')
     parser.add_argument("-P", "--parser", choices=["rem", "anselm", "ref", "redi"],
                         default="ref", help="Token parser to use, default: %(default)s")
+    parser.add_argument("--postprocessing", choices=["ref"],
+                        default=None,
+                        help="Script used to postprocess the xml file")
     args, _ = parser.parse_known_args()
     if _: logging.warn("Unknown args: %s", _)
 
@@ -186,6 +191,15 @@ if __name__ == "__main__":
 
 
     if doc:
+
+        ## do postprocessing
+        if args.postprocessing:
+            postprocessor = getattr(coraxml_utils.modifier, args.postprocessing + '_postprocess')
+
+            for tok in filter(lambda x: isinstance(x, CoraToken), doc.tokens):
+
+                postprocessor(tok)
+
         print("~SUCCESS CHECK")
 
         print("~BEGIN XML")
