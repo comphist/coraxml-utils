@@ -160,16 +160,29 @@ class Document:
         self.shifttags = shifttags if shifttags else []
         self.annospans = annospans if annospans else []
 
+        self._create_indices()
+
+    ## TODO this should be called when document is changed 
+    def _create_indices(self):
+
         ## create index of line beginnings and endings
         self.index_line_beginnings = frozenset([line.dipls[0]._id
-                                                for page in pages
+                                                for page in self.pages
                                                 for column in page.columns
                                                 for line in column.lines])
 
         self.index_line_endings = frozenset([line.dipls[-1]._id
-                                                for page in pages
+                                                for page in self.pages
                                                 for column in page.columns
                                                 for line in column.lines])
+
+        self.dipl_line_index = {
+            dipl._id: line
+            for page in self.pages
+            for column in page.columns
+            for line in column.lines
+            for dipl in line.dipls
+        }
 
     def __bool__(self):
         return bool(self.pages and self.tokens)
@@ -202,6 +215,9 @@ class Document:
 
     def is_end_of_line(self, tok_dipl):
         return tok_dipl._id in self.index_line_endings
+
+    def get_line_for_dipl(self, tok_dipl):
+        return self.dipl_line_index.get(tok_dipl._id, None)
 
 class Page(IdentifiableObjectMixin):
 

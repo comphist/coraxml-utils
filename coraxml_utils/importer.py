@@ -560,6 +560,8 @@ class TransImporter:
             pass
 
         if self.valid_transcription:
+            ## create indices of lines and dipl tokens
+            new_doc._create_indices()
             return new_doc
         else:
             return None
