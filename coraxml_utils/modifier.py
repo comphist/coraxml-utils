@@ -180,7 +180,7 @@ def trans_to_cora_json(trans):
 
 ### project specific postprocessing
 
-def postprocess(MyImporter, MyExporter, postprocessor):
+def postprocess(MyImporter, MyExporter, postprocessor, document_processor=None):
 
     description = "Fügt einige extra Annotationen einer CorA-XML-Datei hinzu."
     parser = argparse.ArgumentParser(description=description)
@@ -203,6 +203,9 @@ def postprocess(MyImporter, MyExporter, postprocessor):
         for tok in filter(lambda x: isinstance(x, CoraToken), doc.tokens):
 
             postprocessor(tok)
+
+        if document_processor:
+            document_processor(doc)
 
         output_xml = MyExporter.export(doc)
         outfilepath = str(Path(args.outpath) / (doc.sigle + ".xml"))
