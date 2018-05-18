@@ -104,7 +104,9 @@ class CoraXMLExporter:
                                                        "name": line.name,
                                                        # "loc": self.loc(),
                                                        "range": line.range()})
-                    layoutinfo.append(line_xml)
+                        layoutinfo.append(line_xml)
+                    else:
+                        logging.warning("Empty line: " + line.get_external_id())
 
         shifttags = ET.SubElement(root, "shifttags")
         for shifttag in doc.shifttags:
