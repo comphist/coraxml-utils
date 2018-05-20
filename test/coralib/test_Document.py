@@ -36,3 +36,36 @@ class DocumentTest(unittest.TestCase):
 
         self.assertTrue(all([doc.is_beginning_of_line(dipl) for dipl in line_beginnings]))
         self.assertFalse(any([doc.is_beginning_of_line(dipl) for dipl in non_line_beginnings]))
+
+
+    def test_is_end_of_line(self):
+
+
+        line_endings = [TokDipl(None) for i in range(4)]
+        non_line_endings = [TokDipl(None) for i in range(4)]
+
+        doc = Document('t', 'Test', {}, [
+            Page('1', '', [
+                Column([
+                    Line('1', [
+                        non_line_endings[0], line_endings[0]
+                    ]),
+                    Line('2', [
+                        non_line_endings[1], line_endings[1]
+                    ])
+                ])
+            ]),
+            Page('2', '', [
+                Column([
+                    Line('1',[
+                        non_line_endings[2], line_endings[2]
+                    ]),
+                    Line('2',[
+                        non_line_endings[3], line_endings[3]
+                    ])
+                ])
+            ])
+        ], [])
+
+        self.assertTrue(all([doc.is_end_of_line(dipl) for dipl in line_endings]))
+        self.assertFalse(any([doc.is_end_of_line(dipl) for dipl in non_line_endings]))
