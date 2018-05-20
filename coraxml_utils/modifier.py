@@ -6,8 +6,7 @@ from pathlib import Path
 
 from coraxml_utils.settings import DEFAULT_VAL
 from coraxml_utils.character import *
-from coraxml_utils.coralib import ShiftTag, CoraToken, TokAnno
-from coraxml_utils.parser import PlainParser
+from coraxml_utils.coralib import ShiftTag, CoraToken
 
 def add_tokenization_tags(token):
     c = 1
@@ -181,7 +180,7 @@ def trans_to_cora_json(trans):
 
 ### project specific postprocessing
 
-def postprocess(MyImporter, MyExporter, postprocesser):
+def postprocess(MyImporter, MyExporter, postprocessor):
 
     description = "Fügt einige extra Annotationen einer CorA-XML-Datei hinzu."
     parser = argparse.ArgumentParser(description=description)
@@ -203,7 +202,7 @@ def postprocess(MyImporter, MyExporter, postprocesser):
 
         for tok in filter(lambda x: isinstance(x, CoraToken), doc.tokens):
 
-            postprocesser(tok)
+            postprocessor(tok)
 
         output_xml = MyExporter.export(doc)
         outfilepath = str(Path(args.outpath) / (doc.sigle + ".xml"))
@@ -254,35 +253,5 @@ def anselm_postprocess(tok, doc):
 
     # alle Satzzeichen (type = p) auf $( setzen (wenn noch nichts gesetzt)
     update_punct_pos(tok)
-
-
-def split_annos(tok, split_rule):
-
-    new_tok_annos = []
-    for tok_anno in tok.tok_annos:
-        new_tokens = re.split('(' + split_rule + ')', str(tok_anno.trans))
-
-        ## remove empty token (appears when trans starts or ends with a match)
-        if not new_tokens[0]:
-            new_tokens = new_tokens[1:]
-        if not new_tokens[-1]:
-            new_tokens.pop()
-
-        if len(new_tokens) > 1:
-            ## tok_anno is split into multiple tokens
-            ## create new tokens
-            for index, new_token in enumerate(new_tokens):
-                new_tok_anno = TokAnno(PlainParser().parse(new_token, output_type="anno"),
-                                       extid=tok_anno.get_external_id() + '_' + str(index),
-                                       tags=tok_anno.tags, flags=tok_anno.flags,
-                                       checked = tok_anno.checked)
-                new_tok_annos.append(new_tok_anno)
-        else:
-
-            new_tok_annos.append(tok_anno)
-
-    tok.tok_annos = new_tok_annos
-
-
 
 

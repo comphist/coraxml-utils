@@ -147,7 +147,7 @@ class RexParser(BaseParser):
         no_pq = r'(?![.;!?:,"«»])'
 
         # char types
-        abbr_re = r"(?P<abbr> \.[a-zA-Z]\. | e%\.e%\. | %[A-Z] ) " 
+        abbr_re = r"(?P<abbr> %?\.[a-zA-Z]{,2}%?\. | e%\.e%\. | %[A-Z] ) " 
         spc_re = r"(?P<spc> [ \t]+ ) | (?P<newline> \n )"
         word_re = r'(?P<w>  \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
@@ -407,7 +407,8 @@ class RexParser(BaseParser):
                 next_char.anno_bound = True
 
             # final punctuation  "foo%." (NOT "f%.oo")
-            if ((isinstance(last_char, TextChar) or (isinstance(last_char, Bracket) and not last_char.opening)) and
+            if ((isinstance(last_char, TextChar) or 
+                (isinstance(last_char, Bracket) and not last_char.opening)) and
                 isinstance(this_char, Punct) and
                 not isinstance(next_char, TextChar)):
                 this_char.anno_bound = True
@@ -425,7 +426,7 @@ class RexParser(BaseParser):
 
             # preeditionszeichen
             #  (with special handling of initial quotation marks)
-            if (isinstance(last_char, Whitespace) and
+            if (isinstance(last_char, (Whitespace, MultiverbSpace)) and
                 isinstance(this_char, QuotationMark)):
                 next_char.anno_bound = True
             elif (isinstance(this_char, SentBound)):
