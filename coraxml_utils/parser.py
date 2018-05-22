@@ -424,6 +424,12 @@ class RexParser(BaseParser):
                 isinstance(this_char, Punct)):
                 this_char.anno_bound = True
 
+            # seperate punct in klammern
+            if (isinstance(last_char, Bracket) and 
+                isinstance(this_char, Punct) and
+                isinstance(next_char, Bracket)):
+                last_char.anno_bound = True
+
             # preeditionszeichen
             #  (with special handling of initial quotation marks)
             if (isinstance(last_char, (Whitespace, MultiverbSpace)) and
