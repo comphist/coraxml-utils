@@ -90,6 +90,11 @@ class ParserTest(unittest.TestCase):
 
         self.assertEqual(tok.tokenize_anno()[0].simple(), "h.s.")
 
+    def test_unleserlichpunct(self):
+        res = [x.simple() for x in AnselmParser().parse("eyn<s></>(.)").tokenize_anno()]
+        self.assertEqual(res, ["eyns", "/", "(.)"])
+
+
     def test_majuskels(self):
         tok = AnselmParser().parse("*{D*}iz")
         self.assertEqual(tok.parse, [Majuscule("*{D*}", "", 
