@@ -147,7 +147,7 @@ class RexParser(BaseParser):
         no_pq = r'(?![.;!?:,"«»])'
 
         # char types
-        abbr_re = r"(?P<abbr> %?\.[a-zA-Z]{1,2}%?\. | e%\.e%\. | %[A-Z] ) " 
+        abbr_re = r"(?P<abbr> %?\.[a-zA-Z]{1,4}%?\. | e%\.e%\. | %[A-Z] ) "
         spc_re = r"(?P<spc> [ \t]+ ) | (?P<newline> \n )"
         word_re = r'(?P<w>  \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
