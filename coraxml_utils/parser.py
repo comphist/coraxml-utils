@@ -495,7 +495,7 @@ class RemParser(RexParser):
 
 class RefParser(RexParser):
     def init_parser(self):
-        self.allowed.update('()')
+        self.allowed.update('()«»')
 
 class AnselmParser(RexParser):
     pass
