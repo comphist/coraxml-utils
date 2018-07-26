@@ -410,7 +410,7 @@ class RexParser(BaseParser):
             if ((isinstance(last_char, TextChar) or 
                 (isinstance(last_char, Bracket) and not last_char.opening)) and
                 isinstance(this_char, Punct) and
-                not isinstance(next_char, TextChar)):
+                not (isinstance(next_char, TextChar) or isinstance(next_char, Joiner))):
                 this_char.anno_bound = True
 
             # separate punct from punct (if different)
