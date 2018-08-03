@@ -328,8 +328,12 @@ class RexParser(BaseParser):
                                 new_char = TextChar(val, dipl_utf=val, anno_utf=val,
                                                     anno_simple=val)
                             elif key == "abbr":
-                                new_char = TextChar(val, dipl_utf=val, anno_utf=val,
-                                                    anno_simple=val)
+
+                                ### TODO take replacement rules from abbrev-table in characters
+                                anno_val = regex.sub(r"%?\.([A-Za-zÄÖÜäöüß$])%?\.", "\u00B7\\1\u00B7", val)
+                                simple_val = regex.sub(r"%?\.([A-Za-zÄÖÜäöüß$])%?\.", r".\1.", val)
+
+                                new_char = TextChar(val, dipl_utf=val, anno_utf=anno_val, anno_simple=simple_val)
                             elif key == "p":
                                 new_char = Punct(val, dipl_utf=val, anno_utf=val,
                                                  anno_simple=val)                    
