@@ -107,9 +107,11 @@ class CoraXMLImporter:
         anno_trans = "".join([anno_element.attrib['trans'] for anno_element in anno_tokens])
 
         if dipl_trans != token_trans:
-            logging.warning("Transcription of virtual token does not equal the concatenation of the dipl-token transcriptions. Dipl transcriptions is used.")
+            logging.warning("Transcription of virtual token does not equal the concatenation of the dipl-token transcriptions. Dipl transcriptions is used for token " +
+                            coratoken_element.attrib['id'] + " (" + coratoken_element.attrib['trans'] + ").")
         if anno_tokens and anno_trans != dipl_trans:
-            logging.warning("Concatenation of anno-token transcriptions does not equal the concatenation of the dipl-token transcriptions. Dipl transcription is used.")
+            logging.warning("Concatenation of anno-token transcriptions does not equal the concatenation of the dipl-token transcriptions. Dipl transcription is used for token " +
+                            coratoken_element.attrib['id']  + " (" + coratoken_element.attrib['trans'] + ").")
 
 
         ## create transcription of the token with linebreaks
@@ -160,7 +162,7 @@ class CoraXMLImporter:
 
                 if self.strict:
                     self.valid_document = False
-                    logging.error("Tokenization given in XML does not match tokenization of the given parser.")
+                    logging.error("Tokenization given in XML does not match tokenization of the given parser for token " + coratoken_element.attrib['id']  + " (" + coratoken_element.attrib['trans'] + ").")
                 else:
                     logging.warning("Tokenization given in XML does not match tokenization of the given parser - using tokenization from XML. This might lead to unexpected behaviour!")
 
