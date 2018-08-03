@@ -43,8 +43,11 @@ class BaseParser:
         last_char = None
         for c in obj.parse:
             if isinstance(last_char, Joiner) and not isinstance(c, LineBreak) and output_type!='anno':
-                # allows = mid-line as required by legacy tests
-                if not isinstance(last_char, Hyphen):
+                if (
+                    not isinstance(last_char, Hyphen)     # allows = mid-line as required by legacy tests
+                ) and (
+                    not isinstance(last_char, UniverbNewline) # allows (=) mid-line as appearing in Anselm in REF - change?
+                ):
                     raise ParseError("%s not at line end" % last_char.string)
             elif isinstance(last_char, MultiverbSpace) and isinstance(c, Hyphen):
                 raise ParseError("Transcription contains erroneous tokenization symbol: " + obj.trans())
