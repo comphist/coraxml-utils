@@ -238,6 +238,14 @@ def postprocess(MyImporter, MyExporter, postprocessor, document_processor=None):
             output_xml.write(outfile, xml_declaration=True,
                              pretty_print=True, encoding='utf-8')
 
+def ref_convert(tok):
+
+    merge_annotations(tok, 'pos', 'lemmapos', 'pos', sep='<')
+    merge_annotations(tok, 'pos', 'morph', 'pos', sep='.')
+
+    # add punc tags
+    add_punc_tags(tok, 'boundary')
+
 def ref_postprocess(tok):
 
     # add tokenization tags
