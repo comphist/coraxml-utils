@@ -891,6 +891,16 @@ class BonnXMLImporter:
         #Remove whitespace surrounding |
         transcription = re.sub(r" *\| *", "|", transcription)
 
+        #Move newlines inside of words
+        #e.g. uil=|\n|er -> uil=||er\n
+        tokens = transcription.split(" ")
+        t = 0
+        while t < len(tokens)-1:
+            if "|\n" in tokens[t]:
+                tokens[t] = tokens[t].replace("|\n", "|", 1)+ "\n"
+            t+=1
+        transcription = " ".join(tokens)
+
         #Replace double || with a single |
         transcription = re.sub(r"\|\|", "|", transcription)
 
@@ -901,51 +911,50 @@ class BonnXMLImporter:
 
             #If the first token of a line contains a =
             if "=" in line[0]:
-                logging.warn("Found = in first token '{0}' of line {1}.".format(line[0], l+1))
+                pass
+                #logging.warn("Found = in first token '{0}' of line {1}.".format(line[0], l+1))
 
             #If a token in the middle of the line contains a =    
             if any("=" in line[i] for i in range(1, len(line)-1)):
-                logging.warn("Found = in the middle of line {0}.".format(l+1))
+                pass
+                #logging.warn("Found = in the middle of line {0}.".format(l+1))
 
             #If the last token contains a =
             if "=" in line[-1]:
 
-                #If this is not the last line of the document
+                #If this is not the last line of the document,
                 #move the rest of the word to the next line.
                 if l < len(lines)-1:
                     
                     #If (=)| or =| or =
-                    if re.search(r"=\)*\|*", line[-1]):
-                        i_split = line[-1].index("=")
-                        while i_split < len(line[-1])-1:
-                            if line[-1][i_split] in ["|", ")", "="]:
-                                i_split += 1
-                            else:
-                                break
+                    if re.search(r"=[>\)]*\|*", line[-1]):
+                        i_split = re.search(r"=[>\)]*\|*", line[-1]).span()[-1]
                         lines[l+1].insert(0, line[-1][i_split:])
                         lines[l][-1] = line[-1][:i_split]
 
                     #If |(=) or |=
-                    elif re.search(r"\|*\(*=", line[-1]):
-                        i_split = line[-1].index("=")
-                        while i_split > 0:
-                            if line[-1][i_split] in ["(", "="]:
-                                i_split -= 1
-                            else:
-                                break
+                    elif re.search(r"\|*[<\(]*=", line[-1]):
+                        i_split = re.search(r"\|*[<\(]*=", line[-1]).span()[-1]
                         lines[l+1].insert(0, line[-1][i_split:])
                         lines[l][-1] = line[-1][:i_split]
 
-                #If this is the last line
-                #warn and do nothing.
+                #If this is the last line do nothing.
                 else:
-                    logging.warn("Found = in the last token '{0}' of the text.".format(line[-1]))
+                    pass
+                    #logging.warn("Found = in the last token '{0}' of the text.".format(line[-1]))
 
         #Rejoin and return the transcription.
         transcription = "\n".join([" ".join(line) for line in lines])
         return transcription
 
     def _create_cora_tokens(self, tokenized_input):
+
+        open_shifttags = list()
+        shifttag_stack = list()
+        shifttags = list()
+        
+        trans_valid = True
+        
         cora_tokens = []
 
         #Parse tokenized transcription.
@@ -967,15 +976,34 @@ class BonnXMLImporter:
                 elif isinstance(chunk, tokenizer.Newline):
                     pass
 
+                elif isinstance(chunk, tokenizer.Whitespace):
+                    pass
+
+                elif isinstance(chunk, tokenizer.ShiftTagOpen):
+                    open_shifttags.append(chunk.type)
+                    
+                elif isinstance(chunk, tokenizer.ShiftTagClose):
+                    closed_shifttag = open_shifttags.pop()
+                    shifttags.append(ShiftTag(closed_shifttag, shifttag_stack))
+                    if not open_shifttags:
+                        shifttag_stack = list()
+                        
             #Parse error: return an empty token.
             except parser.ParseError as e:
                 logging.error("Token could not be parsed: " + chunk.string + " Message: " + e.message)
                 trans_valid = False
                 cora_tokens.append(CoraToken(None, [], []))
 
-        return cora_tokens
+        if trans_valid:
+            if open_shifttags:
+                logging.warning("Shifttag {0} not closed.".format(open_shifttags))
+            return (cora_tokens, shifttags)
+        else:
+            return (None, None)
 
     def _assign_dipls_to_lines(self, transcription, cora_tokens):
+
+        success = True
         
         #Assign dipl tokens to lines
         #[[dipl1_line1, dipl2_line1, ...], [dipl1_line2, ...], ...]
@@ -985,7 +1013,6 @@ class BonnXMLImporter:
         dipls_per_line = list()
         for line in lines:
             for index, token in enumerate(line):
-                
                 #Create a new line.
                 if index == 0:
                     dipls_per_line.append(list())
@@ -998,7 +1025,7 @@ class BonnXMLImporter:
 
                 token_trans = token
                 dipl_trans = str(cora_tokens[c].tok_dipls[d])
-
+                
                 #If the dipl token matches the transcription:
                 if dipl_trans == token_trans:
                     dipls_per_line[-1].append(cora_tokens[c].tok_dipls[d])
@@ -1020,15 +1047,21 @@ class BonnXMLImporter:
                 else:
                     logging.error("Dipl token {0} is not identical to input: {1}".format(str(cora_tokens[c].tok_dipls[d]), token))
                     d += 1
+                    success = False
                     
                 if d > len(cora_tokens[c].tok_dipls)-1:
                     c += 1
                     d = 0
 
-        return dipls_per_line
+        if success:
+            return dipls_per_line
+        else:
+            return None
 
     def _create_pages(self, dipls_per_line, structure, cora_tokens):
 
+        success = True
+        
         #Create pages, columns and lines with dipls.
         #While doing this get annotation information for each anno token.
         c = 0
@@ -1050,15 +1083,17 @@ class BonnXMLImporter:
                     
                     #Get annotation from Bonn token.
                     for bonn_token in line[1]:
-                            
-                        #Skip Tokens that are not CoraTokens (and thus don't have annos).
+                         
+                        #Skip Tokens that are not CoraTokens.
                         if not type(cora_tokens[c]) is CoraToken:
                             c += 1
                             a = 0
                             continue
-                                
-                        bonn_trans = re.sub(r"[\|=\(\)]", "", bonn_token.find("form").attrib["trans"])
-                        anno_trans = re.sub(r"[\|=\(\)]", "", str(cora_tokens[c].tok_annos[a]))
+
+                        #For comparison of transcription and anno tokens
+                        #remove | and/or linebreak indicators like (=)| etc.
+                        bonn_trans = re.sub(r"(\|*[\(<]*=[\)>]*\|*|\|+)", "", bonn_token.find("form").attrib["trans"])
+                        anno_trans = re.sub(r"(\|*[\(<]*=[\)>]*\|*|\|+)", "", str(cora_tokens[c].tok_annos[a]))
                         
                         #If Bonn and anno token are identical:
                         if anno_trans == bonn_trans:
@@ -1075,31 +1110,34 @@ class BonnXMLImporter:
                                     cora_tokens[c].tok_annos[a] = self._get_annotation(cora_tokens[c].tok_annos[a], bonn_token)
                                 a += 1
                                 if a < len(cora_tokens[c].tok_annos):
-                                    anno_trans = re.sub(r"[\|=\(\)]", "", str(cora_tokens[c].tok_annos[a]))
-                            
+                                    anno_trans = re.sub(r"(\|*[\(<]*=[\)>]*\|*|\|+)", "", str(cora_tokens[c].tok_annos[a]))
+
                         #If the anno token does not match the Bonn token:
                         else:
                             logging.error("Anno token {0} is not identical to input {1}.".format(str(cora_tokens[c].tok_annos[a]), \
                                                                                                  bonn_token.find("form").attrib["trans"]))
                             a += 1
+                            success = False
                             
                         if a > len(cora_tokens[c].tok_annos)-1:
                             c += 1
                             a = 0
                             
+                            
                     line_index += 1
-
-        return pages
+        if success:
+            return pages
+        else:
+            return None
     
     def import_from_file(self, filename):
 
-        self.valid_document = True
-
         #Read in BonnXML file and create ElementTree.
+        #recover = True to ignore invalid characters.
         try:
-            tree = ET.parse(filename, ET.XMLParser())
+            tree = ET.parse(filename, ET.XMLParser(recover = True))
         except:
-            logging.error("Cannot parse file {0}. Message: {1}".format(filename, e.message))
+            logging.error("Cannot parse file {0}.".format(filename))
             return None
         root = tree.getroot()
 
@@ -1131,7 +1169,6 @@ class BonnXMLImporter:
         
         pages = []
         tokens = []
-        shifttags = []
 
         #Get structure of the BonnXML
         structure = self._get_structure_of_bonn_xml(root)
@@ -1145,22 +1182,28 @@ class BonnXMLImporter:
         transcription = self._preprocess_transcription(transcription)
 
         #Tokenize transcription
-        #Remove whitespace tokens (?)
+        #Remove whitespace tokens
         tokenized_input = [chunk for chunk in self.tokenizer.tokenize(transcription) \
-                           if isinstance(chunk, tokenizer.Comment) or chunk.string != " "]
+                           if not isinstance(chunk, tokenizer.Whitespace)]
 
         #Create cora tokens.
-        cora_tokens = self._create_cora_tokens(tokenized_input)
-        if any(type(cora_tok) is CoraToken and cora_tok.tok_dipls == [] and cora_tok.tok_annos == [] for cora_tok in cora_tokens):
-            logging.error("XML cannot be parsed completely.")
+        (cora_tokens, shifttags) = self._create_cora_tokens(tokenized_input)
+        if not cora_tokens:
+            logging.error("XML cannot be parsed.")
             return None
         
         #Assign dipl tokens to lines.
         dipls_per_line = self._assign_dipls_to_lines(transcription, cora_tokens)
-
+        if not dipls_per_line:
+            logging.error("XML cannot be parsed.")
+            return None
+        
         #Create pages, columns and lines with dipls.
         #While doing this get annotation information for each anno token.
         pages = self._create_pages(dipls_per_line, structure, cora_tokens)
+        if not pages:
+            logging.error("XML cannot be parsed.")
+            return None
         
         #Create a document object.
         doc = Document(sigle, name, header, pages, cora_tokens, shifttags, header_string)
