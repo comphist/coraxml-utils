@@ -26,6 +26,11 @@ def create_importer(file_format, dialect=None, **kwargs):
             return cora_importer
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
+    elif file_format == "bonnxml":
+        if dialect in parser.dialect_mapper:
+            return BonnXMLImporter(parser.dialect_mapper[dialect], **kwargs)
+        else:
+            raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
     elif file_format == "trans":
         if dialect in parser.dialect_mapper:
             return TransImporter(parser.dialect_mapper[dialect], **kwargs)
@@ -1151,7 +1156,9 @@ class BonnXMLImporter:
 
         #Create cora tokens.
         cora_tokens = self._create_cora_tokens(tokenized_input)
-        if any(type(cora_tok) is CoraToken and cora_tok.tok_dipls == [] and cora_tok.tok_annos == [] for cora_tok in cora_tokens):
+        if any(type(cora_tok) is CoraToken and 
+               cora_tok.tok_dipls == [] and 
+               cora_tok.tok_annos == [] for cora_tok in cora_tokens):
             logging.error("XML cannot be parsed completely.")
             return None
         
