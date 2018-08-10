@@ -43,8 +43,11 @@ class BaseParser:
         last_char = None
         for c in obj.parse:
             if isinstance(last_char, Joiner) and not isinstance(c, LineBreak) and output_type!='anno':
-                # allows = mid-line as required by legacy tests
-                if not isinstance(last_char, Hyphen):
+                if (
+                    not isinstance(last_char, Hyphen)     # allows = mid-line as required by legacy tests
+                ) and (
+                    not isinstance(last_char, UniverbNewline) # allows (=) mid-line as appearing in Anselm in REF - change?
+                ):
                     raise ParseError("%s not at line end" % last_char.string)
             elif isinstance(last_char, MultiverbSpace) and isinstance(c, Hyphen):
                 raise ParseError("Transcription contains erroneous tokenization symbol: " + obj.trans())
@@ -147,7 +150,7 @@ class RexParser(BaseParser):
         no_pq = r'(?![.;!?:,"«»])'
 
         # char types
-        abbr_re = r"(?P<abbr> %?\.[a-zA-Z]{1,2}%?\. | e%\.e%\. | %[A-Z] ) " 
+        abbr_re = r"(?P<abbr> %?\.[a-zA-Z]{1,4}%?\. | e%\.e%\. | %[A-Z] ) "
         spc_re = r"(?P<spc> [ \t]+ ) | (?P<newline> \n )"
         word_re = r'(?P<w>  \\ . | . )'
         uni_re = "|".join("(?P<uni{0}>".format(i) + x + ")"
@@ -328,8 +331,12 @@ class RexParser(BaseParser):
                                 new_char = TextChar(val, dipl_utf=val, anno_utf=val,
                                                     anno_simple=val)
                             elif key == "abbr":
-                                new_char = TextChar(val, dipl_utf=val, anno_utf=val,
-                                                    anno_simple=val)
+
+                                ### TODO take replacement rules from abbrev-table in characters
+                                anno_val = regex.sub(r"%?\.([A-Za-zÄÖÜäöüß$])%?\.", "\u00B7\\1\u00B7", val)
+                                simple_val = regex.sub(r"%?\.([A-Za-zÄÖÜäöüß$])%?\.", r".\1.", val)
+
+                                new_char = TextChar(val, dipl_utf=val, anno_utf=anno_val, anno_simple=simple_val)
                             elif key == "p":
                                 new_char = Punct(val, dipl_utf=val, anno_utf=val,
                                                  anno_simple=val)                    
@@ -410,7 +417,7 @@ class RexParser(BaseParser):
             if ((isinstance(last_char, TextChar) or 
                 (isinstance(last_char, Bracket) and not last_char.opening)) and
                 isinstance(this_char, Punct) and
-                not isinstance(next_char, TextChar)):
+                not (isinstance(next_char, TextChar) or isinstance(next_char, Joiner) or isinstance(next_char, UniverbSpace))):
                 this_char.anno_bound = True
 
             # separate punct from punct (if different)
@@ -495,7 +502,7 @@ class RemParser(RexParser):
 
 class RefParser(RexParser):
     def init_parser(self):
-        self.allowed.update('()')
+        self.allowed.update('()«»')
 
 class AnselmParser(RexParser):
     pass

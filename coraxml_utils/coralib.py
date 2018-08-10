@@ -438,4 +438,4 @@ class ShiftTag:
                 "R": "rub",
                 "Ü": "title",
                 "M": "marg",
-                "Q": "question"}.get(self.type, "shifttag")
+                "Q": "question"}.get(self.type, self.type)

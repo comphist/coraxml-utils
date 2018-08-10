@@ -137,6 +137,31 @@ def add_punc_tags(token, tagname='punc'):
         ### TODO make sure dipl.trans is not empty
     token.tok_annos = keep_annos
 
+def merge_annotations(token, source_anno1_name, source_anno2_name, res_anno_name, sep='.'):
+
+    for tok_anno in token.tok_annos:
+
+        if source_anno1_name in tok_anno.tags:
+            if source_anno2_name in tok_anno.tags:
+                ## both source annos
+                ## 1. create new tag
+                combined_tag = tok_anno.tags[source_anno1_name] + sep + tok_anno.tags[source_anno2_name]
+                ## 2. remove old annotations
+                del tok_anno.tags[source_anno1_name]
+                del tok_anno.tags[source_anno2_name]
+            else:
+                ## only source anno1
+                ## keep this tag under new name
+                combined_tag = tok_anno.tags[source_anno1_name]
+                del tok_anno.tags[source_anno1_name]
+            ## add new annotation
+            tok_anno.tags[res_anno_name] = combined_tag
+
+        ### TODO just for readability?
+        else:
+            ## if source_anno1_name does not exist -> do nothing
+            pass
+
 def trans_to_cora_json(trans):
     """
     Converts a Trans-object to json as expected from CorA from a token editing script
@@ -212,6 +237,14 @@ def postprocess(MyImporter, MyExporter, postprocessor, document_processor=None):
         with open(outfilepath, "wb") as outfile:
             output_xml.write(outfile, xml_declaration=True,
                              pretty_print=True, encoding='utf-8')
+
+def ref_convert(tok):
+
+    merge_annotations(tok, 'pos', 'lemmapos', 'pos', sep='<')
+    merge_annotations(tok, 'pos', 'morph', 'pos', sep='.')
+
+    # add punc tags
+    add_punc_tags(tok, 'boundary')
 
 def ref_postprocess(tok):
 

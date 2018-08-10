@@ -163,6 +163,12 @@ class ParserTest(unittest.TestCase):
         tok = AnselmParser().parse("oli<ueti>%.")
         self.assertEqual(len(tok.tokenize_anno()), 2)
 
+    def test_punct_before_joiner(self):
+        ## . should not be separated
+
+        tok = AnselmParser().parse("dz.(=)\n$elbe\-")
+        self.assertEqual(len(tok.tokenize_anno()), 1)
+
     def test_preed_quotes_tokenization(self):
         ## (") at the beginning should be separated
 
