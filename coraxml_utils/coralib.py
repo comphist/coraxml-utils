@@ -139,7 +139,7 @@ class IdentifiableObjectMixin:
     def _set_id(self, t, extid=""):
 
         IdentifiableObjectMixin.id_counter[t] += 1
-        self._id = self._id = "{}{}".format(t, IdentifiableObjectMixin.id_counter[t])
+        self._id = "{}{}".format(t, IdentifiableObjectMixin.id_counter[t])
 
         ## TODO this is only to be compatible with existing code
         ## id should no longer be used to get the id -> use get_external_id
@@ -303,7 +303,7 @@ class Line(IdentifiableObjectMixin):
 
 class CoraToken(IdentifiableObjectMixin):
 
-    def from_parse(parse):
+    def from_parse(self, parse):
 
         return CoraToken(parse, [TokDipl(x) for x in parse.tokenize_dipl()], [TokAnno(x) for x in parse.tokenize_anno()])
 

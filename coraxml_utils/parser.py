@@ -442,7 +442,9 @@ class RexParser(BaseParser):
             if (isinstance(last_char, (Whitespace, MultiverbSpace)) and
                 isinstance(this_char, QuotationMark)):
                 next_char.anno_bound = True
-            elif (isinstance(this_char, SentBound)):
+            elif (isinstance(this_char, SentBound) and
+                  not isinstance(next_char, (MultiverbSpace, 
+                                             MultiverbNewline))):
                 this_char.anno_bound = True
 
         # CoraToken bounds

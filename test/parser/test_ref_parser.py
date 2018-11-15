@@ -22,3 +22,8 @@ class ParserTest(unittest.TestCase):
         tok = ParserTest._create_ref_parse("*[vordír/*](.)")
         self.assertEqual(len(tok.tokenize_anno()), 3)
         self.assertEqual(len(tok.tokenize_dipl()), 1)
+
+    def test_sentbound_multiverb_interaction(self):
+        tok = ParserTest._create_ref_parse("genome\-*2(,)|etwas")
+        self.assertEqual(len(tok.tokenize_anno()), 2)
+        self.assertEqual(len(tok.tokenize_dipl()), 1)

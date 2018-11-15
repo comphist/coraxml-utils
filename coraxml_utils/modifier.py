@@ -182,7 +182,7 @@ def trans_to_cora_json(trans):
         if char.dipl_bound:
             json_dict['dipl_trans'].append('')
             json_dict['dipl_utf'].append('')
-            if char.line_break:
+            if char.line_break_after:
                 json_dict['dipl_breaks'].append(1)
             else:
                 json_dict['dipl_breaks'].append(0)
