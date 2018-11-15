@@ -57,13 +57,13 @@ class TestUtils(unittest.TestCase):
             TextChar('o', dipl_utf='o', anno_utf='o', anno_simple='o'),
             TextChar('o', dipl_utf='o', anno_utf='o', anno_simple='o'),
             Hyphen('=', dipl_utf='='),
-            Whitespace('\n'),
+            LineBreak('\n'),
             TextChar('b', dipl_utf='b', anno_utf='b', anno_simple='b'),
             TextChar('a', dipl_utf='a', anno_utf='a', anno_simple='a'),
             TextChar('\\e', dipl_utf='ͤ', anno_utf='ͤ', anno_simple='e'),
             TextChar('r', dipl_utf='r', anno_utf='r', anno_simple='r'),
         ]
-        my_parse[4].line_break=True
+        # my_parse[4].line_break=True  ## required by object definition
         my_parse[4].dipl_bound=True
 
         self.assertEquals(
