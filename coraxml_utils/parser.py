@@ -461,6 +461,7 @@ class RemParser(RexParser):
         self.ATOMIC_ILLEGIBLE = "<<...>>"
         self.ILLEGIBLE_REPLACEMENT = "[...]"
         self.missing_br_open = {'['}
+        self.allowed.update('&()%~^+#*{}@`æ')
 
         # self.spc_re = r"(?P<spc> \s+ )"
         # self.abbr_re = r'(?P<abbr> \. [\w$] \. | <<\.{3}>> | \[\[\.\.\.\]\] )'
