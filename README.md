@@ -14,6 +14,14 @@ It consists of:
 
 # The data model
 
+
+## Corpus documents
+
+A CorA-XML file is represented in our data model by the `Document` object. The internal structure of `Document` objects reflects the fact that they are meant to represent historical prints and manuscripts. They thus also model the layout of text on pages. 
+
+![document model viz](docmodel.png)
+
+
 ## Transcriptions
 
 A transcription (`Trans`) consists of characters (`Char`) -- see the next section for more on characters. 
@@ -23,52 +31,79 @@ The central distinction that CorA-XML makes is that between *diplomatic* tokeniz
 A `Trans` object thus has two essential methods: `tokenize_dipl` and `tokenize_anno` for producing the two tokenizations. The `tokenize_dipl` method produces a list of `DiplTrans` objects, which contain the UTF diplomatic representation of the transcriptions (accessible with `.utf()`). The `tokenize_anno` produces a list of `AnnoTrans` objects that contain the simplified ASCII representations (`.simple()`).
 
 
+
+
+
 ## Character classes
 
-For the processing of transcriptions, `coraxml_utils` makes use of a 
+For the processing of transcriptions, `coraxml_utils` makes use of a detailed character class model.
 
+Visualization of character class hierarchy:
 ![character model overview](charclasses.png)
 
 
-## Corpus documents
 
 
-
-
-
-### Scripts
+# Scripts
 
 - trans2coraxml.py
 - coraxml2gatejson.py
 
-### Importer
+# Parsers
 
-#### Transcriptions
-
-This allows to read in a transcription following certain conventions and create a
-CorA-XML for it.
-
-Currently there are parsers for the following conventions:
-
-- ReM
-- ReF
-- ReDi
-- Anselm
-
-#### CorA-XML
-
-##### REM
-##### Extended CorA-XML
-
-TODO:
-extends CorA-XML, adding span annotations and subtoken annotations
+Currently there are parsers for the following transcription conventions.
 
 
-### Exporter
+## `RexParser`
 
-#### GATE JSON
+This parser should cover all of the features of the transcription languages for ReF, ReDi, and Anselm, as well as a few other of the related projects (maybe).
+
+## `RemParser`
+
+Due to a few special features of the REM transcriptions, we have also implemented a parser for REM in particular.
+
+
+# Importers
+
+## `CoraXMLImporter`
+
+
+## `TransImporter`
+
+For plain text transcription files.
+
+## `BonnXMLImporter`
+
+For REM.
+
+
+
+# Exporters
+
+## `CoraXMLExporter`
+
+Data imported with the `CoraXMLImporter` and exported with this exporter should be identical.
+
+## `TransExporter`
+
+## `TEIExporter`
+
+## `GateJsonExporter`
 
 This is the variant of Tweet JSON used by GATE.
+
+
+# Modifiers
+
+Modifiers are functions that perform whatever post-processing one might require in certain situations.
+
+## Adding tokenization tags
+
+For REF, Anselm, and REM (at least) we want to have tags indicating where univerbation or multiverbation has taken place. The `add_tokenization_tags` function adds these tags based on the `TokenBound` annotations added during the transcription phase.
+
+## Modifying tags
+
+The `add_punc_tags` converts sentence boundary annotations to tags that are easier to query (?)
 
 
 # TODO
@@ -79,3 +114,5 @@ aufgefasst werden)
 	* I015: `<mod id="a42" trans="rote\-b\:g" utf="rotēb̈g" simple="rotenbg"/>`
 * Validierung
 	* Präeditionszeichen sind alleinstehend als Token nicht erlaubt
+* Extended CorA-XML: extends CorA-XML, adding span annotations and subtoken annotations
+

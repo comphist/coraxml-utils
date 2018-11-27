@@ -219,6 +219,7 @@ class Document:
     def get_line_for_dipl(self, tok_dipl):
         return self.dipl_line_index.get(tok_dipl._id, None)
 
+
 class Page(IdentifiableObjectMixin):
 
     def __init__(self, name, side, columns, extid=""):
