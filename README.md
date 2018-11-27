@@ -58,6 +58,9 @@ aufgefasst werden)
 
 Zum neuen Parser/Token-Modell:
 
+![character model overview](uebersicht.png)
+
+
 * Parser
 	- `__init__(str)` mit kwargs zum Einstellen einzelner Optionen
 	- `parse(str) -> ParsedToken` (mit Unterklassen wie gehabt)
