@@ -15,7 +15,7 @@ if __name__ == "__main__":
                         default="ref", help="Token parser to use, default: %(default)s")
     args, _ = parser.parse_known_args()
 
-    with open(args.infile) as f:
+    with open(args.infile, encoding="utf-8") as f:
         token = f.read().strip()
 
     parsed_token = dialect_mapper[args.parser]().parse(token)
