@@ -99,15 +99,18 @@ replacements = [
     #                so they're just replaced by [Pp]
     [ r"p\\\/",      "\u0070",     "pro"       ],
     [ r"P\\\/",      "\u0050",     "Pro"       ],
+    [ r"p\\\/_p",    "\u0070p",    "prop"      ],  # TODO
+
     # \/ is apparently another abbreviation sign in anselm texts
     # but to my knowledge, there is no single codepoint for this,
     # therefore, it shall be replaced by nothing, and simplifed to
     # dash
     [ r"\\\/",       "",         "-"          ],
     # ----
-    [ r"p\\_",       "\uA751",     "per"       ],      # p\_ er, prae
+    [ r"p\\_",       "\uA751",     "per"       ],      # p\_ er, prae 
     [ r"P\\_",       "\uA750",     "Per"       ],
     [ r"q_2",        "\uE8B3",     "quia"      ],      # q_2 quia
+    [ r"_3",            ""   ,     "us"        ],      # kürzel für auslautend 'us' TODO
     [ r"\*C",        "\uF1E1",     "//"        ],      # PARAGRAPHUS (MUFI)
     [ r"·",          "\u00B7",     "."         ],      # middle dot in roman digits
     [ r"\%\.",       "\u00B7",     "."         ],      # middle dot
@@ -157,6 +160,7 @@ replacements = [
 
     # d_e ligature, frequent in REM
     [ r"d_e",        "\u0064\u1D49",     "de" ],
+    [ r"p_p",         "",         "pp" ],   # TODO pp-Ligatur
     # x_y - ligature, but not for all ligatures exist codepoints. solution: replace by ZERO WITH JOINER
     [ r"_",          "\u200D",     ""          ],
 
@@ -246,7 +250,7 @@ replacements = [
     [ r"æ",          "\u00E6",     "ae"        ],
     [ r"Æ",          "\u00C6",     "Ae"        ],
     [ r"&&",         "\u0026",     "und"       ],
-
+    [ r"&",          "\u0026",     "und"       ],  # kommt so bei REM vor
  
 ]
 

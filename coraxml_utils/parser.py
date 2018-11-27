@@ -461,33 +461,14 @@ class RemParser(RexParser):
         self.ATOMIC_ILLEGIBLE = "<<...>>"
         self.ILLEGIBLE_REPLACEMENT = "[...]"
         self.missing_br_open = {'['}
-        self.allowed.update('&()%~^+#*{}@`æ')
 
-        # self.spc_re = r"(?P<spc> \s+ )"
-        # self.abbr_re = r'(?P<abbr> \. [\w$] \. | <<\.{3}>> | \[\[\.\.\.\]\] )'
-        # self.comm_re = r'(?P<comm> [+@][KEZ] )'
-        # self.word_re = r'(?P<w> . \\\ [^\[\](){}<>] | . )'
-        # self.init_punc_re = r'(?P<ip> // | \*C | \*f )'
-        # self.punc_re = (r'(?P<p>  \. \\\ . | %\. | \. | (?<! \\\ ) / | ' + BULLET + ' | .̇ | ' +
-        #         MEDIUS + ' | ' + ELEVATUS +  ' | ' + PARAGRAPHUS +
-        #         r' | ! | \? | : | ;  )')
-        # self.strk_re = r'(?P<strk>  \*\[ | \*\] )'
-        # # NB: messy lookahead fix for symbols ending with open parens
-        # self.preedit_re = (r'(?P<pe> \([.;!?:,"«»]\) | ,,\) | ,,\( (?![.;!?:,"«»]) | ' +
-        #             r',\) | ,\( (?![.;!?:,"«»]) | ,, | , )')
-        # self.ptk_marker_re = r'(?P<ptk> \*1 | \*2 )'
-        # self.brackets_re = r'(?P<br> \[+ | \]+ | <+ | >+ )'
-        # self.quotes_re = r'(?P<q> " | « | » )'
-        # self.majuscule_re = r'(?P<m> [*÷] [{(<] (?: [a-zA-Z] \\\ . | [a-zA-Z] )+ [*÷] \d* [})>] )'
-        # self.editnum_re = r'(?P<edit> (?<![\*÷]) \{ [^{} ]+ (?<![\*÷]) \} )'
-        # self.splitter_re = r'(?P<spl> ~\(=\) | ~\|+ | ~ | \(=\) | =\|+ | \# | \|+ )'
-        # self.ddash_re = r'(?P<dd> = )'
+        # degree sign for foreign-language text (won't be removed)
+        self.allowed.update('°')
 
-        # # specifies which regexes are to be applied, and in what order
-        # self.re_parts = [self.spc_re, self.abbr_re, self.comm_re, self.majuscule_re,
-        #                  self.splitter_re, self.ddash_re, self.quotes_re,
-        #                  self.strk_re, self.preedit_re, self.init_punc_re, self.punc_re,
-        #                  self.ptk_marker_re, self.brackets_re, self.word_re]
+        quote_re = r'(?P<q> " | « | » )'
+        parens_re = r'(?P<pareno> \( ) | (?P<parenc> \) )'
+        tokenization_re = (r'(?P<ul> \(=\) ) | (?P<ml> =\| ) | (?P<ms> \|+ ) | (?P<us> \# ) | ' + 
+                           r' (?P<uc> ~\(=\) ) | (?P<mc> ~| ) | (?P<conj> ~ ) ')
 
         # self.ESCAPE_CHAR = re.compile(r"&([^" + re.escape("".join(self.allowed)) + r"])")
 

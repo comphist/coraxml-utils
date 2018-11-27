@@ -1,15 +1,40 @@
-# README #
 
-## coraxml_utils
+# `coraxml_utils`
 
-coraxml_utils is a collection of tools to work with CorA-XML and different variants.
+`coraxml_utils` is a collection of tools for processing CorA-XML and the various associated transcription languages for historical manuscripts.
+
 It consists of:
 
-- a model for CorA-XML
-- Importer to read different file formats and 
-- Exporter to dump the content of a data model to certain formats 
+- A model for CorA-XML
+- A model for transcriptions
+- Importers to read different file formats and 
+- Exporters to dump the content of a data model to certain formats 
+- Scripts for carrying out various combinations of these tasks.
 
-These tools are used by a collection of scripts that are described in the next section.
+
+# The data model
+
+## Transcriptions
+
+A transcription (`Trans`) consists of characters (`Char`) -- see the next section for more on characters. 
+
+The central distinction that CorA-XML makes is that between *diplomatic* tokenizations and *modernized*, i.e. *annotatable*, tokenizations. CorA-XML additionally differentiates between *diplomatic* representations of transcribed text and *simplified* ASCII representations of the same text.
+
+A `Trans` object thus has two essential methods: `tokenize_dipl` and `tokenize_anno` for producing the two tokenizations. The `tokenize_dipl` method produces a list of `DiplTrans` objects, which contain the UTF diplomatic representation of the transcriptions (accessible with `.utf()`). The `tokenize_anno` produces a list of `AnnoTrans` objects that contain the simplified ASCII representations (`.simple()`).
+
+
+## Character classes
+
+For the processing of transcriptions, `coraxml_utils` makes use of a 
+
+![character model overview](charclasses.png)
+
+
+## Corpus documents
+
+
+
+
 
 ### Scripts
 
@@ -46,7 +71,7 @@ extends CorA-XML, adding span annotations and subtoken annotations
 This is the variant of Tweet JSON used by GATE.
 
 
-### TODO
+# TODO
 
 * Zweifelhafter Simplifizierungsregeln (möglicherweise müssen diese projektspezifisch
 aufgefasst werden)
@@ -54,22 +79,3 @@ aufgefasst werden)
 	* I015: `<mod id="a42" trans="rote\-b\:g" utf="rotēb̈g" simple="rotenbg"/>`
 * Validierung
 	* Präeditionszeichen sind alleinstehend als Token nicht erlaubt
-
-
-Zum neuen Parser/Token-Modell:
-
-![character model overview](uebersicht.png)
-
-
-* Parser
-	- `__init__(str)` mit kwargs zum Einstellen einzelner Optionen
-	- `parse(str) -> ParsedToken` (mit Unterklassen wie gehabt)
-
-* ParsedToken
-	- input string: all annotations as spans of this string
-	- tokenizations also as spans (dipl/anno tokenizations)
-	- utf string
-	- simple string
-	- (dipl_utf construction via application of dipl token spans to utf string)
-	- other subtoken annotations (strikethrough, illegible, majuscules) also as spans
-	- actual python references: `majs.append(input_string[0:2])`

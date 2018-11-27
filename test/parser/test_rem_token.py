@@ -92,3 +92,16 @@ class LegacyTests(unittest.TestCase):
         self._test_tokenization_lengths('Sig[[=]]\nmundt', 2, 1)
         self._test_tokenization_lengths('Sig<=>\nmundt', 2, 1)
         self._test_tokenization_lengths('Sig<<=>>\nmundt', 2, 1)
+
+class REMTests(unittest.TestCase):
+
+    def _create_rem_parse(test_string):
+
+        tok = RemParser().parse(test_string)
+        return tok
+
+    # bullets are not allowed
+    def test_bullet(self):
+        # REMTests._create_rem_parse("string\u00B7string")
+        with self.assertRaises(ParseError) as cm:
+            REMTests._create_rem_parse("string\u2219string")
