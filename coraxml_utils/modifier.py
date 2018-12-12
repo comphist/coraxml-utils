@@ -256,6 +256,17 @@ def ref_postprocess(tok):
     # add punc tags
     add_punc_tags(tok)
 
+
+def anselm_correct_dipls(tok):
+    # TODO figure out how to fix
+    new_len = len(tok.trans.tokenize_dipl())
+    old_len = len(tok.tok_dipls)
+    if not new_len == old_len:
+        print(tok.id, tok.trans, 
+              " ".join(str(x) for x in tok.trans.tokenize_dipl()), new_len, "vs.", 
+              " ".join(str(x) for x in tok.tok_dipls), old_len,  sep="\t")
+
+
 def anselm_postprocess(tok):
 
     for tok_anno in tok.tok_annos:
@@ -295,4 +306,9 @@ def anselm_postprocess(tok):
 
 def no_postprocess(tok): 
     # do nothing
+    return tok
+
+
+def check_dipl_tokenization(tok):
+    anselm_correct_dipls(tok)
     return tok

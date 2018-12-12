@@ -333,8 +333,8 @@ class RexParser(BaseParser):
                             elif key == "abbr":
 
                                 ### TODO take replacement rules from abbrev-table in characters
-                                anno_val = regex.sub(r"%?\.([A-Za-zÄÖÜäöüß$])%?\.", "\u00B7\\1\u00B7", val)
-                                simple_val = regex.sub(r"%?\.([A-Za-zÄÖÜäöüß$])%?\.", r".\1.", val)
+                                anno_val = regex.sub(r"%?\.([A-Za-zÄÖÜäöüß$]+)%?\.", "\u00B7\\1\u00B7", val)
+                                simple_val = regex.sub(r"%?\.([A-Za-zÄÖÜäöüß$]+)%?\.", r".\1.", val)
 
                                 new_char = TextChar(val, dipl_utf=val, anno_utf=anno_val, anno_simple=simple_val)
                             elif key == "p":
@@ -396,11 +396,18 @@ class RexParser(BaseParser):
         for i in range(1, len(padded_parse) - 1):
             last_char, this_char, next_char = padded_parse[i-1:i+2]
 
-            if isinstance(last_char, (UniverbSpace, UniverbNewline, Hyphen,
                                     # if hyphens are dipl bounds, these should be too
                                     #   (also present in handschrift)
-                                      MultiverbNewline)):
+            if (isinstance(last_char, (UniverbSpace, UniverbNewline, Hyphen,
+                                      MultiverbNewline)) and
+                not isinstance(this_char, Bracket)):
                 this_char.dipl_bound = True
+
+            # special cases such as w[[a=]]ren (boundary after brackets)
+            elif (isinstance(last_char, (UniverbSpace, UniverbNewline, Hyphen,
+                                      MultiverbNewline)) and 
+                isinstance(this_char, Bracket)):
+                next_char.dipl_bound = True
 
             # word split "foo|bar"
             if isinstance(last_char, (MultiverbSpace, MultiverbNewline)):

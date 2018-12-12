@@ -1,0 +1,266 @@
+processing /home/roussel/tmp/anselmtest2/B.xml...
+t4240	do#vor	do# vor	2	vs.	do#vor	1
+processing /home/roussel/tmp/anselmtest2/b.xml...
+t24	en|wolden	en|wolden	1	vs.	en| wolden	2
+t881	*(w*1)ar#vmme	*(w*1)ar# vmme	2	vs.	*(w*1)ar#vmme	1
+processing /home/roussel/tmp/anselmtest2/B2.xml...
+t2635	wyder#komen	wyder# komen	2	vs.	wyder#komen	1
+t3154	eczlicher#hande	eczlicher# hande	2	vs.	eczlicher#hande	1
+t3699	en#bünden	en# bünden	2	vs.	en#bünden	1
+processing /home/roussel/tmp/anselmtest2/b2.xml...
+processing /home/roussel/tmp/anselmtest2/B3.xml...
+t450	do#von	do# von	2	vs.	do#von	1
+t696	dar#nach	dar# nach	2	vs.	dar#nach	1
+t1665	dar#Innen	dar# Innen	2	vs.	dar#Innen	1
+processing /home/roussel/tmp/anselmtest2/Ba.xml...
+t4826	ein#komen	ein# komen	2	vs.	ein#komen	1
+t4856	ein#komen	ein# komen	2	vs.	ein#komen	1
+t5570	die=|iungern.	die=| iungern.	2	vs.	die=| iungern .	3
+processing /home/roussel/tmp/anselmtest2/Ba2.xml...
+t2874	da#hin	da# hin	2	vs.	da#hin	1
+t4800	ein#kumben	ein# kumben	2	vs.	ein#kumben	1
+t4830	ein#kum\-en	ein# kum\-en	2	vs.	ein#kum\-en	1
+processing /home/roussel/tmp/anselmtest2/Be.xml...
+t53	herd#$cholle\-	herd# $cholle\-	2	vs.	herd#$cholle\-	1
+t119	michel#haffti	michel# haffti	2	vs.	michel#haffti	1
+t2231	dar#nach	dar# nach	2	vs.	dar#nach	1
+t2252	zu\o#$amen	zu\o# $amen	2	vs.	zu\o#$amen	1
+t2358	bi$t||u	bi$t||u	1	vs.	bi$t|| u	2
+t2622	ein#an=der	ein# an= der	3	vs.	ein#an= der	2
+t2706	ma\en=ger#hand	ma\en= ger# hand	3	vs.	ma\en= ger#hand	2
+t2781	da#mit	da# mit	2	vs.	da#mit	1
+t2904	do#mit	do# mit	2	vs.	do#mit	1
+t2914	da#mit	da# mit	2	vs.	da#mit	1
+t3091	dar#an	dar# an	2	vs.	dar#an	1
+t3179	dar#nach	dar# nach	2	vs.	dar#nach	1
+t3757	dar#nach	dar# nach	2	vs.	dar#nach	1
+t3912	In||s	In||s	1	vs.	In|| s	2
+t4635	dar#u$$	dar# u$$	2	vs.	dar#u$$	1
+t4673	ham=er#$chla\eg	ham= er# $chla\eg	3	vs.	ham=er#$chla\eg	1
+t4931	*(d*1)ar#nach	*(d*1)ar# nach	2	vs.	*(d*1)ar#nach	1
+t4957	he$t||u	he$t||u	1	vs.	he$t|| u	2
+t5224	da#von	da# von	2	vs.	da#von	1
+t5290	$pocz#wy\:$	$pocz# wy\:$	2	vs.	$pocz#wy\:$	1
+t5524	ha$t||u	ha$t||u	1	vs.	ha$t|| u	2
+t7308	da#vor	da# vor	2	vs.	da#vor	1
+t7875	vnder#wegen	vnder# wegen	2	vs.	vnder#wegen	1
+t8104	dar#nach	dar# nach	2	vs.	dar#nach	1
+processing /home/roussel/tmp/anselmtest2/D.xml...
+t304	bal$eme#$chri\en	bal$eme# $chri\en	2	vs.	bal$eme#$chri\en	1
+t914	hanen|krat	hanen|krat	1	vs.	hanen| krat	2
+t2081	der#$ulue\-	der# $ulue\-	2	vs.	der#$ulue\-	1
+t4234	vm\-e#lopen	vm\-e# lopen	2	vs.	vm\-e#lopen	1
+t4239	to#hope	to# hope	2	vs.	to#hope	1
+t5202	iam\-er(=)liken	iam\-er(=) liken	2	vs.	iam\-er(=)liken	1
+t5304	vor(=)deruen	vor(=) deruen	2	vs.	vor(=)deruen	1
+t5668	vnder(=)wegen	vnder(=) wegen	2	vs.	vnder(=)wegen	1
+t6175	vmbarmh'ti(=)cheyt	vmbarmh'ti(=) cheyt	2	vs.	vmbarmh'ti(=)cheyt	1
+t6250	be(=)richte\-	be(=) richte\-	2	vs.	be(=)richte\-	1
+t7130	Ny\e#werlde	Ny\e# werlde	2	vs.	Ny\e#werlde	1
+processing /home/roussel/tmp/anselmtest2/D2.xml...
+t314	war#weruen	war# weruen	2	vs.	war#weruen	1
+t713	dy#$ulue	dy# $ulue	2	vs.	dy#$ulue	1
+t3815	leue#dy	leue# dy	2	vs.	leue#dy	1
+t4150	to#varen	to# varen	2	vs.	to#varen	1
+t5500	ge#dre(=)uen	ge# dre(=) uen	3	vs.	ge# dre(=)uen	2
+t5891	mydda(=)ghe	mydda(=) ghe	2	vs.	mydda(=)ghe	1
+t6217	vn#barmh'tich(=)heit	vn# barmh'tich(=) heit	3	vs.	vn# barmh'tich(=)heit	2
+t6387	al#rede	al# rede	2	vs.	al#rede	1
+t6603	ge(=)ku$t	ge(=) ku$t	2	vs.	ge(=)ku$t	1
+t6707	scre(=)[[uen]]	scre(=)[[ uen]]	2	vs.	scre(=)[[uen]]	1
+t7095	my|myn(=)en	my|myn(=) en	2	vs.	my|myn(=)en	1
+t7119	wor(=)tygen	wor(=) tygen	2	vs.	wor(=)tygen	1
+processing /home/roussel/tmp/anselmtest2/D3.xml...
+t1686	morgin#dis	morgin# dis	2	vs.	morgin#dis	1
+t2392	do#mit	do# mit	2	vs.	do#mit	1
+t2605	do#mitte	do# mitte	2	vs.	do#mitte	1
+t2698	hynt|vmb	hynt|vmb	1	vs.	hynt| vmb	2
+t4817	do#vo\-	do# vo\-	2	vs.	do#vo\-	1
+t5445	wol|$tat	wol|$tat	1	vs.	wol| $tat	2
+processing /home/roussel/tmp/anselmtest2/D4.xml...
+t1216	So#balde	So# balde	2	vs.	So#balde	1
+t4208	*(d*1)a#mit	*(d*1)a# mit	2	vs.	*(d*1)a#mit	1
+processing /home/roussel/tmp/anselmtest2/f.xml...
+processing /home/roussel/tmp/anselmtest2/H.xml...
+t264	welcher(=)lei	welcher(=) lei	2	vs.	welcher(=)lei	1
+t4500	na(=)gel	na(=) gel	2	vs.	na(=)gel	1
+t4789	an$(=)helm	an$(=) helm	2	vs.	an$(=)helm	1
+t7822	cla(=)gende	cla(=) gende	2	vs.	cla(=)gende	1
+processing /home/roussel/tmp/anselmtest2/HA1521.xml...
+t17	Anno.	Anno.	1	vs.	Anno .	2
+t18	M.D.XXj.	M.D.XXj.	1	vs.	M.D.XXj .	2
+t363	al#gemeyne	al# gemeyne	2	vs.	al#gemeyne	1
+t1791	bo\eze#wycht	bo\eze# wycht	2	vs.	bo\eze#wycht	1
+processing /home/roussel/tmp/anselmtest2/hb.xml...
+processing /home/roussel/tmp/anselmtest2/Hk.xml...
+t534	genaden#reich	genaden# reich	2	vs.	genaden#reich	1
+t8056	da|uo\-	da|uo\-	1	vs.	da| uo\-	2
+processing /home/roussel/tmp/anselmtest2/Ka.xml...
+t2452	Dar#nach	Dar# nach	2	vs.	Dar#nach	1
+t5491	ivdeo&4.	ivdeo&4.	1	vs.	ivdeo&4 .	2
+t5879	v\ibel.	v\ibel.	1	vs.	v\ibel .	2
+t7375	an#d'	an# d'	2	vs.	an#d'	1
+t7547	<en>#<bize>	<en>#< bize>	2	vs.	<en>#<bize>	1
+t9400	vn#v'$ertes	vn# v'$ertes	2	vs.	vn#v'$ertes	1
+processing /home/roussel/tmp/anselmtest2/Kh.xml...
+t6829	by#$tan	by# $tan	2	vs.	by#$tan	1
+processing /home/roussel/tmp/anselmtest2/KJ1499.xml...
+t1402	dae#heer	dae# heer	2	vs.	dae#heer	1
+t2192	hijr#an	hijr# an	2	vs.	hijr#an	1
+t4806	vy$$#zoigen	vy$$# zoigen	2	vs.	vy$$#zoigen	1
+t5231	Her#neder	Her# neder	2	vs.	Her#neder	1
+t5515	Her#neder	Her# neder	2	vs.	Her#neder	1
+t5525	her#neder	her# neder	2	vs.	her#neder	1
+t6323	guinte||s	guinte||s	1	vs.	guinte|| s	2
+t6900	hertze#lieue	hertze# lieue	2	vs.	hertze#lieue	1
+processing /home/roussel/tmp/anselmtest2/KÄ1492.xml...
+t293	Allzo#maill	Allzo# maill	2	vs.	Allzo#maill	1
+t526	dair#mit	dair# mit	2	vs.	dair#mit	1
+t1466	wen#ich	wen# ich	2	vs.	wen#ich	1
+t2517	v'$a(=)*Cgen	v'$a(=) *Cgen	2	vs.	v'$a(=)*Cgen	1
+t4536	en|hai$t||u	en|hai$t||u	1	vs.	en| hai$t|| u	3
+t5236	Her#neder	Her# neder	2	vs.	Her#neder	1
+t5522	neder#komen	neder# komen	2	vs.	neder#komen	1
+t5763	$pre/(=)*Cchen	$pre/(=) *Cchen	2	vs.	$pre/(=)*Cchen	1
+t6332	guinte||s	guinte||s	1	vs.	guinte|| s	2
+processing /home/roussel/tmp/anselmtest2/Le.xml...
+t176	te#voren	te# voren	2	vs.	te#voren	1
+t222	hij||s	hij||s	1	vs.	hij|| s	2
+t1913	die||t	die||t	1	vs.	die|| t	2
+t1960	$i||ne	$i||ne	1	vs.	$i|| ne	2
+t2657	hi||ne	hi||ne	1	vs.	hi|| ne	2
+t4387	$i||ne	$i||ne	1	vs.	$i|| ne	2
+t5261	voert#an	voert# an	2	vs.	voert#an	1
+processing /home/roussel/tmp/anselmtest2/M.xml...
+t622	Da#vo\-	Da# vo\-	2	vs.	Da#vo\-	1
+t904	hin#zv	hin# zv	2	vs.	hin#zv	1
+t1888	in#der	in# der	2	vs.	in#der	1
+t3375	colu\-(=)nam.	colu\-(=) nam.	2	vs.	colu\-(=)nam.	1
+t4789	plu\et#trophe	plu\et# trophe	2	vs.	plu\et#trophe	1
+t5389	i\-i(=)micis	i\-i(=) micis	2	vs.	i\-i(=)micis	1
+t8274	was.	was.	1	vs.	was .	2
+t8279	M%a.	M%a.	1	vs.	M%a .	2
+t8280	Magd%a.	Magd%a.	1	vs.	Magd%a .	2
+processing /home/roussel/tmp/anselmtest2/M2.xml...
+t1516	dy\:|es	dy\:|es	1	vs.	dy\:| es	2
+t2805	czu\:|dem	czu\:|dem	1	vs.	czu\:| dem	2
+processing /home/roussel/tmp/anselmtest2/M3.xml...
+t1324	her#aws	her# aws	2	vs.	her#aws	1
+t2556	ha$||cz	ha$||cz	1	vs.	ha$|| cz	2
+processing /home/roussel/tmp/anselmtest2/M4.xml...
+t3024	*(d*1)o#mit	*(d*1)o# mit	2	vs.	*(d*1)o#mit	1
+t3700	er#hörte	er# hörte	2	vs.	er#hörte	1
+processing /home/roussel/tmp/anselmtest2/M5.xml...
+t1924	dar#czw\:	dar# czw\:	2	vs.	dar#czw\:	1
+processing /home/roussel/tmp/anselmtest2/M6.xml...
+processing /home/roussel/tmp/anselmtest2/M7.xml...
+processing /home/roussel/tmp/anselmtest2/M8.xml...
+t261	cri$tn\-#men$ch	cri$tn\-# men$ch	2	vs.	cri$tn\-#men$ch	1
+processing /home/roussel/tmp/anselmtest2/M9.xml...
+t151	ant=loz#tag	ant= loz# tag	3	vs.	ant= loz#tag	2
+t1805	a\-.*(m*1).	a\-.*(m*1).	1	vs.	a\- .*(m*1) .	3
+t3119	er|han=get	er|han= get	2	vs.	er| han= get	3
+processing /home/roussel/tmp/anselmtest2/M10.xml...
+processing /home/roussel/tmp/anselmtest2/Me.xml...
+t2765	in||s	in||s	1	vs.	in|| s	2
+processing /home/roussel/tmp/anselmtest2/n.xml...
+t1517	Mei#ne\-	Mei# ne\-	2	vs.	Mei#ne\-	1
+t5750	dreyer#hant	dreyer# hant	2	vs.	dreyer#hant	1
+processing /home/roussel/tmp/anselmtest2/N2.xml...
+t584	ein#ander	ein# ander	2	vs.	ein#ander	1
+t5657	auff#er$tanden	auff# er$tanden	2	vs.	auff#er$tanden	1
+t7403	an#gelegt	an# gelegt	2	vs.	an#gelegt	1
+processing /home/roussel/tmp/anselmtest2/N3.xml...
+t12	lang|zeit	lang|zeit	1	vs.	lang| zeit	2
+t36	lang|zeit	lang|zeit	1	vs.	lang| zeit	2
+processing /home/roussel/tmp/anselmtest2/N4.xml...
+processing /home/roussel/tmp/anselmtest2/N1500.xml...
+t1121	en#$ach	en# $ach	2	vs.	en#$ach	1
+t1637	by#nae	by# nae	2	vs.	by#nae	1
+t2011	Al#dair	Al# dair	2	vs.	Al#dair	1
+t2446	kenne||s	kenne||s	1	vs.	kenne|| s	2
+t4511	wolde||s	wolde||s	1	vs.	wolde|| s	2
+t5945	vort#an	vort# an	2	vs.	vort#an	1
+t6232	tzo#male	tzo# male	2	vs.	tzo#male	1
+processing /home/roussel/tmp/anselmtest2/N1509.xml...
+t4212	recht#$chuldigen	recht# $chuldigen	2	vs.	recht#$chuldigen	1
+t4555	woulde||s	woulde||s	1	vs.	woulde|| s	2
+t4872	Al#dair	Al# dair	2	vs.	Al#dair	1
+t5346	Her#neder	Her# neder	2	vs.	Her#neder	1
+t5647	neder.	neder.	1	vs.	neder .	2
+t5702	an#$ach	an# $ach	2	vs.	an#$ach	1
+t6620	an#$eyn	an# $eyn	2	vs.	an#$eyn	1
+processing /home/roussel/tmp/anselmtest2/N1514.xml...
+t991	her#neder	her# neder	2	vs.	her#neder	1
+t1403	dae#her	dae# her	2	vs.	dae#her	1
+t3787	all#tzo#mail	all# tzo# mail	3	vs.	all#tzo#mail	1
+t4640	her#ned'	her# ned'	2	vs.	her#ned'	1
+t4855	Al#dair	Al# dair	2	vs.	Al#dair	1
+t5335	Her#ned'	Her# ned'	2	vs.	Her#ned'	1
+t5584	<m>all#ich	<m>all# ich	2	vs.	<m>all#ich	1
+t5628	neder#komen	neder# komen	2	vs.	neder#komen	1
+t5637	her#ned'	her# ned'	2	vs.	her#ned'	1
+processing /home/roussel/tmp/anselmtest2/O.xml...
+t550	dar#wedder	dar# wedder	2	vs.	dar#wedder	1
+t2744	dar#to	dar# to	2	vs.	dar#to	1
+t3620	vp#$tan	vp# $tan	2	vs.	vp#$tan	1
+t4274	konde||s	konde||s	1	vs.	konde|| s	2
+t4867	blodes#dropen	blodes# dropen	2	vs.	blodes#dropen	1
+t5915	vp#ghaf	vp# ghaf	2	vs.	vp#ghaf	1
+t6017	pa$che#daghen	pa$che# daghen	2	vs.	pa$che#daghen	1
+t7163	to#vore\-	to# vore\-	2	vs.	to#vore\-	1
+processing /home/roussel/tmp/anselmtest2/s1495_T1.xml...
+t31	S#Ant	S# Ant	2	vs.	S#Ant	1
+processing /home/roussel/tmp/anselmtest2/s1495_T2.xml...
+processing /home/roussel/tmp/anselmtest2/s1496,97.xml...
+t3485	gieng.	gieng.	1	vs.	gieng .	2
+t3611	got(=)tes	got(=) tes	2	vs.	got(=)tes	1
+t4885	was.	was.	1	vs.	was .	2
+processing /home/roussel/tmp/anselmtest2/Sa.xml...
+t25	er$<ch>(=)<ain>	er$<ch>(=)< ain>	2	vs.	er$<ch>(=)<ain>	1
+t1756	dar#in	dar# in	2	vs.	dar#in	1
+t3945	vn$chvldi(=)g	vn$chvldi(=) g	2	vs.	vn$chvldi(=)g	1
+t4634	z||er|rehten	z||er|rehten	1	vs.	z|| er| rehten	3
+t4638	z||er|lingen	z||er|lingen	1	vs.	z|| er| lingen	3
+t6833	gro(=)$en	gro(=) $en	2	vs.	gro(=)$en	1
+t6945	nid(=)er	nid(=) er	2	vs.	nid(=)er	1
+t7507	euali(=)$t	euali(=) $t	2	vs.	euali(=)$t	1
+processing /home/roussel/tmp/anselmtest2/Sa2.xml...
+t1774	ga'=|bitterlich.	ga'=| bitterlich.	2	vs.	ga'=| bitterlich .	3
+t4786	hertz#liebe	hertz# liebe	2	vs.	hertz#liebe	1
+t6816	hertz#liebes	hertz# liebes	2	vs.	hertz#liebes	1
+t8264	men$chen#kind	men$chen# kind	2	vs.	men$chen#kind	1
+processing /home/roussel/tmp/anselmtest2/SG.xml...
+processing /home/roussel/tmp/anselmtest2/sl.xml...
+processing /home/roussel/tmp/anselmtest2/SP.xml...
+t320	tho#quemen	tho# quemen	2	vs.	tho#quemen	1
+t1429	to|$lape\-	to|$lape\-	1	vs.	to| $lape\-	2
+t1538	enghel#$hare	enghel# $hare	2	vs.	enghel#$hare	1
+t1676	here#lope\-	here# lope\-	2	vs.	here#lope\-	1
+t2466	up#ghinck	up# ghinck	2	vs.	up#ghinck	1
+t3947	to#hope	to# hope	2	vs.	to#hope	1
+t5050	nedder#kamen	nedder# kamen	2	vs.	nedder#kamen	1
+processing /home/roussel/tmp/anselmtest2/St.xml...
+processing /home/roussel/tmp/anselmtest2/St2.xml...
+t8457	men$chen#kinde	men$chen# kinde	2	vs.	men$chen#kinde	1
+processing /home/roussel/tmp/anselmtest2/StA1495.xml...
+t1970	yn#ghekamen	yn# ghekamen	2	vs.	yn#ghekamen	1
+t3748	to#hope	to# hope	2	vs.	to#hope	1
+t3749	ropen.	ropen.	1	vs.	ropen .	2
+t4181	al#dor	al# dor	2	vs.	al#dor	1
+t4354	dar#twi$$chen	dar# twi$$chen	2	vs.	dar#twi$$chen	1
+processing /home/roussel/tmp/anselmtest2/Stu.xml...
+t7263	er#$tanden	er# $tanden	2	vs.	er#$tanden	1
+t8606	da\er*[vmb*]#na\ech	da\er*[vmb*]# na\ech	2	vs.	da\er*[vmb*]#na\ech	1
+processing /home/roussel/tmp/anselmtest2/T.xml...
+t317	nach#cho	nach# cho	2	vs.	nach#cho	1
+t6381	iamer.	iamer.	1	vs.	iamer .	2
+processing /home/roussel/tmp/anselmtest2/W.xml...
+t863	habt||n\-	habt||n\-	1	vs.	habt|| n\-	2
+t3365	da#mit	da# mit	2	vs.	da#mit	1
+t4642	fumffcen|mal	fumffcen|mal	1	vs.	fumffcen| mal	2
+processing /home/roussel/tmp/anselmtest2/We.xml...
+t2757	en|finde	en|finde	1	vs.	en| finde	2
+t3017	da#mit	da# mit	2	vs.	da#mit	1
+processing /home/roussel/tmp/anselmtest2/Wo.xml...
+t4392	vort#toke\-	vort# toke\-	2	vs.	vort#toke\-	1
