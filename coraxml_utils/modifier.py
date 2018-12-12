@@ -256,7 +256,7 @@ def ref_postprocess(tok):
     # add punc tags
     add_punc_tags(tok)
 
-def anselm_postprocess(tok, doc):
+def anselm_postprocess(tok):
 
     for tok_anno in tok.tok_annos:
         # remove comment and boundary
@@ -293,3 +293,6 @@ def anselm_postprocess(tok, doc):
     update_punct_pos(tok)
 
 
+def no_postprocess(tok): 
+    # do nothing
+    return tok
