@@ -266,6 +266,7 @@ def anselm_correct_tokenization(tok):
             tok.tok_dipls = list()
             new_dipls = tok.trans.tokenize_dipl()
             for new_dipl_trans in new_dipls:
+                # TODO update layout info
                 tok.tok_dipls.append(TokDipl(new_dipl_trans, 
                                              "{0}_d{1}".format(tok.id, legacy_counter)))
                 legacy_counter += 1
@@ -276,7 +277,7 @@ def anselm_correct_tokenization(tok):
                 if new_anno_trans.has(Majuscule):
                     old_anno_tok.trans = new_anno_trans
                 else:
-                    logging.warning("did not corrent error of type 'err_tok_anno': '{0}' -> '{1}'".format(old_anno_tok.trans, 
+                    logging.warning("did not correct error of type 'err_tok_anno': '{0}' -> '{1}'".format(old_anno_tok.trans, 
                                                                                                           new_anno_trans))
 
 
