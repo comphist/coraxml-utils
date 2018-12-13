@@ -28,7 +28,16 @@ class BaseParser:
         self.token_re = regex.compile(r"({0})".format("|".join(self.re_parts)), 
                                       flags=regex.VERBOSE)
 
-    def validate(self, obj, output_type="trans"):
+    def validate(self, obj, output_type="trans", span_errors=None):
+        # TODO at the moment, this function will only report one error
+        #      at a time instead of all errors in token
+
+        if span_errors:
+            # concatenate messages meaningfully
+            span_err_msg = ", ".join(span_errors)
+            # raise ParseError
+            raise ParseError(span_err_msg)
+
         # remove all valid characters, now everything that remains
         # is an error. also remove \&1-9 "variables zeichen"
         # which gets simplified to {1-9}
@@ -42,8 +51,6 @@ class BaseParser:
 
         last_char = None
         for c in obj.parse:
-            # TODO move bracket validation here!
-
             if isinstance(last_char, Joiner) and not isinstance(c, LineBreak) and output_type!='anno':
                 if (
                     not isinstance(last_char, Hyphen)     # allows = mid-line as required by legacy tests
@@ -211,19 +218,21 @@ class RexParser(BaseParser):
         myparse = list()
         subtoken_spans = list() # list of SubtokenAnnos
         open_spans = defaultdict(list)    # {type, [start1, start2, ...]}
+        intoken_span_errs = list()  # span-related errors will be passed to validation fn
 
         for match in self.token_re.scanner(intoken):
             new_char = None
             for key, val in match.groupdict().items():
                 if val:
-                    # disallow brackets that span multiple tokens
                     if key == "spc":
+                        # disallow brackets that span multiple tokens
                         if any(val for key, val in open_spans.items()):
-                            raise ParseError("Unclosed bracket at end of token: " + intoken)
+                            intoken_span_errs.append("unclosed bracket at end of token: '{0}'".format(intoken))
                         new_char = Whitespace(val) 
                     elif key == "newline":
+                        # disallow brackets that span multiple tokens
                         if any(val for key, val in open_spans.items()):
-                            raise ParseError("Unclosed bracket at end of line: " + intoken)
+                            intoken_span_errs.append("unclosed bracket at end of line: '{0}'".format(intoken))
                         new_char = LineBreak(val)
                                 
                     elif key == "strko":
@@ -236,7 +245,7 @@ class RexParser(BaseParser):
                             subtoken_spans.append(SubtokenAnno(Strikethrough, closing, match.end()))
                             new_char = Strikethrough(val, opening=False)
                         except IndexError:
-                            raise ParseError("Matching opening bracket missing: " + intoken)
+                            intoken_span_errs.append("closing bracket '{0}' not opened".format(val))
 
                     elif key == "reado":
                         open_spans[Recognizable].append(match.start())
@@ -247,7 +256,7 @@ class RexParser(BaseParser):
                             subtoken_spans.append(SubtokenAnno(Recognizable, closing, match.end()))
                             new_char = Recognizable(val, opening=False)
                         except IndexError:
-                            raise ParseError("Matching opening bracket missing: " + intoken)
+                            intoken_span_errs.append("closing bracket '{0}' not opened".format(val))
 
                     elif key == "edito":
                         open_spans[FromEdition].append(match.start())
@@ -265,7 +274,7 @@ class RexParser(BaseParser):
                                            anno_utf=self.ILLEGIBLE_REPLACEMENT)
                     elif key in {"editc", "complc"}:
                         try:
-                            # TODO update strings
+                            # TODO update strings TODO ????
                             # openbr = flip_bracket(val)
                             if key == "editc":
                                 closing = open_spans[FromEdition].pop()
@@ -276,7 +285,7 @@ class RexParser(BaseParser):
                                 subtoken_spans.append(SubtokenAnno(EditorCompleted, closing, match.end())) 
                                 new_char = EditorCompleted(val, opening=False)
                         except IndexError:
-                            raise ParseError("Closing bracket is not opened: " + intoken)
+                            intoken_span_errs.append("closing bracket '{0}' not opened".format(val))
 
 
                     elif key == "pareno":
@@ -373,7 +382,7 @@ class RexParser(BaseParser):
                 logging.warning("Empty char results from " + intoken)
 
         if any(val for key, val in open_spans.items()):
-            raise ParseError("Unclosed bracket at end of token: " + intoken)
+            intoken_span_errs.append("unclosed bracket '{0}'".format(val))
 
         if output_type.startswith("dipl"):
             result = DiplTrans(myparse, subtoken=subtoken_spans)
@@ -382,12 +391,16 @@ class RexParser(BaseParser):
         else:
             myparse = self.tokenize(myparse)
             result = Trans(myparse, subtoken=subtoken_spans)
-        try:
-            # TODO only validate whole tokens
-            self.validate(result, output_type)  # throws ParseError
-        except ParseError as e:
-            raise ParseError("The token '{0}' could not be parsed:\n\t{1}".format(intoken,
-                             e.message))
+            try:
+                # NB: only validate whole tokens
+                #  (in general dipl and mod trans are only parsed
+                #   once the whole token has been parsed anyway,
+                #   so just validating the whole thing should be enough)
+                self.validate(result, output_type, 
+                              span_errors=intoken_span_errs)  # throws ParseError
+            except ParseError as e:
+                raise ParseError("The token '{0}' could not be parsed:\n\t{1}".format(intoken,
+                                e.message))
         return result
 
     def tokenize(self, some_parse):

@@ -278,9 +278,10 @@ def anselm_postprocess(tok):
         # add "--" if morph is not set
         fill_annotation_column(tok_anno, 'morph')
 
-        # add norm if it is missing
-        if 'norm' not in tok_anno.tags:
-            print(tok_anno)
+        # add norm if it is missing (???)
+        # if 'norm' not in tok_anno.tags:
+        #     print(tok_anno)
+
         # set norm_broad to norm if it is not set
         if 'norm' in tok_anno.tags:
             fill_annotation_column(tok_anno, 'norm_broad', tok_anno.tags['norm'])
