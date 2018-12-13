@@ -191,7 +191,7 @@ class CoraXMLImporter:
     def _connect_with_layout_elements(self, root, layout_type, subelements, subelement_type, 
                                       extract_from_xml, create_object):
         """
-        Connects elements like lines with higher element like columns.
+        Connects elements like lines with higher elements like columns.
 
         Positional arguments:
         root -- the xml object
@@ -472,7 +472,7 @@ class TransImporter:
 
             elif isinstance(chunk, tokenizer.Token):
                 try:
-                    new_token = self.TokenParser.parse(chunk.string)
+                    new_token = self.tokenparser.parse(chunk.string)
                 except parser.ParseError as e:
                     ## get next line
                     new_bibinfo = next(bibinfo_iter)

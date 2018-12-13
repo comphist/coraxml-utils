@@ -42,6 +42,8 @@ class BaseParser:
 
         last_char = None
         for c in obj.parse:
+            # TODO move bracket validation here!
+
             if isinstance(last_char, Joiner) and not isinstance(c, LineBreak) and output_type!='anno':
                 if (
                     not isinstance(last_char, Hyphen)     # allows = mid-line as required by legacy tests
@@ -308,7 +310,7 @@ class RexParser(BaseParser):
                     else:
                         if key.startswith("uni"):
                             _, utfchar, simplechar = replacements[int(key[3:])]
-                            # TODO: please revise, regex should make this distinction
+                            ##  TODO: regex should make this distinction
                             # special case for punc w/ utf conversions
                             if val != "\\." and "." in val or "·" in val:
                                 new_char = Punct(val, dipl_utf=utfchar, anno_utf=utfchar,
@@ -331,8 +333,6 @@ class RexParser(BaseParser):
                                 new_char = TextChar(val, dipl_utf=val, anno_utf=val,
                                                     anno_simple=val)
                             elif key == "abbr":
-
-                                ### TODO take replacement rules from abbrev-table in characters
                                 anno_val = regex.sub(r"%?\.([A-Za-zÄÖÜäöüß$]+)%?\.", "\u00B7\\1\u00B7", val)
                                 simple_val = regex.sub(r"%?\.([A-Za-zÄÖÜäöüß$]+)%?\.", r".\1.", val)
 
@@ -383,6 +383,7 @@ class RexParser(BaseParser):
             myparse = self.tokenize(myparse)
             result = Trans(myparse, subtoken=subtoken_spans)
         try:
+            # TODO only validate whole tokens
             self.validate(result, output_type)  # throws ParseError
         except ParseError as e:
             raise ParseError("The token '{0}' could not be parsed:\n\t{1}".format(intoken,
