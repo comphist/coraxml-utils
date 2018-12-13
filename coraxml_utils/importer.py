@@ -55,12 +55,13 @@ def parse_header(header_string):
 
 class CoraXMLImporter:
 
-    def __init__(self, token_parser, strict=True):
+    def __init__(self, token_parser, strict=True, force_retokenization=False):
         self.tok_dipl_tag = 'dipl'
         self.tok_anno_tag = 'mod'
         self.tokenparser = token_parser()
 
         self.strict = strict
+        self.force_retokenization = force_retokenization
 
 
     def _create_dipl_token(self, dipl_element, trans):
@@ -96,28 +97,36 @@ class CoraXMLImporter:
         )
 
     def _create_cora_token(self, coratoken_element, line_endings):
-
+        thistoken_id = coratoken_element.attrib['id']
         ## get dipl and anno elements
-        dipl_tokens = []
-        anno_tokens = []
-
-        for dipl_element in coratoken_element.findall(self.tok_dipl_tag):
-            dipl_tokens.append(dipl_element)
-        for anno_element in coratoken_element.findall(self.tok_anno_tag):
-            anno_tokens.append(anno_element)
+        dipl_tokens = coratoken_element.findall(self.tok_dipl_tag)
+        anno_tokens = coratoken_element.findall(self.tok_anno_tag)
+        thistoken_errs = list()
 
         ## test that transcriptions are the same for the different levels
         token_trans = coratoken_element.attrib['trans']
-        dipl_trans = "".join([dipl_element.attrib['trans'] for dipl_element in dipl_tokens])
-        anno_trans = "".join([anno_element.attrib['trans'] for anno_element in anno_tokens])
+        dipl_trans_cat = "".join(dipl_element.attrib['trans'] 
+                                 for dipl_element in dipl_tokens)
+        anno_trans_cat = "".join(anno_element.attrib['trans'] 
+                                 for anno_element in anno_tokens)
 
-        if dipl_trans != token_trans:
-            logging.warning("Transcription of virtual token does not equal the concatenation of the dipl-token transcriptions. Dipl transcriptions is used for token " +
-                            coratoken_element.attrib['id'] + " (" + coratoken_element.attrib['trans'] + ").")
-        if anno_tokens and anno_trans != dipl_trans:
-            logging.warning("Concatenation of anno-token transcriptions does not equal the concatenation of the dipl-token transcriptions. Dipl transcription is used for token " +
-                            coratoken_element.attrib['id']  + " (" + coratoken_element.attrib['trans'] + ").")
-
+        if dipl_trans_cat != token_trans:
+            logging.warning(("Token transcription '{ttrans}' not equal to "
+                             "concatenation of dipl transcriptions '{dtrans}'. " 
+                             "Dipl transcriptions will "
+                             "be used for token {id}").format(id=thistoken_id, 
+                                                              ttrans=token_trans, 
+                                                              dtrans=dipl_trans_cat))
+            thistoken_errs.append("err_cat_dipl")
+        if anno_tokens:
+            if anno_trans_cat != dipl_trans_cat:
+                logging.warning(("Concatenation of anno '{atrans}' and "
+                                 "dipl '{dtrans}' transcriptions not equal. "
+                                 "Dipl transcription will be "
+                                 "used for token {id}").format(id=thistoken_id,
+                                                               atrans=anno_trans_cat,
+                                                               dtrans=dipl_trans_cat))
+                thistoken_errs.append("err_cat_anno")
 
         ## create transcription of the token with linebreaks
         parse_trans = ''
@@ -134,22 +143,38 @@ class CoraXMLImporter:
             ## test if parses match
             parsed_dipl_toks = parsed_token.tokenize_dipl()
             if len(parsed_dipl_toks) != len(dipl_tokens):
-                logging.warning("Parse does not match number of dipl tokens for token " + coratoken_element.attrib['id'])
+                logging.warning(("Change in number of dipls "
+                                 "('{old}' -> '{new}') for token {id}").format(id=thistoken_id,
+                                                                          old=" ".join(d.get("trans") for d in dipl_tokens),
+                                                                          new=" ".join(d.trans() for d in parsed_dipl_toks)))
+                thistoken_errs.append("err_nr_dipl")
                 trans_valid = False
-            else:
-                if any([dipl1.trans() != dipl2.attrib['trans'] for dipl1, dipl2 in zip(parsed_dipl_toks, dipl_tokens)]):
-                    logging.warning("Transcriptions of dipls are not equal for token " + coratoken_element.attrib['id'])
+            elif any([dipl1.trans() != dipl2.attrib['trans'] for dipl1, dipl2 in zip(parsed_dipl_toks, dipl_tokens)]):
+                logging.warning(("Change in tokenization for dipls of token {id}: "
+                                "'{old}' -> '{new}'").format(id=thistoken_id,
+                                                             old=" ".join(d.get("trans") for d in dipl_tokens),
+                                                             new=" ".join(d.trans() for d in parsed_dipl_toks)))
+                thistoken_errs.append("err_tok_dipl")
+                # trans_valid = False ??
+
             parsed_anno_toks = parsed_token.tokenize_anno()
             if len(parsed_anno_toks) != len(anno_tokens):
-                logging.warning("Parse does not match number of anno tokens for token " + coratoken_element.attrib['id'] +
-                              " " + coratoken_element.attrib['trans'])
+                logging.warning(("Change in number of annos "
+                                 "('{old}' -> '{new}') for token {id}").format(id=thistoken_id,
+                                                        old=" ".join(a.get("trans") for a in anno_tokens),
+                                                        new=" ".join(a.trans() for a in parsed_anno_toks)))
+                thistoken_errs.append("err_nr_anno")
                 trans_valid = False
-            else:
-                if any([anno1.trans() != anno2.attrib['trans'] for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)]):
-                    logging.warning("Transcriptions of annos are not equal for token " + coratoken_element.attrib['id'])
+            elif any([anno1.trans() != anno2.attrib['trans'] for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)]):
+                logging.warning(("Change in tokenization for annos of token {id}: "
+                                "'{old}' -> '{new}'").format(id=thistoken_id,
+                                                        old=" ".join(a.get("trans") for a in anno_tokens),
+                                                        new=" ".join(a.trans() for a in parsed_anno_toks)))
+                thistoken_errs.append("err_tok_anno")
+                # trans_valid = False ??
 
             ### Transform XML-Elements into objects
-            if trans_valid:
+            if trans_valid or self.force_retokenization:
 
                 dipl_tokens = [self._create_dipl_token(dipl_element, dipl_parse)
                                for dipl_element, dipl_parse in zip(dipl_tokens, parsed_dipl_toks)]
@@ -159,20 +184,25 @@ class CoraXMLImporter:
 
             else:
 
-                dipl_tokens = [self._create_dipl_token(dipl_element, self.tokenparser.parse(dipl_element.attrib['trans'], output_type="dipl"))
+                dipl_tokens = [self._create_dipl_token(dipl_element, 
+                                                       self.tokenparser.parse(dipl_element.attrib['trans'], output_type="dipl"))
                                for dipl_element in dipl_tokens]
 
-                anno_tokens = [self._create_anno_token(anno_element, self.tokenparser.parse(anno_element.attrib['trans'], output_type="anno"))
+                anno_tokens = [self._create_anno_token(anno_element, 
+                                                       self.tokenparser.parse(anno_element.attrib['trans'], output_type="anno"))
                                for anno_element in anno_tokens]
 
                 if self.strict:
                     self.valid_document = False
-                    logging.error("Tokenization given in XML does not match tokenization of the given parser for token " + coratoken_element.attrib['id']  + " (" + coratoken_element.attrib['trans'] + ").")
-                else:
-                    logging.warning("Tokenization given in XML does not match tokenization of the given parser - using tokenization from XML. This might lead to unexpected behaviour!")
+                    logging.error(("Tokenization given in XML does not match "
+                                   "tokenization of the given parser for token {0}").format(coratoken_element.attrib['id']))
+                ### Probably unnecessary to report this again here
+                # else:
+                #     logging.warning("Tokenization given in XML does not match tokenization of the given parser - using tokenization from XML. This might lead to unexpected behaviour!")
 
 
-            return CoraToken(parsed_token, dipl_tokens, anno_tokens, extid=coratoken_element.attrib['id'])
+            return CoraToken(parsed_token, dipl_tokens, anno_tokens, extid=coratoken_element.attrib['id'],
+                             errors=thistoken_errs)
 
         except parser.ParseError as e:
             ## parse error - return an empty token
@@ -208,16 +238,16 @@ class CoraXMLImporter:
         # get layoutinfo from xml
         beginnings = []
         for element in root.findall("layoutinfo/" + layout_type):
-            range = self._get_range(element)
-            if range is None:
+            my_range = self._get_range(element)
+            if my_range is None:
                 logging.warn('Dropped empty ' + layout_type + ' (' + element.attrib['id'] + ')')
                 continue
-            if range[0] in beginnings:
+            if my_range[0] in beginnings:
                 logging.error('Two ' + layout_type + 's that start at the same position: ' + 
-                              element.attrib['id'] + ' and ' + beginnings[range[0]]['extid'])
+                              element.attrib['id'] + ' and ' + beginnings[my_range[0]]['extid'])
             beginnings.append({**extract_from_xml(element), 
-                               'beginning': range[0], 
-                               'end': range[-1], 'subelements': []})
+                               'beginning': my_range[0], 
+                               'end': my_range[-1], 'subelements': []})
 
         beginnings.reverse()
         next_element = beginnings.pop()
@@ -267,9 +297,9 @@ class CoraXMLImporter:
         ## get all ids of last dipls in line
         line_endings = set()
         for element in root.findall("layoutinfo/line"):
-            range = self._get_range(element)
-            if range is not None:
-                line_endings.add(range[-1])
+            my_range = self._get_range(element)
+            if my_range is not None:
+                line_endings.add(my_range[-1])
 
         ## Create list of cora_tokens and comments and a list of dipl_tokens for the layout elements
         tokens = []
@@ -289,10 +319,10 @@ class CoraXMLImporter:
         open_shifttags = []
 
         for shifttag_element in root.find('shifttags'):
-            range = self._get_range(shifttag_element)
-            shifttag_beginnings[range[0]].append({
+            my_range = self._get_range(shifttag_element)
+            shifttag_beginnings[my_range[0]].append({
                 'type': shifttag_element.tag,
-                'end': range[-1],
+                'end': my_range[-1],
                 'tokens': []
             })
 

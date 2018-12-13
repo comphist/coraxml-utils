@@ -6,7 +6,7 @@ from pathlib import Path
 
 from coraxml_utils.settings import DEFAULT_VAL
 from coraxml_utils.character import *
-from coraxml_utils.coralib import ShiftTag, CoraToken
+from coraxml_utils.coralib import ShiftTag, CoraToken, TokDipl
 
 def add_tokenization_tags(token):
     c = 1
@@ -257,17 +257,32 @@ def ref_postprocess(tok):
     add_punc_tags(tok)
 
 
-def anselm_correct_dipls(tok):
-    # TODO figure out how to fix
-    new_len = len(tok.trans.tokenize_dipl())
-    old_len = len(tok.tok_dipls)
-    if not new_len == old_len:
-        print(tok.id, tok.trans, 
-              " ".join(str(x) for x in tok.trans.tokenize_dipl()), new_len, "vs.", 
-              " ".join(str(x) for x in tok.tok_dipls), old_len,  sep="\t")
+def anselm_correct_tokenization(tok):
+    for err in tok.errors:
+        if err == "err_nr_dipl" or err == "err_tok_dipl":
+            # throw away old tokenization
+            #  and use new tokenization from current parser
+            legacy_counter = 1
+            tok.tok_dipls = list()
+            new_dipls = tok.trans.tokenize_dipl()
+            for new_dipl_trans in new_dipls:
+                tok.tok_dipls.append(TokDipl(new_dipl_trans, 
+                                             "{0}_d{1}".format(tok.id, legacy_counter)))
+                legacy_counter += 1
+
+        elif err == "err_tok_anno":
+            # new trans
+            for old_anno_tok, new_anno_trans in zip(tok.tok_annos, tok.trans.tokenize_anno()):
+                if new_anno_trans.has(Majuscule):
+                    old_anno_tok.trans = new_anno_trans
+                else:
+                    logging.warning("did not corrent error of type 'err_tok_anno': '{0}' -> '{1}'".format(old_anno_tok.trans, 
+                                                                                                          new_anno_trans))
 
 
 def anselm_postprocess(tok):
+
+    anselm_correct_tokenization(tok)
 
     for tok_anno in tok.tok_annos:
         # remove comment and boundary
@@ -305,11 +320,7 @@ def anselm_postprocess(tok):
     update_punct_pos(tok)
 
 
-def no_postprocess(tok): 
+def no_postprocess(doc): 
     # do nothing
-    return tok
+    return doc
 
-
-def check_dipl_tokenization(tok):
-    anselm_correct_dipls(tok)
-    return tok

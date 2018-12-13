@@ -308,11 +308,12 @@ class CoraToken(IdentifiableObjectMixin):
 
         return CoraToken(parse, [TokDipl(x) for x in parse.tokenize_dipl()], [TokAnno(x) for x in parse.tokenize_anno()])
 
-    def __init__(self, trans, tok_dipls, tok_annos, extid=""):
+    def __init__(self, trans, tok_dipls, tok_annos, extid="", errors=None):
         self._set_id("t", extid)
         self.trans = trans
         self.tok_dipls = tok_dipls
         self.tok_annos = tok_annos
+        self.errors = errors if errors else list()
 
     def __str__(self):
         return str(self.trans)
@@ -342,7 +343,7 @@ class CoraToken(IdentifiableObjectMixin):
 
 class TokDipl(IdentifiableObjectMixin):
 
-    def __init__(self, trans, extid=""):
+    def __init__(self, trans: DiplTrans, extid=""):
         self._set_id("d", extid)
         self.trans = trans
 

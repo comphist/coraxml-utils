@@ -9,11 +9,12 @@ from coraxml_utils.modifier import postprocess, anselm_postprocess
 if __name__ == "__main__":
 
     postprocess(
-        create_importer("coraxml", dialect="anselm"),
+        create_importer("coraxml", dialect="anselm", strict=False),
         create_exporter("coraxml", options={
             # name mod -> tok_anno, dipl -> tok_dipl
-            'dipl_tag_name': 'tok_dipl',
-            'anno_tag_name': 'tok_anno',
+            ### for testing only
+            # 'dipl_tag_name': 'tok_dipl',
+            # 'anno_tag_name': 'tok_anno',
         }),
         anselm_postprocess
     )
