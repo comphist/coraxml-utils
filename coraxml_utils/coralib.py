@@ -1,4 +1,3 @@
-
 import abc
 
 from collections import defaultdict
@@ -36,7 +35,7 @@ class BaseTrans:
         return self.__class__([c for c in self.parse if not isinstance(c, t)])
 
     def has(self, t):
-        return any(isinstance(c, t) for c in self.parse)    
+        return any(isinstance(c, t) for c in self.parse)
 
 
 class AnnoTrans(BaseTrans):
@@ -76,8 +75,8 @@ class Trans(BaseTrans):
         return iter(self.parse)
 
     # TODO: these methods should also close the open brackets
-    #  that result from tokenization (since all tokens are 
-    #  validated on parsing, we can assume that all open 
+    #  that result from tokenization (since all tokens are
+    #  validated on parsing, we can assume that all open
     #  brackets are open due to tokenization and are not
     #  transcription errors)
     def tokenize_anno(self):
@@ -148,7 +147,7 @@ class IdentifiableObjectMixin:
 
 class Document:
 
-    def __init__(self, sigle, name, header, pages, tokens, 
+    def __init__(self, sigle, name, header, pages, tokens,
                  shifttags=None, header_string=None, annospans=None):
         self.sigle = sigle
         self.name = name
@@ -162,7 +161,7 @@ class Document:
 
         self._create_indices()
 
-    ## TODO this should be called when document is changed 
+    ## TODO this should be called when document is changed
     def _create_indices(self):
 
         ## create index of line beginnings and endings
@@ -206,7 +205,7 @@ class Document:
         else:
             new_col = Column([new_line], name=bibinfo["col"])
             new_page = Page(bibinfo["page"], bibinfo["side"], [new_col])
-            self.pages.append(new_page) 
+            self.pages.append(new_page)
 
         return new_line
 
@@ -304,9 +303,10 @@ class Line(IdentifiableObjectMixin):
 
 class CoraToken(IdentifiableObjectMixin):
 
-    def from_parse(self, parse):
-
-        return CoraToken(parse, [TokDipl(x) for x in parse.tokenize_dipl()], [TokAnno(x) for x in parse.tokenize_anno()])
+    def from_parse(parse):
+        return CoraToken(parse,
+                         [TokDipl(x) for x in parse.tokenize_dipl()],
+                         [TokAnno(x) for x in parse.tokenize_anno()])
 
     def __init__(self, trans, tok_dipls, tok_annos, extid="", errors=None):
         self._set_id("t", extid)

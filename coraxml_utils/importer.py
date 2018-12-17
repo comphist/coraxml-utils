@@ -165,7 +165,8 @@ class CoraXMLImporter:
                                                         new=" ".join(a.trans() for a in parsed_anno_toks)))
                 thistoken_errs.append("err_nr_anno")
                 trans_valid = False
-            elif any([anno1.trans() != anno2.attrib['trans'] for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)]):
+            elif any(anno1.trans() != anno2.attrib['trans']
+                     for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)):
                 logging.warning(("Change in tokenization for annos of token {id}: "
                                 "'{old}' -> '{new}'").format(id=thistoken_id,
                                                         old=" ".join(a.get("trans") for a in anno_tokens),
