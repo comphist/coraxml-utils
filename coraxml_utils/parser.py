@@ -417,11 +417,11 @@ class RexParser(BaseParser):
                 not isinstance(this_char, Bracket)):
                 this_char.dipl_bound = True
 
-            # special cases such as w[[a=]]ren (boundary after brackets)
-            elif (isinstance(last_char, (UniverbSpace, UniverbNewline, Hyphen,
-                                      MultiverbNewline)) and 
-                isinstance(this_char, Bracket)):
-                next_char.dipl_bound = True
+            # # special cases such as w[[a=]]ren (boundary after brackets)
+            # elif (isinstance(last_char, (UniverbSpace, UniverbNewline, Hyphen,
+            #                           MultiverbNewline)) and 
+            #     isinstance(this_char, Bracket)):
+            #     next_char.dipl_bound = True
 
             # word split "foo|bar"
             if isinstance(last_char, (MultiverbSpace, MultiverbNewline)):
