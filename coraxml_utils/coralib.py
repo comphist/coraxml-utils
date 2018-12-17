@@ -34,7 +34,7 @@ class BaseTrans:
     def delete(self, t):
         return self.__class__([c for c in self.parse if not isinstance(c, t)])
 
-    def has(self, t):
+    def has(self, *t):
         return any(isinstance(c, t) for c in self.parse)
 
 
