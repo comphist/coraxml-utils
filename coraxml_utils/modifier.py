@@ -257,21 +257,8 @@ def ref_postprocess(tok):
     add_punc_tags(tok)
 
 
-def iter_lines(doc):
-    for page in doc.pages:
-        for col in page.columns:
-            for line in col.lines:
-                for dipl in line.dipls:
-                    yield dipl, line
-
-
-
-
 def anselm_correct_tokenization(doc):
 
-    line_generator = iter_lines(doc)
-    layout_dipl = None
-    curr_line = None
     marginalia = set()
     for st in doc.shifttags:
         if st.tag() == "marg":
@@ -279,7 +266,6 @@ def anselm_correct_tokenization(doc):
                 marginalia.add(t.id)
 
     for tok in filter(lambda x: isinstance(x, CoraToken), doc.tokens):
-
 
         if "err_nr_dipl" in tok.errors or "err_tok_dipl" in tok.errors:
 
@@ -340,6 +326,7 @@ def anselm_correct_tokenization(doc):
                     current_index += 1
 
                     if new_dipl.trans.has(Joiner) and tok.id not in marginalia:
+                        logging.warn("correcting at line bound: %s" % tok.id)
                         line_bound = True
                 
         if "err_tok_anno" in tok.errors:
@@ -348,84 +335,12 @@ def anselm_correct_tokenization(doc):
                 if new_anno_trans.has(Majuscule):
                     old_anno_tok.trans = new_anno_trans
                 else:
-                    logging.warning("did not correct error of " +
-                                    "type 'err_tok_anno': '{0}' -> '{1}'".format(old_anno_tok.trans,
-                                                                                new_anno_trans))
+                    logging.info("did not correct error of " +
+                                 "type 'err_tok_anno': '{0}' -> '{1}'".format(old_anno_tok.trans,
+                                                                              new_anno_trans))
 
     return doc
        
-
-
-
-        
-
-                
-
-        # if "err_nr_dipl" not in tok.errors and "err_tok_dipl" not in tok.errors:
-        #     for dipl in tok.tok_dipls:
-        #         layout_dipl, curr_line = next(line_generator)
-        # else:
-        #     for i, d in enumerate(tok.tok_dipls):
-        #         if i == 0:
-        #             layout_dipl, curr_line = next(line_generator)
-        #             layout_tok_i = curr_line.dipls.index(layout_dipl)
-        #         else:
-        #             next(line_generator)
-        #         curr_line.dipls = [dipl for dipl in curr_line.dipls if dipl.id != d.id]
-
-        #     tok.tok_dipls = list()
-        #     legacy_counter = 1
-        #     new_dipls = tok.trans.tokenize_dipl()
-        #     for new_dipl_trans in new_dipls:
-        #         new_dipl = TokDipl(new_dipl_trans, 
-        #                         "{0}_d{1}".format(tok.id, legacy_counter))
-        #         tok.tok_dipls.append(new_dipl)
-        #         legacy_counter += 1
-
-        #     for new_dipl in reversed(tok.tok_dipls):
-        #         curr_line.dipls.insert(layout_tok_i, new_dipl)
-
-
-        # if "err_tok_anno" in tok.errors:
-        #     # for dipl in tok.tok_dipls:
-        #     #     layout_dipl, curr_line = next(line_generator)
-        #     #     print(dipl, layout_dipl, curr_line.id)
-        #     ###    new trans
-        #     for old_anno_tok, new_anno_trans in zip(tok.tok_annos, tok.trans.tokenize_anno()):
-        #         if new_anno_trans.has(Majuscule):
-        #             old_anno_tok.trans = new_anno_trans
-        #         else:
-        #             logging.warning("did not correct error of " +
-        #                            "type 'err_tok_anno': '{0}' -> '{1}'".format(old_anno_tok.trans,
-        #                                                                         new_anno_trans))
-    
-
-
-# def anselm_correct_tokenization(tok):
-
-#     for err in tok.errors:
-#         if err == "err_nr_dipl" or err == "err_tok_dipl":
-#             # throw away old tokenization
-#             #  and use new tokenization from current parser
-#             legacy_counter = 1
-#             old_dipls = tok.tok_dipls
-#             tok.tok_dipls = list()
-#             new_dipls = tok.trans.tokenize_dipl()
-#             for new_dipl_trans in new_dipls:
-#                 # TODO update layout info
-#                 new_dipl = TokDipl(new_dipl_trans, 
-#                                 "{0}_d{1}".format(tok.id, legacy_counter))
-#                 tok.tok_dipls.append(new_dipl)
-            
-#                 legacy_counter += 1
-
-#         elif err == "err_tok_anno":
-#             # new trans
-#             for old_anno_tok, new_anno_trans in zip(tok.tok_annos, tok.trans.tokenize_anno()):
-#                 if new_anno_trans.has(Majuscule):
-#                     old_anno_tok.trans = new_anno_trans
-#                 else:
-#                     logging.warning("did not correct error of type 'err_tok_anno': '{0}' -> '{1}'".format(old_anno_tok.trans,   new_anno_trans))
 
 
 def anselm_postprocess(tok):
