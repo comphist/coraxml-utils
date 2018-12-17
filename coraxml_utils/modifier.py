@@ -257,7 +257,13 @@ def ref_postprocess(tok):
     add_punc_tags(tok)
 
 
-def anselm_correct_tokenization(tok):
+def anselm_correct_tokenization(doc):
+
+    for page in doc.pages:
+        for column in page.columns:
+            for line in column.lines:
+                
+
     for err in tok.errors:
         if err == "err_nr_dipl" or err == "err_tok_dipl":
             # throw away old tokenization
@@ -280,10 +286,10 @@ def anselm_correct_tokenization(tok):
                     logging.warning("did not correct error of type 'err_tok_anno': '{0}' -> '{1}'".format(old_anno_tok.trans, 
                                                                                                           new_anno_trans))
 
+# anselm_correct_tokenization(tok)
 
 def anselm_postprocess(tok):
 
-    anselm_correct_tokenization(tok)
 
     for tok_anno in tok.tok_annos:
         # remove comment and boundary

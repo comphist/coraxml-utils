@@ -3,7 +3,7 @@
 
 from coraxml_utils.importer import create_importer
 from coraxml_utils.exporter import create_exporter
-from coraxml_utils.modifier import postprocess, anselm_postprocess
+from coraxml_utils.modifier import postprocess, anselm_postprocess, anselm_correct_tokenization
 
 
 if __name__ == "__main__":
@@ -16,5 +16,6 @@ if __name__ == "__main__":
             # 'dipl_tag_name': 'tok_dipl',
             # 'anno_tag_name': 'tok_anno',
         }),
-        anselm_postprocess
+        anselm_postprocess,
+        anselm_correct_tokenization
     )

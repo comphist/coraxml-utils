@@ -267,6 +267,7 @@ class CoraXMLImporter:
                     logging.warn('Expected ' + subelement_type + ' with id ' + next_element['beginning'] +
                                  ' but found ' + subelement_type + ' with id ' + subelement.id)
 
+            subelement.container = next_element['extid']
             next_element['subelements'].append(subelement)
             if next_element['end'] == subelement.id:
                 layout_elements.append(create_object(next_element))
@@ -360,6 +361,7 @@ class CoraXMLImporter:
         pages = self._connect_with_layout_elements(root, 'page', columns, 'column',
                               lambda element: {'extid': element.attrib['id'], 'name': element.attrib['no'], 'side': element.attrib.get('side', None)},
                               lambda dictionary: Page(dictionary['name'], dictionary['side'], dictionary['subelements'], extid=dictionary['extid']))
+
         ## collect document information and create Document object
         sigle = ""
         name = ""
