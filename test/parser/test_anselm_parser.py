@@ -80,9 +80,22 @@ class ParserTest(unittest.TestCase):
         tok = ParserTest._create_anselm_parse("de%$")
         self.assertIsInstance(tok, Trans)
 
+    # TODO should be allowed
     def test_brackets_lineend(self):
         with self.assertRaises(ParseError):
             ParserTest._create_anselm_parse("*[wi(=)\nder*]")
+    
+    # TODO should be allowed
+    # TODO make sure this gets tokenized
+    def test_legalbrackets_lineend(self):
+        #  should be '[[ge]](=)\ntan'
+        with self.assertRaises(ParseError):
+            AnselmParser().parse("[[ge(=)]]\ntan")
+
+    def test_tokenize_atbracket(self):
+        tok = AnselmParser().parse("er$<ch>(=)<ain>")
+        self.assertEqual([str(x) for x in tok.tokenize_dipl()],
+                         ["er$<ch>(=)", "<ain>"])
         
     def test_abbreviations(self):
         tok = AnselmParser().parse("h<.$.>")
@@ -101,11 +114,6 @@ class ParserTest(unittest.TestCase):
                                      anno_simple="D", anno_utf="D", dipl_utf="D"), 
                                      TextChar("i", anno_simple="i", anno_utf="i", dipl_utf="i"), 
                                      TextChar("z", anno_simple="z", anno_utf="z", dipl_utf="z")])
-
-    def test_legalbrackets_lineend(self):
-        #  should be '[[ge]](=)\ntan'
-        with self.assertRaises(ParseError):
-            AnselmParser().parse("[[ge(=)]]\ntan")
 
     def test_fromedition(self):
         tok = AnselmParser().parse("$wer[t]").tokenize_dipl()[0]
