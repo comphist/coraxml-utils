@@ -13,8 +13,6 @@ def add_tokenization_tags(token):
     switch_ML = False
     switch_MS = False
     for m in token.tok_annos:
-        mparse = m.trans.parse
-
         # multiverbation
         if switch_ML:
             m.append_annotation("token_type", "ML" + str(c))
@@ -24,25 +22,25 @@ def add_tokenization_tags(token):
             m.append_annotation("token_type", "MS" + str(c))
             switch_MS = False
             c += 1
-        elif any(c.string == "=|" and isinstance(c, TokenBound) 
-                 for c in mparse):
+        elif m.trans.has(MultiverbNewline):
             switch_ML = True
             m.append_annotation("token_type", "ML1")
             c += 1
-        elif any(c.string == "|" and isinstance(c, TokenBound) 
-                 for c in mparse):
+        elif m.trans.has(MultiverbSpace):
             switch_MS = True
             m.append_annotation("token_type", "MS1")
             c += 1
 
         # univerbation
-        if any(isinstance(c, Hyphen) for c in mparse):
-            m.append_annotation("token_type", "UH")
-        elif any(c.string == "#" and isinstance(c, TokenBound) 
-                 for c in mparse):
-            m.append_annotation("token_type", "US")
-        elif any(isinstance(c, MultiverbNewline) for c in mparse):
-            m.append_annotation("token_type", "UL")
+        # (allow multiple)
+        for zeichen in m.trans.parse:
+            if isinstance(zeichen, Hyphen):
+                m.append_annotation("token_type", "UH")
+            if isinstance(zeichen, UniverbSpace):
+                m.append_annotation("token_type", "US")
+            if isinstance(zeichen, UniverbNewline):
+                m.append_annotation("token_type", "UL")
+
 
 # def add_punc_tags(token):
 #     mods = token.tok_annos
