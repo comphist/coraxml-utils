@@ -298,19 +298,25 @@ def anselm_correct_tokenization(doc):
             line_bound = False
             for new_dipl in tok.tok_dipls:
                 if line_bound:
-                    # start new line
-                    current_index = 0
-                    if len(all_rel_lines) == 1:
-                        # find next line
-                        last_id = None
-                        for page in doc.pages:
-                            for col in page.columns:
-                                for line in col.lines:
-                                    if last_id == all_rel_lines[0].id:
-                                        all_rel_lines.append(line)
-                                        break
-                                    last_id = line.id
-                    all_rel_lines.pop(0)
+                    
+                    # don't start new line if in middle of line
+                    if current_index < len(all_rel_lines[0].dipls):
+                        pass
+                    else:
+                        if len(all_rel_lines) == 1:
+                            # find next line
+                            last_id = None
+                            for page in doc.pages:
+                                for col in page.columns:
+                                    for line in col.lines:
+                                        if last_id == all_rel_lines[0].id:
+                                            all_rel_lines.append(line)
+                                            break
+                                        last_id = line.id
+                        # start new line
+                        current_index = 0
+                        all_rel_lines.pop(0)                  
+                   
                     all_rel_lines[0].dipls.insert(current_index, new_dipl)
                     doc._create_indices()
 
@@ -326,7 +332,7 @@ def anselm_correct_tokenization(doc):
                     current_index += 1
 
                     if new_dipl.trans.has(Joiner) and tok.id not in marginalia:
-                        logging.warn("correcting at line bound: %s" % tok.id)
+                        logging.warn("correcting at line bound: %s (prob ok)" % tok.id)
                         line_bound = True
                 
         if "err_tok_anno" in tok.errors:
