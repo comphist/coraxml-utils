@@ -91,9 +91,11 @@ def update_punct_pos(token):
             if m.tags.get("pos", DEFAULT_VAL) == DEFAULT_VAL:
                 m.tags["pos"] = "$("
 
+
 def fill_annotation_column(tok_anno, annotation_type, default_value=DEFAULT_VAL):
     """Add a default value if the token is not annotated with an annotation of the given type."""
     tok_anno.tags[annotation_type] = tok_anno.tags.get(annotation_type, default_value)
+
 
 def change_tags(tok_anno, annotation_type, rename_dict):
     """Change certain tags of the given type to a new value that is specified in rename_dict."""
@@ -134,6 +136,7 @@ def add_punc_tags(token, tagname='punc'):
         dipl.trans = dipl.trans.delete(SentBound)
         ### TODO make sure dipl.trans is not empty
     token.tok_annos = keep_annos
+
 
 def merge_annotations(token, source_anno1_name, source_anno2_name, res_anno_name, sep='.'):
 
@@ -349,8 +352,6 @@ def anselm_correct_tokenization(doc):
 
 def anselm_postprocess(tok):
 
-    # anselm_correct_tokenization(tok)
-
     for tok_anno in tok.tok_annos:
         # remove comment and boundary
         tok_anno.tags.pop('comment', None)
@@ -374,6 +375,9 @@ def anselm_postprocess(tok):
             's': 'semantic',
             'x': 'extinct'
         })
+
+        # fix erroneous tags
+        change_tags(tok_anno, "pos", {"PDN": "PDS", "PIN": "PIS"})
 
     # add tokenization tags
     add_tokenization_tags(tok)
