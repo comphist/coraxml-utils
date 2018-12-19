@@ -1,0 +1,76 @@
+730c730
+<     <line id="l656" name="21" range="t5579_d3..t5587_d1"/>
+---
+>     <line id="l656" name="21" range="t5579_d2..t5587_d1"/>
+/home/roussel/tmp/postprocessed/O.xml vs. /home/roussel/tmp/reimported/O.xml
+/home/roussel/tmp/postprocessed/N4.xml vs. /home/roussel/tmp/reimported/N4.xml
+/home/roussel/tmp/postprocessed/M8.xml vs. /home/roussel/tmp/reimported/M8.xml
+/home/roussel/tmp/postprocessed/Ka.xml vs. /home/roussel/tmp/reimported/Ka.xml
+/home/roussel/tmp/postprocessed/T.xml vs. /home/roussel/tmp/reimported/T.xml
+/home/roussel/tmp/postprocessed/M.xml vs. /home/roussel/tmp/reimported/M.xml
+/home/roussel/tmp/postprocessed/Ba.xml vs. /home/roussel/tmp/reimported/Ba.xml
+/home/roussel/tmp/postprocessed/s1495_T2.xml vs. /home/roussel/tmp/reimported/s1495_T2.xml
+/home/roussel/tmp/postprocessed/B2.xml vs. /home/roussel/tmp/reimported/B2.xml
+/home/roussel/tmp/postprocessed/N.xml vs. /home/roussel/tmp/reimported/N.xml
+/home/roussel/tmp/postprocessed/N2.xml vs. /home/roussel/tmp/reimported/N2.xml
+/home/roussel/tmp/postprocessed/D.xml vs. /home/roussel/tmp/reimported/D.xml
+/home/roussel/tmp/postprocessed/St.xml vs. /home/roussel/tmp/reimported/St.xml
+89369c89369
+<     <mod id="t8606_m1" trans="da\er#na\ech" utf="daͤrnaͤch" ascii="daernaech" checked="y">
+---
+>     <mod id="t8606_m1" trans="da\er*[vmb*]#na\ech" utf="daͤrnaͤch" ascii="daernaech" checked="y">
+/home/roussel/tmp/postprocessed/M2.xml vs. /home/roussel/tmp/reimported/M2.xml
+/home/roussel/tmp/postprocessed/HA1521.xml vs. /home/roussel/tmp/reimported/HA1521.xml
+/home/roussel/tmp/postprocessed/M5.xml vs. /home/roussel/tmp/reimported/M5.xml
+/home/roussel/tmp/postprocessed/s1496,97.xml vs. /home/roussel/tmp/reimported/s1496,97.xml
+/home/roussel/tmp/postprocessed/b2.xml vs. /home/roussel/tmp/reimported/b2.xml
+/home/roussel/tmp/postprocessed/H.xml vs. /home/roussel/tmp/reimported/H.xml
+/home/roussel/tmp/postprocessed/Kh.xml vs. /home/roussel/tmp/reimported/Kh.xml
+/home/roussel/tmp/postprocessed/Hk.xml vs. /home/roussel/tmp/reimported/Hk.xml
+/home/roussel/tmp/postprocessed/SG.xml vs. /home/roussel/tmp/reimported/SG.xml
+/home/roussel/tmp/postprocessed/We.xml vs. /home/roussel/tmp/reimported/We.xml
+/home/roussel/tmp/postprocessed/Le.xml vs. /home/roussel/tmp/reimported/Le.xml
+/home/roussel/tmp/postprocessed/M7.xml vs. /home/roussel/tmp/reimported/M7.xml
+/home/roussel/tmp/postprocessed/Wo.xml vs. /home/roussel/tmp/reimported/Wo.xml
+/home/roussel/tmp/postprocessed/Stu.xml vs. /home/roussel/tmp/reimported/Stu.xml
+/home/roussel/tmp/postprocessed/SP.xml vs. /home/roussel/tmp/reimported/SP.xml
+/home/roussel/tmp/postprocessed/sl.xml vs. /home/roussel/tmp/reimported/sl.xml
+/home/roussel/tmp/postprocessed/KÄ1492.xml vs. /home/roussel/tmp/reimported/KÄ1492.xml
+/home/roussel/tmp/postprocessed/N1509.xml vs. /home/roussel/tmp/reimported/N1509.xml
+/home/roussel/tmp/postprocessed/Sa2.xml vs. /home/roussel/tmp/reimported/Sa2.xml
+/home/roussel/tmp/postprocessed/n.xml vs. /home/roussel/tmp/reimported/n.xml
+/home/roussel/tmp/postprocessed/N1500.xml vs. /home/roussel/tmp/reimported/N1500.xml
+/home/roussel/tmp/postprocessed/N1514.xml vs. /home/roussel/tmp/reimported/N1514.xml
+639c639
+<     <line id="l578" name="16" range="t2706_d3..t2711_d1"/>
+---
+>     <line id="l578" name="16" range="t2706_d2..t2711_d1"/>
+65c65
+<     <line id="l33" name="13" range="t151_d3..t155_d1"/>
+---
+>     <line id="l33" name="13" range="t151_d2..t155_d1"/>
+/home/roussel/tmp/postprocessed/W.xml vs. /home/roussel/tmp/reimported/W.xml
+/home/roussel/tmp/postprocessed/M4.xml vs. /home/roussel/tmp/reimported/M4.xml
+/home/roussel/tmp/postprocessed/B3.xml vs. /home/roussel/tmp/reimported/B3.xml
+/home/roussel/tmp/postprocessed/Be.xml vs. /home/roussel/tmp/reimported/Be.xml
+/home/roussel/tmp/postprocessed/B1523.xml vs. /home/roussel/tmp/reimported/B1523.xml
+/home/roussel/tmp/postprocessed/D2.xml vs. /home/roussel/tmp/reimported/D2.xml
+/home/roussel/tmp/postprocessed/Sa.xml vs. /home/roussel/tmp/reimported/Sa.xml
+/home/roussel/tmp/postprocessed/M9.xml vs. /home/roussel/tmp/reimported/M9.xml
+/home/roussel/tmp/postprocessed/hb.xml vs. /home/roussel/tmp/reimported/hb.xml
+/home/roussel/tmp/postprocessed/St2.xml vs. /home/roussel/tmp/reimported/St2.xml
+/home/roussel/tmp/postprocessed/M10.xml vs. /home/roussel/tmp/reimported/M10.xml
+/home/roussel/tmp/postprocessed/s1495_T1.xml vs. /home/roussel/tmp/reimported/s1495_T1.xml
+/home/roussel/tmp/postprocessed/s1.xml vs. /home/roussel/tmp/reimported/s1.xml
+/home/roussel/tmp/postprocessed/f.xml vs. /home/roussel/tmp/reimported/f.xml
+/home/roussel/tmp/postprocessed/B.xml vs. /home/roussel/tmp/reimported/B.xml
+/home/roussel/tmp/postprocessed/M3.xml vs. /home/roussel/tmp/reimported/M3.xml
+/home/roussel/tmp/postprocessed/Me.xml vs. /home/roussel/tmp/reimported/Me.xml
+/home/roussel/tmp/postprocessed/KJ1499.xml vs. /home/roussel/tmp/reimported/KJ1499.xml
+/home/roussel/tmp/postprocessed/StA1495.xml vs. /home/roussel/tmp/reimported/StA1495.xml
+/home/roussel/tmp/postprocessed/Sb.xml vs. /home/roussel/tmp/reimported/Sb.xml
+/home/roussel/tmp/postprocessed/D3.xml vs. /home/roussel/tmp/reimported/D3.xml
+/home/roussel/tmp/postprocessed/N3.xml vs. /home/roussel/tmp/reimported/N3.xml
+/home/roussel/tmp/postprocessed/M6.xml vs. /home/roussel/tmp/reimported/M6.xml
+/home/roussel/tmp/postprocessed/D4.xml vs. /home/roussel/tmp/reimported/D4.xml
+/home/roussel/tmp/postprocessed/b.xml vs. /home/roussel/tmp/reimported/b.xml
