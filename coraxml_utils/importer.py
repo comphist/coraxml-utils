@@ -55,9 +55,11 @@ def parse_header(header_string):
 
 class CoraXMLImporter:
 
-    def __init__(self, token_parser, strict=True, force_retokenization=False):
-        self.tok_dipl_tag = 'dipl'
-        self.tok_anno_tag = 'mod'
+    def __init__(self, token_parser, strict=True, force_retokenization=False,
+                 tok_dipl_tag="dipl", tok_anno_tag="mod"):
+
+        self.tok_dipl_tag = tok_dipl_tag
+        self.tok_anno_tag = tok_anno_tag
         self.tokenparser = token_parser()
 
         self.strict = strict
