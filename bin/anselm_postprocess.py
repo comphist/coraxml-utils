@@ -12,9 +12,8 @@ if __name__ == "__main__":
         create_importer("coraxml", dialect="anselm", strict=False),
         create_exporter("coraxml", options={
             # name mod -> tok_anno, dipl -> tok_dipl
-            ### for testing only
-            # 'dipl_tag_name': 'tok_dipl',
-            # 'anno_tag_name': 'tok_anno',
+            'dipl_tag_name': 'tok_dipl',
+            'anno_tag_name': 'tok_anno',
         }),
         anselm_postprocess,
         anselm_correct_tokenization
