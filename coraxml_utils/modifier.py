@@ -420,7 +420,7 @@ def repair_header(doc, repair_infos):
                     elif any(line.startswith(x) for x in lines_to_delete):
                         continue
                     else:
-                        new_header_string.append(line + "\n")
+                        new_header_string.append(line)
 
                 # add important info to header
                 new_keyval_strings = list()
