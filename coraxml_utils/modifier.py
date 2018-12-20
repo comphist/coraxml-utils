@@ -394,13 +394,13 @@ def anselm_postprocess(tok):
 
 def repair_header(doc, repair_infos):
     with open(repair_infos, "r", encoding="utf-8") as metadata_file:
-        csvreader = csv.DictReader(metadata_file)
+        csvreader = csv.DictReader(metadata_file, dialect="excel-tab")
         for row in csvreader:
             if row['Sigle'] == doc.sigle:
                 # machen wir was
 
                 new_header_string = list()
-                lines_to_delete = ["Text eingegeben",                                                        "Datum", "Bearbeiter",
+                lines_to_delete = ["Text eingegeben",                                                                              "Datum", "Bearbeiter",
                                    "Text vorkollationiert", 
                                    "Text kollationiert",
                                     "Lat. Passage", "Kenn-Name", 

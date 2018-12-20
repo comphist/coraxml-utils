@@ -374,7 +374,8 @@ class CoraXMLImporter:
 
         # get header
         header_element = root.find("header")
-        header_string = ET.tostring(header_element, encoding="unicode", method="xml")
+        # header_string = ET.tostring(header_element, encoding="unicode", method="xml")
+        header_string = header_element.text
         if not list(header_element):
             header = parse_header(ET.tostring(header_element, encoding="unicode", method="text"))
         else:

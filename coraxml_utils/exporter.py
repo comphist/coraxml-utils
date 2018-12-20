@@ -68,12 +68,12 @@ class CoraXMLExporter:
 
         ## TODO improve export of the header    
         if doc.header_string:
-            try:
-                header = ET.fromstring(doc.header_string)
-                root.append(header)
-            except:
-                header = ET.SubElement(root, "header")
-                header.text = doc.header_string
+            # try:
+            #     header = ET.fromstring(doc.header_string)
+            #     root.append(header)
+            # except:
+            header = ET.SubElement(root, "header")
+            header.text = doc.header_string
         else:
             header = ET.SubElement(root, "header")
             header.text = "\n".join(key + ":" + value for key, value in doc.header)
