@@ -1,4 +1,5 @@
 import json
+import csv
 import re
 import logging
 import argparse
@@ -389,6 +390,51 @@ def anselm_postprocess(tok):
 
     # alle Satzzeichen (type = p) auf $( setzen (wenn noch nichts gesetzt)
     update_punct_pos(tok)
+
+
+def repair_header(doc, repair_infos):
+    with open(repair_infos, "r", encoding="utf-8") as metadata_file:
+        csvreader = csv.DictReader(metadata_file)
+        for row in csvreader:
+            if row['Sigle'] == doc.sigle:
+                # machen wir was
+
+                new_header_string = list()
+                lines_to_delete = ["Text eingegeben",                                                        "Datum", "Bearbeiter",
+                                   "Text vorkollationiert", 
+                                   "Text kollationiert",
+                                    "Lat. Passage", "Kenn-Name", 
+                                    "Präeditiert", "Praeditiert",
+                                    "Grubert-Nummer", "Datierung",
+                                    "Lokalisierung", "Textart",
+                                    "Fassung", "Bibliothek", "Archiv",
+                                    "Signatur", "Folio", "Blatt",
+                                    "Edition", "Provenienz", "Literatur",
+                                    "vorhandener Text", "Vorhandener Text"]
+
+                # delete unnecessary info from header
+                for line in doc.header_string.strip().split("\n"):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    elif any(line.startswith(x) for x in lines_to_delete):
+                        continue
+                    else:
+                        new_header_string.append(line + "\n")
+
+                # add important info to header
+                new_keyval_strings = list()
+                for key, val in row.items():
+                    new_keyval_strings.append(key + ": " + val)
+
+                doc.header_string = "\n".join(new_keyval_strings + new_header_string)
+
+
+def anselm_document_postprocess(doc):
+    anselm_correct_tokenization(doc)
+
+    repair_infos = "../res/metadata_texts_20181220.csv"
+    repair_header(doc, repair_infos)
 
 
 def no_postprocess(doc): 
