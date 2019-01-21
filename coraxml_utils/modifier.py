@@ -98,6 +98,12 @@ def fill_annotation_column(tok_anno, annotation_type, default_value=DEFAULT_VAL)
     tok_anno.tags[annotation_type] = tok_anno.tags.get(annotation_type, default_value)
 
 
+def remove_annotation_colum(tok_anno, annotation_type, value=DEFAULT_VAL):
+    """Remove an annotation column if it is annotated with a given value,
+       e.g. before uploading the text to CorA."""
+    if tok_anno.tags[annotation_type] == value:
+        del tok_anno.tags[annotation_type]
+    
 def change_tags(tok_anno, annotation_type, rename_dict):
     """Change certain tags of the given type to a new value that is specified in rename_dict."""
     if annotation_type in tok_anno.tags:
@@ -439,3 +445,19 @@ def anselm_document_postprocess(doc):
 def no_postprocess(doc): 
     # do nothing
     return doc
+
+def prepare_for_cora(tok):
+    
+    for tok_anno in tok.tok_annos:
+        
+        #undo renaming of norm_type-tags
+        change_tags(tok_anno, 'norm_type', {
+                    'inflection': 'f',
+                    'semantic': 's',
+                    'extinct': 'x'
+                    })
+
+        #remove empty morph annotations
+        remove_annotation_colum(tok_anno, "morph", value=DEFAULT_VAL)
+
+        
