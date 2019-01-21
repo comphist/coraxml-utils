@@ -98,7 +98,7 @@ def fill_annotation_column(tok_anno, annotation_type, default_value=DEFAULT_VAL)
     tok_anno.tags[annotation_type] = tok_anno.tags.get(annotation_type, default_value)
 
 
-def remove_annotation_colum(tok_anno, annotation_type, value=DEFAULT_VAL):
+def remove_annotation_column(tok_anno, annotation_type, value=DEFAULT_VAL):
     """Remove an annotation column if it is annotated with a given value,
        e.g. before uploading the text to CorA."""
     if tok_anno.tags[annotation_type] == value:
@@ -458,6 +458,9 @@ def prepare_for_cora(tok):
                     })
 
         #remove empty morph annotations
-        remove_annotation_colum(tok_anno, "morph", value=DEFAULT_VAL)
+        remove_annotation_column(tok_anno, "morph", value=DEFAULT_VAL)
 
-        
+        # remove norm_broad if it is identical with norm
+        if 'norm_broad' in tok_anno.tags \
+           and tok_anno.tags["norm_broad"] == tok_anno.tags["norm"]:
+            remove_annotation_column(tok_anno, 'norm_broad', tok_anno.tags['norm_broad'])
