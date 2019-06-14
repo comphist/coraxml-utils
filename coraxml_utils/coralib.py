@@ -34,6 +34,10 @@ class BaseTrans:
     def delete(self, t):
         return self.__class__([c for c in self.parse if not isinstance(c, t)])
 
+    def transform(self, transformation, criterium=None):
+        return self.__class__([c if criterium is not None and not criterium(c) else transformation(c) for c in self.parse])
+
+
     def has(self, *t):
         return any(isinstance(c, t) for c in self.parse)
 

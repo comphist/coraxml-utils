@@ -2,6 +2,7 @@
 import logging
 
 from lxml import etree as ET
+import markdown_strings
 
 from coraxml_utils.coralib import *
 from coraxml_utils.character import *
@@ -16,6 +17,8 @@ def create_exporter(format="coraxml", options=None):
         return GateJsonExporter()
     elif format == "tei":
         return TEIExporter()
+    elif format == "md":
+        return MarkdownExporter()
     else:
         logging.error("No valid exporter selected")
 
@@ -758,3 +761,113 @@ class GateJsonExporter:
                 )
 
         return json_object
+
+class MarkdownExporter:
+
+    def __init__(self):
+        pass
+
+    def export(self, doc):
+
+        ## export as markdown
+        ## uses to the pandoc extensions pipe_tables, inline_notes and strikeout
+
+        page = {}
+        column = {}
+
+        ## get page and column info
+        for page_object in doc.pages:
+            page[page_object.columns[0].lines[0].dipls[0].get_internal_id()] = page_object.name + page_object.side
+        for column_object in [column for page in doc.pages for column in page.columns]:
+            column[column_object.lines[0].dipls[0].get_internal_id()] = column_object.name
+
+        page_name = ""
+        column_name = ""
+
+        last_header_line = ':-----|:------------------------------------------------------------------'
+        output = [
+            '% ' + doc.name,
+            '',
+            '|',
+            last_header_line
+        ]
+
+        current_line = []
+
+        for token in doc.tokens:
+            if isinstance(token, CoraComment):
+
+                # converts comment to pandoc markdowns inline footnote
+                ## TODO handle square brackets in comments
+                assert(']' not in token.content)
+                comment = "^[" + markdown_strings.esc_format(token.content) + "]"
+
+                ## add to current_line - if current_line is empty: add to last line in output
+                ## (except for at the beginning)
+                if current_line:
+                    current_line.append(comment)
+                else:
+                    if output[-1] == last_header_line:
+                        current_line.append(comment)
+                    else:
+                        output[-1] += " " + comment
+            else:
+                for dipl in token.tok_dipls:
+
+                    if dipl.get_internal_id() in page:
+                        page_name = page[dipl.get_internal_id()]
+                    if dipl.get_internal_id() in column:
+                        column_name = column[dipl.get_internal_id()]
+                        if column_name is None or column_name == "--":
+                            column_name = ""
+
+                    current_line.append(
+                        markdown_strings.esc_format(
+                            dipl.trans
+
+                            ## mark expansions, paratext and strikethrough with markdown (strikethrough uses pandocs markdown)
+                            .transform(
+                                lambda c: ExpandedAbbreviation('*', dipl_utf='*'), lambda c: isinstance(c, ExpandedAbbreviation)
+                            )
+                            .transform(
+                                lambda c: Para('**', dipl_utf='**'), lambda c: isinstance(c, Para)
+                            )
+                            .transform(
+                                lambda c: Strikethrough('~~', dipl_utf='~~'), lambda c: isinstance(c, Strikethrough)
+                            )
+
+                            ## TODO the following transformations are specific for ReN
+                            ## this should be changed to be usable for other corpora as well
+                            .transform(
+                                lambda c: Multiverbation('', dipl_utf=''), lambda c: isinstance(c, Multiverbation)
+                            )
+                            .transform(
+                                lambda c: Univerbation('', dipl_utf=''), lambda c: isinstance(c, Univerbation)
+                            )
+
+                            .transform(
+                                lambda c: Recognizable('[', dipl_utf='['), lambda c: isinstance(c, Recognizable) and c.opening
+                            )
+                            .transform(
+                                lambda c: Recognizable(']', dipl_utf=']'), lambda c: isinstance(c, Recognizable) and not c.opening
+                            )
+                            .transform(
+                                lambda c: IllegibleChar('[…]', dipl_utf='[…]'), lambda c: isinstance(c, IllegibleChar) or (isinstance(c, TextChar) and c.dipl_utf == "…")
+                            )
+                            .transform(
+                                lambda c: Lacuna('^[Lücke]', dipl_utf='^[Lücke]'), lambda c: isinstance(c, Lacuna)
+                            )
+                            .transform(
+                                lambda c: Continuation('', dipl_utf=''), lambda c: isinstance(c, Continuation)
+                            )
+                            .trans()
+                        )
+                    )
+
+                    if doc.is_end_of_line(dipl):
+                        bibinfo = page_name + column_name + "," + doc.get_line_for_dipl(dipl).name
+
+                        output.append(bibinfo + " | " + " ".join(current_line))
+                        current_line = []
+
+        return '  \n'.join(output)

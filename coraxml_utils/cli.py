@@ -18,7 +18,7 @@ def main():
               default='trans', show_default=True, help="Format of the input."
 )
 @click.option('-t', '--to',
-              type=click.Choice(['coraxml', 'trans', 'gatejson', 'tei']),
+              type=click.Choice(['coraxml', 'trans', 'gatejson', 'tei', 'md']),
               default='coraxml', show_default=True, help="Format of the output."
 )
 @click.option('-P', '--parser',

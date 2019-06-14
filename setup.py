@@ -9,7 +9,8 @@ setuptools.setup(
         'click',
         'lxml',
         'regex',
-        'lark-parser'
+        'lark-parser',
+        'markdown-strings'
     ],
     entry_points={
         'console_scripts': ['coraxml_utils = coraxml_utils.cli:main']
