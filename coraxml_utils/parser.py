@@ -7,6 +7,8 @@ logger = logging.getLogger()
 
 from collections import defaultdict
 
+import lark
+
 from coraxml_utils.character import *
 from coraxml_utils.coralib import Trans, DiplTrans, AnnoTrans, SubtokenAnno
 
@@ -520,6 +522,119 @@ class AnselmParser(RexParser):
 
 class RediParser(RexParser):
     pass
+
+
+## get all subclass
+def __get_all_subclasses(cls):
+    return cls.__subclasses__() + [g for s in cls.__subclasses__()
+                                   for g in __get_all_subclasses(s)]
+
+
+def __parse_tree_transformer_init(self, char_mapping=None):
+    self._create_char = char_mapping
+    if self._create_char is None:
+        self._create_char = lambda character: {
+            '_trans': str(character),
+            'dipl_utf': str(character),
+            'anno_utf': str(character),
+            'anno_simple': str(character)
+        }
+
+ParseTreeTransformer = lark.v_args(inline=True) (
+    type("ParseTreeTransformer", (lark.Transformer,), {
+        **{
+            '__doc__': """Transformer from flat parse trees to character classes
+
+            Parse trees handled by this transformer should only have the root node 'start'
+            with children containing tokens, with a name that is the (lowercased) name of the corresponding
+            character class and the character as value. For brackets name_open and name_closed are expected.
+
+            Args:
+              char_mapping: A function that takes a character as input and returns its representations as dict.
+                            Defaults to the character in all representations.
+            """,
+            '__init__': __parse_tree_transformer_init,
+            'start': lambda self, *characters: characters,
+        },
+        ## add basic characters
+        **{class_.__name__.lower(): lambda self, character, class_=class_: class_(**self._create_char(character))
+           for class_ in __get_all_subclasses(Char) if not issubclass(class_, Bracket)},
+        ## add whitspace
+        **{class_.__name__.lower(): lambda self, character, class_=class_: class_(self._create_char(character)['_trans'])
+           for class_ in [Whitespace] + __get_all_subclasses(Whitespace)},
+        ## add brackets - open and close
+        **{class_.__name__.lower() + '_open': lambda self, character, class_=class_: class_(**self._create_char(character), opening=True)
+           for class_ in __get_all_subclasses(Bracket)},
+        **{class_.__name__.lower() + '_close': lambda self, character, class_=class_: class_(**self._create_char(character), opening=False)
+           for class_ in __get_all_subclasses(Bracket)}
+    })
+)
+
+
+class CFGParser:
+    """Parse a text with a given context-free grammar.
+
+    Args:
+       grammar: either a file or a string containing the grammar in a format as expected by lark.
+       transformer: lark.transformer that turns the parse tree into the parserd token.
+                    Defaults to a transformer for flat parse trees.
+    """
+
+    def __init__(self, grammar, transformer=None):
+
+        self.parser = lark.Lark(grammar, parser='lalr')
+        ## handles ambiguities better, but is slow
+        self.backup_parser = lark.Lark(grammar)
+        self.transformer = transformer
+
+        if self.transformer is None:
+            self.transformer = ParseTreeTransformer()
+
+    ## TODO how to support output_type? - different grammars? or use one grammar and filter illegal tokens for specific output types afterwards?
+    def parse(self, intoken, output_type="trans"):
+
+        try:
+            tree = self.parser.parse(intoken)
+        except Exception as e:
+            try:
+                tree = self.backup_parser.parse(intoken)
+            except Exception as e:
+                raise ParseError(intoken + " could not be parsed")
+        parse = self.transformer.transform(tree)
+        ## test if Tree elements are left
+        if any([isinstance(x, lark.Tree) for x in parse]):
+            # logger.debug(tree.pretty())
+            print(tree.pretty())
+            print(parse)
+            raise ParseError(intoken + " parse could not be interpreted")
+
+        ## TODO is this generic enough should this be changeable?
+        ## add token boundaries
+        add_dipl_bound = False
+        add_anno_bound = False
+
+        for char in parse:
+
+            ## don't add breaks at closing brackets, whitepsace (including eol) or multiverbation character
+            if (not isinstance(char, Bracket) or char.opening) and not isinstance(char, Whitespace) and not isinstance(char, Multiverbation) and not isinstance(char, Univerbation):
+                if add_dipl_bound:
+                    char.dipl_bound = True
+                    char.dipl_bound = True
+                    add_dipl_bound = False
+                if add_anno_bound:
+                    char.anno_bound = True
+                    add_anno_bound = False
+
+            if isinstance(char, Multiverbation):
+                add_anno_bound = True
+            elif isinstance(char, Univerbation):
+                add_dipl_bound = True
+            elif isinstance(char, LineBreak):
+                add_dipl_bound = True
+            elif isinstance(char, Whitespace):
+                add_dipl_bound = True
+
+        return Trans(list(parse))
 
 
 ## Assigns parsers to dialects
