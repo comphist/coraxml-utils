@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "375036b04db7ccad74007173c1d5f341ba71b1d14e349c0e181e6882ab49f6ec"
+            "sha256": "100932d7dfb101e703dc0a88d6ebbb9afe04f27d1ca6ad2e70c32cfdc96e35be"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -29,6 +29,10 @@
         ]
     },
     "default": {
+        "e1839a8": {
+            "editable": true,
+            "path": "."
+        },
         "lark-parser": {
             "hashes": [
                 "sha256:8455e05d062fa7f9d59a2735583cf02291545f944955c4056bf1144c4e625344"

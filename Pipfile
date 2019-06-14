@@ -12,9 +12,7 @@ name = "pypi"
 
 [packages]
 
-lxml = "*"
-regex = "*"
-lark-parser = "*"
+"e1839a8" = {path = ".", editable = true}
 
 
 [requires]
