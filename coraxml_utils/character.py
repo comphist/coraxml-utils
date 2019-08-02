@@ -308,6 +308,7 @@ class Whitespace:
         self.anno_simple = _trans
         self.anno_bound = False
         self.dipl_bound = False
+        self.token_bound = False
 
     def __str__(self):
         return "{0}({1})".format(self.__class__.__name__, self.string)
@@ -330,8 +331,6 @@ class LineBreak(Whitespace):
     def __init__(self, _trans):
         super().__init__(_trans)
         self.line_break = True
-        # should only occur within token
-        self.token_bound = False
 
 
 class Punct(Char):
@@ -413,5 +412,26 @@ class FromEdition(Bracket):
 class EditorCompleted(Bracket):
     pass
 
+class ExpandedAbbreviation(Bracket):
+    pass
+
+class Continuation(Bracket):
+    pass
+
+class Para(Bracket):
+    pass
+
+class Addition(Para):
+    pass
+
+class Correction(Para):
+    pass
+
+class Note(Para):
+    pass
+
 class Lacuna(MetaChar):
+    pass
+
+class Comment(MetaChar):
     pass
