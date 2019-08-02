@@ -23,6 +23,11 @@ def create_importer(file_format, dialect=None, **kwargs):
             if dialect == 'rem':
                 cora_importer.tok_dipl_tag = 'tok_dipl'
                 cora_importer.tok_anno_tag = 'tok_anno'
+            elif dialect == 'ren':
+                cora_importer.tok_dipl_tag = 'dipl'
+                cora_importer.tok_anno_tag = 'anno'
+                cora_importer.force_retokenization = True
+                cora_importer.add_dipl_whitespace = True
             return cora_importer
         else:
             raise ValueError("CorA-XML dialect " + dialect + " is not supported.")
@@ -56,7 +61,7 @@ def parse_header(header_string):
 class CoraXMLImporter:
 
     def __init__(self, token_parser, strict=True, force_retokenization=False,
-                 tok_dipl_tag="dipl", tok_anno_tag="mod"):
+                 tok_dipl_tag="dipl", tok_anno_tag="mod", add_dipl_whitespace=False):
 
         self.tok_dipl_tag = tok_dipl_tag
         self.tok_anno_tag = tok_anno_tag
@@ -64,6 +69,8 @@ class CoraXMLImporter:
 
         self.strict = strict
         self.force_retokenization = force_retokenization
+
+        self.add_dipl_whitespace = add_dipl_whitespace
 
 
     def _create_dipl_token(self, dipl_element, trans):
@@ -130,12 +137,15 @@ class CoraXMLImporter:
                                                                dtrans=dipl_trans_cat))
                 thistoken_errs.append("err_cat_anno")
 
-        ## create transcription of the token with linebreaks
+        ## create transcription of the token with linebreaks (this is how CorA does it, when editing tokens)
+        ## adding optional whitespace between dipls (currently the ren parser needs whitespace to determine dipl breaks)
         parse_trans = ''
         for dipl_tok in dipl_tokens:
             parse_trans += dipl_tok.attrib['trans']
             if dipl_tok.attrib['id'] in line_endings:
                 parse_trans += '\n'
+            elif self.add_dipl_whitespace:
+                parse_trans += ' '
         parse_trans = parse_trans.strip()
 
         trans_valid = True

@@ -637,10 +637,125 @@ class CFGParser:
         return Trans(list(parse))
 
 
+
+class ReNParser(CFGParser):
+
+    def __init__(self):
+
+        ## note: this is a (rough) draft for a ReNParser using a context free grammar
+        ## the grammer does not parse full ReN transcriptions but Cora tokens
+        ## the parser expects whitespace between dipl tokens, SentBound's are not included
+        ## (they are represented as annotation in cora)
+        ### this parser is not very strict - assumes validated transcriptions and creates parses
+
+        ## this parsers use case is to import the validated coraxml files from the ReN corpus
+        ## in order to convert them to other formats (e.g. tei)
+
+        grammar = '''
+
+        start: lacuna | _token // a token is either a gap (lacuna), an editorial comment or a proper token
+
+        !lacuna.2: "$Lücke$" // lacuna is a special editorial comment (higher priority)
+
+        // a token consists of diplomatic tokens
+        _token: _dipl_token_initial+
+        _token_without_strikethrough: _dipl_token_initial_without_strikethrough+
+        _dipl_token: ( _char | multiverbation | _bracket )+ // ( _char | _bracket )
+        _dipl_token_without_strikethrough: ( _char | multiverbation | _bracket_without_strikethrough )+
+        _dipl_token_initial: _dipl_token ( univerbation | multiverbation | hyphen )? (linebreak | whitespace)?
+        _dipl_token_initial_without_strikethrough: _dipl_token_without_strikethrough ( univerbation | multiverbation | hyphen )? (linebreak | whitespace)?
+
+        _char:  textchar | punct | hyphen | comment
+        comment: /\$[^$]+\$/
+
+        textchar: _letter | _special_letter | _digit
+        _letter.2: /([A-Za-zØø]|\[…\])[ͣͤͥͦͧͮ̈]*/
+        _special_letter: /[¶]/
+        _digit: /[0-9]/
+        //!illegiblechar.2: "[…]" // has priority over hard to read parts - is included into the normal letter category as it appears with diacritics
+        !hyphen: "-" | "="
+        !punct: "." | "," | "?" | ":" | "/" | "|" | "(" | ")"
+
+        !univerbation: "#"
+        !multiverbation: "§"
+
+        !linebreak: "\\n"
+        !whitespace: " "
+
+        _bracket: _recognizable | _strikethrough | _abbr_expansion | _note | _addition | _correction | _continuation
+        _bracket_without_strikethrough: _recognizable | _abbr_expansion | _note | _addition | _correction | _continuation
+        _bracket_content: _token?
+        _bracket_content_without_strikethrough: _token_without_strikethrough?
+        _recognizable: recognizable_open _bracket_content recognizable_close
+        !recognizable_open: "["
+        !recognizable_close: "]"
+        _strikethrough: strikethrough_open  _bracket_content_without_strikethrough strikethrough_close
+        strikethrough_open: STRIKETHROUGH_OPEN_CHAR
+        strikethrough_close: STRIKETHROUGH_CLOSE_CHAR
+        STRIKETHROUGH_OPEN_CHAR: "ǂ"
+        STRIKETHROUGH_CLOSE_CHAR: "ǂ"
+        _abbr_expansion: expandedabbreviation_open  _bracket_content expandedabbreviation_close
+        expandedabbreviation_open: /{[LRAEX]_/
+        !expandedabbreviation_close: "}"
+        _note: note_open _bracket_content note_close
+        note_open: /\*[ILROUT]N_/
+        !note_close: "*"
+        _correction: correction_open _bracket_content correction_close
+        correction_open: /\*[ILROUT]K_/
+        !correction_close: "*"
+        _addition: addition_open _bracket_content addition_close
+        addition_open: /\*[ILROUT]E_/
+        !addition_close: "*"
+        _continuation:  continuation_open _bracket_content continuation_close
+        !continuation_open: /\\\\F[UO]_/
+        !continuation_close: "\\\\" // needs 4 backslashes to get one backslash
+        '''
+
+        transformer = self.transformer = ParseTreeTransformer()
+        super().__init__(grammar, transformer)
+
+    def process_parse(self, parse, keep_deletions=False):
+
+        in_deletion = False
+        for idx, char in enumerate(parse):
+            # remove deletions
+            if isinstance(char, Strikethrough):
+                in_deletion = char.opening
+            if isinstance(char, TokenBound) or isinstance(char, Bracket) or (not keep_deletions and in_deletion):
+                char.dipl_utf = ''
+                char.anno_utf = ''
+                char.anno_simple = ''
+            ## TODO the grammar currently labels IllegibleChar as normal TextChar - this is a fix
+            elif isinstance(char, TextChar) and char.string == "[…]":
+                parse.parse[idx] = IllegibleChar(char.string, dipl_utf='…', anno_utf='…', anno_simple='…')
+                parse.parse[idx].anno_bound = char.anno_bound
+                parse.parse[idx].dipl_bound = char.dipl_bound
+                parse.parse[idx].token_bound = char.token_bound
+                parse.parse[idx].line_break_after = char.line_break_after
+            elif isinstance(char, Hyphen):
+                char.anno_simple = ''
+
+        return parse
+
+    def parse(self, intoken, output_type="trans"):
+        if output_type != "trans":
+            raise NotImplementedError("ReN parser currently only supports parsing whole CorA tokens.")
+        else:
+            parse = super().parse(intoken, output_type)
+            import copy
+            tmp_parse = copy.deepcopy(parse)
+            self.process_parse(tmp_parse)
+            ## if empty: return full transcription
+            if not "".join([dipl.utf() for dipl in tmp_parse.tokenize_dipl()]):
+                tmp_parse = self.process_parse(parse, True)
+
+            return tmp_parse
+
 ## Assigns parsers to dialects
 dialect_mapper = {None: PlainParser,
                   "plain": PlainParser,
                   "rem": RemParser,
                   "ref": RefParser,
+                  "ren": ReNParser,
                   "redi": RediParser,
                   "anselm": AnselmParser}
