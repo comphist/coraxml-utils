@@ -270,8 +270,17 @@ class TEIExporter:
         setattr(self._current_text_element, self._current_text_attribute,
                 getattr(self._current_text_element, self._current_text_attribute) + character)
 
+    def _add_element(self, element, current_parent):
 
-    def export(self, doc):
+        if current_parent != self.tei_root or self.sent_tag is None: # and self.head_tag is None:
+            current_parent.append(element)
+        else:
+            self.curr_part.append(element)
+
+    ## TODO sent_tag="bound_sent" is specific for ReN
+    ## TODO it is also a hack - importers should use anno_span for sentences
+    def export(self, doc, sent_tag="bound_sent"):
+
 
         page = {}
         column = {}
@@ -279,13 +288,23 @@ class TEIExporter:
 
         text_root = ET.Element("text")
         tei_root = ET.SubElement(text_root, "body")
+        tei_root = ET.SubElement(tei_root, "ab")
         tei_doc = ET.ElementTree(text_root)
+
+        self.tei_root = tei_root
+
         current_parent = tei_root
+
+        self.sent_tag = sent_tag
+        self.curr_part = []
+
 
         ## the xml element to which characters are added
         self._current_text_element = tei_root
-        ## characters have to added either to tail or to text
+        ## characters have to be added either to tail or to text
         self._current_text_attribute = 'text'
+
+        in_multiverbation = False
 
         ## get layoutinfo
         for page_object in doc.pages:
@@ -294,6 +313,8 @@ class TEIExporter:
             column[column_object.lines[0].dipls[0].get_internal_id()] = column_object.name
         for line_object in [line for page in doc.pages for column in page.columns for line in column.lines]:
             line[line_object.dipls[0].get_internal_id()] = line_object.name
+
+        open_tags = []
 
         for token in doc.tokens:
 
@@ -310,11 +331,14 @@ class TEIExporter:
 
                 token_chars[0].dipl_bound = True
                 token_chars[-1].dipl_bound = True
-                ## TODO subtok spans
 
                 for position, char in enumerate(token_chars):
 
                     if char.anno_bound:
+                        while current_parent.tag not in ['w', tei_root.tag]:
+                            open_tags.append((current_parent.tag, current_parent.attrib))
+                            current_parent = current_parent.getparent()
+
                         current_parent = tei_root
                         self._current_text_attribute = 'tail'
 
@@ -332,60 +356,188 @@ class TEIExporter:
                                     ## test for page
                                     if current_dipl.get_internal_id() in page:
                                         ## add page
-                                        ET.SubElement(current_parent, "pb", n=page[current_dipl.get_internal_id()])
+                                        self._add_element(ET.Element("pb", n=page[current_dipl.get_internal_id()]), current_parent)
 
                                     ## add column
-                                    last_element = ET.SubElement(current_parent, "cb")
+                                    column_name = None
                                     if column[current_dipl.get_internal_id()]:
-                                        last_element.attrib['n'] = column[current_dipl.get_internal_id()]
+                                        column_name = column[current_dipl.get_internal_id()]
+
+                                    if column_name != "--":
+                                        last_element = ET.Element("cb")
+                                        self._add_element(last_element, current_parent)
+
+                                        if column_name != None:
+                                            last_element.attrib['n'] = column_name
 
                                 ## add line
-                                self._current_text_element = ET.SubElement(current_parent, "lb", n=line[current_dipl.get_internal_id()])
+                                self._current_text_element = ET.Element("lb", n=line[current_dipl.get_internal_id()])
+                                self._add_element(self._current_text_element, current_parent)
                                 self._current_text_attribute = 'tail'
 
                             ## test for univerbation without linebreak
                             elif not char.anno_bound:
-                                self._current_text_element = ET.SubElement(current_parent, "space", quantity="1", unit="chars")
+                                self._current_text_element = ET.Element("space", quantity="1", unit="chars")
+                                self._add_element(self._current_text_element, current_parent)
                                 self._current_text_attribute = 'tail'
 
                         else:
                             current_dipl = None
 
 
-                    ## TODO refactor multiverbation - part ("I", "M", "F") is missing
                     if char.anno_bound:
 
-                        ## test for multiverbation -- part 1
                         if not char.dipl_bound:
-                            ## TODO part!
-                            last_element = ET.SubElement(self._curr_anno_xml, "seg")
-                            last_element.text = self._curr_anno_xml.text
-                            self._curr_anno_xml.text = None
+                            if not in_multiverbation:
+                                self._curr_anno_xml.set('join', 'right')
+                                in_multiverbation = True
+                            else:
+                                self._curr_anno_xml.set('join', 'both')
+                        else:
+                            if in_multiverbation:
+                                self._curr_anno_xml.set('join', 'left')
+                                in_multiverbation = False
 
 
                         if anno_tokens:
                             self._curr_anno = anno_tokens.pop()
-                            self._curr_anno_xml = ET.SubElement(tei_root, "w", nsmap = {"id": self._curr_anno.get_external_id()}, ana=self._curr_anno.tags.get('pos', '--'), lemma=self._curr_anno.tags.get('lemma', '--'), tok=self._curr_anno.trans.simple())
+                            annotations = { "{http://www.w3.org/XML/1998/namespace}id": self._curr_anno.get_external_id() } #'tok': self._curr_anno.trans.simple() }
+                            if 'pos' in self._curr_anno.tags:
+                                annotations['pos'] = self._curr_anno.tags.get('pos')
+                                if 'pos_gen' in self._curr_anno.tags:
+                                    annotations['pos'] += "<" + self._curr_anno.tags.get('pos_gen')
+                            if 'morph' in self._curr_anno.tags:
+                                annotations['msd'] = self._curr_anno.tags.get('morph')
+                            ## TODO this is specific for ren -- add option
+                            if 'lemma_wsd' in self._curr_anno.tags:
+                                annotations['lemma'] = self._curr_anno.tags.get('lemma_wsd')
+
+                            self._curr_anno_xml = ET.Element("w", **annotations)
+                            self._add_element(self._curr_anno_xml, tei_root)
+
                             current_parent = self._curr_anno_xml
+                            while open_tags:
+                                tag, attrib = open_tags.pop()
+                                current_parent = ET.SubElement(current_parent, tag, **attrib)
+
                             self._current_text_element = current_parent
                             self._current_text_attribute = 'text'
 
 
-                            ## test for multiverbation -- part 2
-                            if not char.dipl_bound:
-                                ## TODO part!
-                                self._current_text_element = ET.SubElement(current_parent, "seg")
-                                self._crrent_text_attribute = 'text'
-
                         else:
                             self._curr_anno = None
 
-                    self._add_text(char.dipl_utf)
+                        if self._curr_anno is not None:
+
+                            curr_sent_tag = self._curr_anno.tags.get(self.sent_tag, None)
+
+                            parent_node = tei_root
+
+                            if curr_sent_tag is not None and curr_sent_tag != "None":
+
+                                ## create new sentence node
+                                parent_node = ET.SubElement(parent_node, "s")
+                                if self._curr_anno.tags[self.sent_tag].startswith("Satzteil_"):
+                                    parent_node.set("part", self._curr_anno.tags[self.sent_tag][-1])
+
+                            ## add elements to part
+                            if curr_sent_tag is not None: # or curr_head_tag is not None:
+                                for element in self.curr_part:
+                                    parent_node.append(element)
+                                self.curr_part = []
+
+
+                    def getPlacement(bracket_string):
+
+                        ## ReN: continuation below or above line
+                        if bracket_string.startswith("\\F"):
+                            if bracket_string[2] == "U":
+                                return "below"
+                            elif char.string[2] == "O":
+                                return  "above"
+                        ## ReN: paratext
+                        elif char.string.startswith("*"):
+                            if char.string[1] == "U":
+                                return "bottom"
+                            elif char.string[1] == "O":
+                                return "top"
+                            elif char.string[1] == "T":
+                                return "inline"
+                            elif char.string[1] == "L":
+                                return "margin left"
+                            elif char.string[1] == "R":
+                                return "margin right"
+                            elif char.string[1] == "I":
+                                return "interlinear"
+
+                        ## bracket string does not have a known format
+                        return None
+
+
+                    ## add subtoken information (like strikethrough)
+                    if isinstance(char, Whitespace) or isinstance(char, Multiverbation) or isinstance(char, Univerbation):
+                        pass
+                    elif isinstance(char, IllegibleChar):
+                        self._current_text_element = ET.SubElement(current_parent, "gap", reason="illegible")
+                        self._current_text_attribute = 'tail'
+                    elif isinstance(char, Addition) or isinstance(char, Correction) or isinstance(char, Continuation):
+                        if char.opening:
+                            current_parent = ET.SubElement(current_parent, "add")
+                            placement = getPlacement(char.string)
+                            if placement is not None:
+                                current_parent.set("place", placement)
+                            self._current_text_element = current_parent
+                            self._current_text_attribute = 'text'
+                        else:
+                            current_parent = current_parent.getparent()
+                            self._current_text_attribute = 'tail'
+                    elif isinstance(char, Note):
+                        if char.opening:
+                            current_parent = ET.SubElement(current_parent, "note")
+                            placement = getPlacement(char.string)
+                            if placement is not None:
+                                current_parent.set("place", placement)
+                            self._current_text_element = current_parent
+                            self._current_text_attribute = 'text'
+                        else:
+                            current_parent = current_parent.getparent()
+                            self._current_text_attribute = 'tail'
+                    elif isinstance(char, Recognizable):
+                        if char.opening:
+                            current_parent = ET.SubElement(current_parent, "unclear")
+                            self._current_text_element = current_parent
+                            self._current_text_attribute = 'text'
+                        else:
+                            current_parent = current_parent.getparent()
+                            self._current_text_attribute = 'tail'
+                    elif isinstance(char, ExpandedAbbreviation):
+                        if char.opening:
+                            current_parent = ET.SubElement(current_parent, "expan")
+                            self._current_text_element = current_parent
+                            self._current_text_attribute = 'text'
+                        else:
+                            current_parent = current_parent.getparent()
+                            self._current_text_attribute = 'tail'
+                    elif isinstance(char, Strikethrough):
+                        if char.opening:
+                            current_parent = ET.SubElement(current_parent, "del")
+                            self._current_text_element = current_parent
+                            self._current_text_attribute = 'text'
+                        else:
+                            current_parent = current_parent.getparent()
+                            self._current_text_attribute = 'tail'
+                    else:
+                        self._add_text(char.string)
 
             elif type(token) == CoraComment:
                 ## TODO what about type?
-                comment_element = ET.SubElement(tei_root, "comment", type="editorial")
+                comment_element = ET.SubElement(tei_root, "note", type="editorial")
                 comment_element.text = token.content
+
+        ## elements not assigned to a part
+        if self.curr_part:
+            for element in self.curr_part:
+                tei_root.append(element)
 
         return tei_doc
 
