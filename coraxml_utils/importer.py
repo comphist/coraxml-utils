@@ -368,8 +368,8 @@ class CoraXMLImporter:
                               lambda element: {'extid': element.attrib['id'], 'name': element.attrib['name']},
                               lambda dictionary: Line(dictionary['name'], dictionary['subelements'], extid=dictionary['extid']))
         columns = self._connect_with_layout_elements(root, 'column', lines, 'line',
-                              lambda element: {'extid': element.attrib['id']},
-                              lambda dictionary: Column(dictionary['subelements'], extid=dictionary['extid']))
+                              lambda element: {'extid': element.attrib['id'], 'name': element.attrib.get('name', None)},
+                              lambda dictionary: Column(dictionary['subelements'], extid=dictionary['extid'], name=dictionary['name']))
         pages = self._connect_with_layout_elements(root, 'page', columns, 'column',
                               lambda element: {'extid': element.attrib['id'], 'name': element.attrib['no'], 'side': element.attrib.get('side', None)},
                               lambda dictionary: Page(dictionary['name'], dictionary['side'], dictionary['subelements'], extid=dictionary['extid']))
