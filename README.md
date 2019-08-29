@@ -19,7 +19,7 @@ It consists of:
 
 A CorA-XML file is represented in our data model by the `Document` object. The internal structure of `Document` objects reflects the fact that they are meant to represent historical prints and manuscripts. They thus also model the layout of text on pages. 
 
-![document model viz](docmodel.png)
+![document model viz](res/docmodel.png)
 
 
 ## Transcriptions
@@ -39,7 +39,7 @@ A `Trans` object thus has two essential methods: `tokenize_dipl` and `tokenize_a
 For the processing of transcriptions, `coraxml_utils` makes use of a detailed character class model.
 
 Visualization of character class hierarchy:
-![character model overview](charclasses.png)
+![character model overview](res/charclasses.png)
 
 
 
