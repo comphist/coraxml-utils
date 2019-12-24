@@ -1,9 +1,9 @@
-
 import re
 import itertools
 import sys
 import logging
-logging.basicConfig(format='%(levelname)s: %(message)s')
+
+logging.basicConfig(format="%(levelname)s: %(message)s")
 logger = logging.getLogger()
 
 from collections import defaultdict
@@ -17,15 +17,15 @@ from lxml import etree as ET
 
 
 def create_importer(file_format, dialect=None, **kwargs):
-    if file_format == 'coraxml':
+    if file_format == "coraxml":
         if dialect in parser.dialect_mapper:
             cora_importer = CoraXMLImporter(parser.dialect_mapper[dialect], **kwargs)
-            if dialect == 'rem':
-                cora_importer.tok_dipl_tag = 'tok_dipl'
-                cora_importer.tok_anno_tag = 'tok_anno'
-            elif dialect == 'ren':
-                cora_importer.tok_dipl_tag = 'dipl'
-                cora_importer.tok_anno_tag = 'anno'
+            if dialect == "rem":
+                cora_importer.tok_dipl_tag = "tok_dipl"
+                cora_importer.tok_anno_tag = "tok_anno"
+            elif dialect == "ren":
+                cora_importer.tok_dipl_tag = "dipl"
+                cora_importer.tok_anno_tag = "anno"
                 cora_importer.force_retokenization = True
                 cora_importer.add_dipl_whitespace = True
             return cora_importer
@@ -44,6 +44,7 @@ def create_importer(file_format, dialect=None, **kwargs):
     else:
         raise ValueError("File format " + file_format + " is not supported.")
 
+
 ## TODO project specific functions!
 def parse_header(header_string):
 
@@ -53,15 +54,22 @@ def parse_header(header_string):
         ## skip empty lines
         if not header_line:
             continue
-        key, *val = header_line.split(':')
+        key, *val = header_line.split(":")
         header[key] = val if val else ""
 
     return header
 
-class CoraXMLImporter:
 
-    def __init__(self, token_parser, strict=True, force_retokenization=False,
-                 tok_dipl_tag="dipl", tok_anno_tag="mod", add_dipl_whitespace=False):
+class CoraXMLImporter:
+    def __init__(
+        self,
+        token_parser,
+        strict=True,
+        force_retokenization=False,
+        tok_dipl_tag="dipl",
+        tok_anno_tag="mod",
+        add_dipl_whitespace=False,
+    ):
 
         self.tok_dipl_tag = tok_dipl_tag
         self.tok_anno_tag = tok_anno_tag
@@ -72,10 +80,9 @@ class CoraXMLImporter:
 
         self.add_dipl_whitespace = add_dipl_whitespace
 
-
     def _create_dipl_token(self, dipl_element, trans):
 
-        return TokDipl(trans, extid=dipl_element.attrib['id'])
+        return TokDipl(trans, extid=dipl_element.attrib["id"])
 
     def _create_anno_token(self, anno_element, trans):
 
@@ -85,67 +92,91 @@ class CoraXMLImporter:
 
         for annotation_element in anno_element:
 
-            if annotation_element.tag == 'cora-flag':
-                flagname = annotation_element.attrib['name']
+            if annotation_element.tag == "cora-flag":
+                flagname = annotation_element.attrib["name"]
                 if flagname in flags:
-                    logging.warning('Flag ' + flagname + 
-                                    ' is set twice for anno-token ' + anno_element.attrib['id'] + '.')
+                    logging.warning(
+                        "Flag "
+                        + flagname
+                        + " is set twice for anno-token "
+                        + anno_element.attrib["id"]
+                        + "."
+                    )
                 flags.add(flagname)
             else:
                 tagname = annotation_element.tag
                 if tagname in tags:
-                    logging.warning('Tag ' + tagname + 
-                                    ' is set twice for anno-token ' + anno_element.attrib['id'] + '.')
-                tags[tagname] = annotation_element.attrib.get('tag', "")
+                    logging.warning(
+                        "Tag "
+                        + tagname
+                        + " is set twice for anno-token "
+                        + anno_element.attrib["id"]
+                        + "."
+                    )
+                tags[tagname] = annotation_element.attrib.get("tag", "")
 
         ## the attribute checked is not obligatory
-        checked = 'checked' in anno_element.attrib and anno_element.attrib['checked'] == 'y'
+        checked = (
+            "checked" in anno_element.attrib and anno_element.attrib["checked"] == "y"
+        )
 
-        return TokAnno(trans,
-            tags=tags, flags=flags, checked=checked, extid=anno_element.attrib['id']
+        return TokAnno(
+            trans,
+            tags=tags,
+            flags=flags,
+            checked=checked,
+            extid=anno_element.attrib["id"],
         )
 
     def _create_cora_token(self, coratoken_element, line_endings):
-        thistoken_id = coratoken_element.attrib['id']
+        thistoken_id = coratoken_element.attrib["id"]
         ## get dipl and anno elements
         dipl_tokens = coratoken_element.findall(self.tok_dipl_tag)
         anno_tokens = coratoken_element.findall(self.tok_anno_tag)
         thistoken_errs = list()
 
         ## test that transcriptions are the same for the different levels
-        token_trans = coratoken_element.attrib['trans']
-        dipl_trans_cat = "".join(dipl_element.attrib['trans'] 
-                                 for dipl_element in dipl_tokens)
-        anno_trans_cat = "".join(anno_element.attrib['trans'] 
-                                 for anno_element in anno_tokens)
+        token_trans = coratoken_element.attrib["trans"]
+        dipl_trans_cat = "".join(
+            dipl_element.attrib["trans"] for dipl_element in dipl_tokens
+        )
+        anno_trans_cat = "".join(
+            anno_element.attrib["trans"] for anno_element in anno_tokens
+        )
 
         if dipl_trans_cat != token_trans:
-            logging.warning(("Token transcription '{ttrans}' not equal to "
-                             "concatenation of dipl transcriptions '{dtrans}'. " 
-                             "Dipl transcriptions will "
-                             "be used for token {id}").format(id=thistoken_id, 
-                                                              ttrans=token_trans, 
-                                                              dtrans=dipl_trans_cat))
+            logging.warning(
+                (
+                    "Token transcription '{ttrans}' not equal to "
+                    "concatenation of dipl transcriptions '{dtrans}'. "
+                    "Dipl transcriptions will "
+                    "be used for token {id}"
+                ).format(id=thistoken_id, ttrans=token_trans, dtrans=dipl_trans_cat)
+            )
             thistoken_errs.append("err_cat_dipl")
         if anno_tokens:
             if anno_trans_cat != dipl_trans_cat:
-                logging.warning(("Concatenation of anno '{atrans}' and "
-                                 "dipl '{dtrans}' transcriptions not equal. "
-                                 "Dipl transcription will be "
-                                 "used for token {id}").format(id=thistoken_id,
-                                                               atrans=anno_trans_cat,
-                                                               dtrans=dipl_trans_cat))
+                logging.warning(
+                    (
+                        "Concatenation of anno '{atrans}' and "
+                        "dipl '{dtrans}' transcriptions not equal. "
+                        "Dipl transcription will be "
+                        "used for token {id}"
+                    ).format(
+                        id=thistoken_id, atrans=anno_trans_cat, dtrans=dipl_trans_cat
+                    )
+                )
                 thistoken_errs.append("err_cat_anno")
 
         ## create transcription of the token with linebreaks (this is how CorA does it, when editing tokens)
         ## adding optional whitespace between dipls (currently the ren parser needs whitespace to determine dipl breaks)
-        parse_trans = ''
+        parse_trans = ""
         for dipl_tok in dipl_tokens:
-            parse_trans += dipl_tok.attrib['trans']
-            if dipl_tok.attrib['id'] in line_endings:
-                parse_trans += '\n'
+            parse_trans += dipl_tok.attrib["trans"]
+            if dipl_tok.attrib["id"] in line_endings:
+                parse_trans += "\n"
             elif self.add_dipl_whitespace:
-                parse_trans += ' '
+                parse_trans += " "
         parse_trans = parse_trans.strip()
 
         trans_valid = True
@@ -155,84 +186,147 @@ class CoraXMLImporter:
             ## test if parses match
             parsed_dipl_toks = parsed_token.tokenize_dipl()
             if len(parsed_dipl_toks) != len(dipl_tokens):
-                logging.warning(("Change in number of dipls "
-                                 "('{old}' -> '{new}') for token {id}").format(id=thistoken_id,
-                                                                          old=" ".join(d.get("trans") for d in dipl_tokens),
-                                                                          new=" ".join(d.trans() for d in parsed_dipl_toks)))
+                logging.warning(
+                    (
+                        "Change in number of dipls "
+                        "('{old}' -> '{new}') for token {id}"
+                    ).format(
+                        id=thistoken_id,
+                        old=" ".join(d.get("trans") for d in dipl_tokens),
+                        new=" ".join(d.trans() for d in parsed_dipl_toks),
+                    )
+                )
                 thistoken_errs.append("err_nr_dipl")
                 trans_valid = False
-            elif any([dipl1.trans() != dipl2.attrib['trans'] for dipl1, dipl2 in zip(parsed_dipl_toks, dipl_tokens)]):
-                logging.warning(("Change in tokenization for dipls of token {id}: "
-                                "'{old}' -> '{new}'").format(id=thistoken_id,
-                                                             old=" ".join(d.get("trans") for d in dipl_tokens),
-                                                             new=" ".join(d.trans() for d in parsed_dipl_toks)))
+            elif any(
+                [
+                    dipl1.trans() != dipl2.attrib["trans"]
+                    for dipl1, dipl2 in zip(parsed_dipl_toks, dipl_tokens)
+                ]
+            ):
+                logging.warning(
+                    (
+                        "Change in tokenization for dipls of token {id}: "
+                        "'{old}' -> '{new}'"
+                    ).format(
+                        id=thistoken_id,
+                        old=" ".join(d.get("trans") for d in dipl_tokens),
+                        new=" ".join(d.trans() for d in parsed_dipl_toks),
+                    )
+                )
                 thistoken_errs.append("err_tok_dipl")
                 # trans_valid = False ??
 
             parsed_anno_toks = parsed_token.tokenize_anno()
             if len(parsed_anno_toks) != len(anno_tokens):
-                logging.warning(("Change in number of annos "
-                                 "('{old}' -> '{new}') for token {id}").format(id=thistoken_id,
-                                                        old=" ".join(a.get("trans") for a in anno_tokens),
-                                                        new=" ".join(a.trans() for a in parsed_anno_toks)))
+                logging.warning(
+                    (
+                        "Change in number of annos "
+                        "('{old}' -> '{new}') for token {id}"
+                    ).format(
+                        id=thistoken_id,
+                        old=" ".join(a.get("trans") for a in anno_tokens),
+                        new=" ".join(a.trans() for a in parsed_anno_toks),
+                    )
+                )
                 thistoken_errs.append("err_nr_anno")
                 trans_valid = False
-            elif any(anno1.trans() != anno2.attrib['trans']
-                     for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)):
-                logging.warning(("Change in tokenization for annos of token {id}: "
-                                "'{old}' -> '{new}'").format(id=thistoken_id,
-                                                        old=" ".join(a.get("trans") for a in anno_tokens),
-                                                        new=" ".join(a.trans() for a in parsed_anno_toks)))
+            elif any(
+                anno1.trans() != anno2.attrib["trans"]
+                for anno1, anno2 in zip(parsed_anno_toks, anno_tokens)
+            ):
+                logging.warning(
+                    (
+                        "Change in tokenization for annos of token {id}: "
+                        "'{old}' -> '{new}'"
+                    ).format(
+                        id=thistoken_id,
+                        old=" ".join(a.get("trans") for a in anno_tokens),
+                        new=" ".join(a.trans() for a in parsed_anno_toks),
+                    )
+                )
                 thistoken_errs.append("err_tok_anno")
                 # trans_valid = False ??
 
             ### Transform XML-Elements into objects
             if trans_valid or self.force_retokenization:
 
-                dipl_tokens = [self._create_dipl_token(dipl_element, dipl_parse)
-                               for dipl_element, dipl_parse in zip(dipl_tokens, parsed_dipl_toks)]
+                dipl_tokens = [
+                    self._create_dipl_token(dipl_element, dipl_parse)
+                    for dipl_element, dipl_parse in zip(dipl_tokens, parsed_dipl_toks)
+                ]
 
-                anno_tokens = [self._create_anno_token(anno_element, anno_parse)
-                               for anno_element, anno_parse in zip(anno_tokens, parsed_anno_toks)]
+                anno_tokens = [
+                    self._create_anno_token(anno_element, anno_parse)
+                    for anno_element, anno_parse in zip(anno_tokens, parsed_anno_toks)
+                ]
 
             else:
 
-                dipl_tokens = [self._create_dipl_token(dipl_element, 
-                                                       self.tokenparser.parse(dipl_element.attrib['trans'], output_type="dipl"))
-                               for dipl_element in dipl_tokens]
+                dipl_tokens = [
+                    self._create_dipl_token(
+                        dipl_element,
+                        self.tokenparser.parse(
+                            dipl_element.attrib["trans"], output_type="dipl"
+                        ),
+                    )
+                    for dipl_element in dipl_tokens
+                ]
 
-                anno_tokens = [self._create_anno_token(anno_element, 
-                                                       self.tokenparser.parse(anno_element.attrib['trans'], output_type="anno"))
-                               for anno_element in anno_tokens]
+                anno_tokens = [
+                    self._create_anno_token(
+                        anno_element,
+                        self.tokenparser.parse(
+                            anno_element.attrib["trans"], output_type="anno"
+                        ),
+                    )
+                    for anno_element in anno_tokens
+                ]
 
                 if self.strict:
                     self.valid_document = False
-                    logging.error(("Tokenization given in XML does not match "
-                                   "tokenization of the given parser for token {0}").format(coratoken_element.attrib['id']))
+                    logging.error(
+                        (
+                            "Tokenization given in XML does not match "
+                            "tokenization of the given parser for token {0}"
+                        ).format(coratoken_element.attrib["id"])
+                    )
                 ### Probably unnecessary to report this again here
                 # else:
                 #     logging.warning("Tokenization given in XML does not match tokenization of the given parser - using tokenization from XML. This might lead to unexpected behaviour!")
 
-
-            return CoraToken(parsed_token, dipl_tokens, anno_tokens, extid=coratoken_element.attrib['id'],
-                             errors=thistoken_errs)
+            return CoraToken(
+                parsed_token,
+                dipl_tokens,
+                anno_tokens,
+                extid=coratoken_element.attrib["id"],
+                errors=thistoken_errs,
+            )
 
         except parser.ParseError as e:
             ## parse error - return an empty token
-            logging.error("Token could not be parsed: " + parse_trans + " Message: " + e.message)
+            logging.error(
+                "Token could not be parsed: " + parse_trans + " Message: " + e.message
+            )
             trans_valid = False
-            return CoraToken(None, [], [], extid=coratoken_element.attrib['id'])
-
+            return CoraToken(None, [], [], extid=coratoken_element.attrib["id"])
 
     def _get_range(self, element):
-        if element.attrib['range']:
-            return element.attrib['range'].split('..')
+        if element.attrib["range"]:
+            return element.attrib["range"].split("..")
         else:
             ## empty range - should not happen but appears sometimes
             return None
 
-    def _connect_with_layout_elements(self, root, layout_type, subelements, subelement_type, 
-                                      extract_from_xml, create_object):
+    def _connect_with_layout_elements(
+        self,
+        root,
+        layout_type,
+        subelements,
+        subelement_type,
+        extract_from_xml,
+        create_object,
+    ):
         """
         Connects elements like lines with higher elements like columns.
 
@@ -253,14 +347,27 @@ class CoraXMLImporter:
         for element in root.findall("layoutinfo/" + layout_type):
             my_range = self._get_range(element)
             if my_range is None:
-                logging.warn('Dropped empty ' + layout_type + ' (' + element.attrib['id'] + ')')
+                logging.warn(
+                    "Dropped empty " + layout_type + " (" + element.attrib["id"] + ")"
+                )
                 continue
             if my_range[0] in beginnings:
-                logging.error('Two ' + layout_type + 's that start at the same position: ' + 
-                              element.attrib['id'] + ' and ' + beginnings[my_range[0]]['extid'])
-            beginnings.append({**extract_from_xml(element), 
-                               'beginning': my_range[0], 
-                               'end': my_range[-1], 'subelements': []})
+                logging.error(
+                    "Two "
+                    + layout_type
+                    + "s that start at the same position: "
+                    + element.attrib["id"]
+                    + " and "
+                    + beginnings[my_range[0]]["extid"]
+                )
+            beginnings.append(
+                {
+                    **extract_from_xml(element),
+                    "beginning": my_range[0],
+                    "end": my_range[-1],
+                    "subelements": [],
+                }
+            )
 
         beginnings.reverse()
         next_element = beginnings.pop()
@@ -269,19 +376,35 @@ class CoraXMLImporter:
         for subelement in subelements:
 
             if next_element is None:
-                logging.warn('No more ' + layout_type + 's for ' + subelement_type + ' (' + subelement.id +  ')')
+                logging.warn(
+                    "No more "
+                    + layout_type
+                    + "s for "
+                    + subelement_type
+                    + " ("
+                    + subelement.id
+                    + ")"
+                )
 
             if not open_element:
-                if subelement.id == next_element['beginning']:
+                if subelement.id == next_element["beginning"]:
                     open_element = True
                 else:
                     # warn and continue
-                    logging.warn('Expected ' + subelement_type + ' with id ' + next_element['beginning'] +
-                                 ' but found ' + subelement_type + ' with id ' + subelement.id)
+                    logging.warn(
+                        "Expected "
+                        + subelement_type
+                        + " with id "
+                        + next_element["beginning"]
+                        + " but found "
+                        + subelement_type
+                        + " with id "
+                        + subelement.id
+                    )
 
-            subelement.container = next_element['extid']
-            next_element['subelements'].append(subelement)
-            if next_element['end'] == subelement.id:
+            subelement.container = next_element["extid"]
+            next_element["subelements"].append(subelement)
+            if next_element["end"] == subelement.id:
                 layout_elements.append(create_object(next_element))
                 open_element = False
                 if beginnings:
@@ -290,16 +413,25 @@ class CoraXMLImporter:
                     next_element = None
 
         if beginnings:
-            logger.warn('Dropped ' + layout_type + 
-                        '(s) starting with nonexistent ' + subelement_type + 
-                        ': ' + str([beginning['extid'] for beginning in reversed(beginnings)]))
+            logger.warn(
+                "Dropped "
+                + layout_type
+                + "(s) starting with nonexistent "
+                + subelement_type
+                + ": "
+                + str([beginning["extid"] for beginning in reversed(beginnings)])
+            )
         if open_element:
-            logger.warn('Dropped ' + layout_type + 
-                        '(s) ending with nonexistent ' + subelement_type + 
-                        ': ' + next_element['extid'])
+            logger.warn(
+                "Dropped "
+                + layout_type
+                + "(s) ending with nonexistent "
+                + subelement_type
+                + ": "
+                + next_element["extid"]
+            )
 
         return layout_elements
-
 
     def import_from_file(self, filename):
 
@@ -320,25 +452,23 @@ class CoraXMLImporter:
         dipl_tokens = []
         for element in root:
 
-            if element.tag == 'token':
+            if element.tag == "token":
                 curr_token = self._create_cora_token(element, line_endings)
                 tokens.append(curr_token)
                 dipl_tokens.extend(curr_token.tok_dipls)
-            elif element.tag == 'comment':
-                tokens.append(CoraComment(element.attrib['type'], element.text))
+            elif element.tag == "comment":
+                tokens.append(CoraComment(element.attrib["type"], element.text))
 
         # Get shifttags
         shifttag_beginnings = defaultdict(list)
         shifttags = []
         open_shifttags = []
 
-        for shifttag_element in root.find('shifttags'):
+        for shifttag_element in root.find("shifttags"):
             my_range = self._get_range(shifttag_element)
-            shifttag_beginnings[my_range[0]].append({
-                'type': shifttag_element.tag,
-                'end': my_range[-1],
-                'tokens': []
-            })
+            shifttag_beginnings[my_range[0]].append(
+                {"type": shifttag_element.tag, "end": my_range[-1], "tokens": []}
+            )
 
         for cora_token in tokens:
             # Skip comments
@@ -350,34 +480,76 @@ class CoraXMLImporter:
             # add token to all open_shifttags and create shifttag objects for finished shifttags
             still_open_shifttags = []
             for shifttag in open_shifttags:
-                shifttag['tokens'].append(cora_token)
-                if cora_token.id == shifttag['end']:
-                    shifttags.append(ShiftTag(shifttag['type'], shifttag['tokens']))
+                shifttag["tokens"].append(cora_token)
+                if cora_token.id == shifttag["end"]:
+                    shifttags.append(ShiftTag(shifttag["type"], shifttag["tokens"]))
                 else:
                     still_open_shifttags.append(shifttag)
             open_shifttags = still_open_shifttags
 
         if shifttag_beginnings:
-            logging.warn("Dropped shifttag(s) starting with nonexistent token: " + str(list(shifttag_beginnings.keys())))
+            logging.warn(
+                "Dropped shifttag(s) starting with nonexistent token: "
+                + str(list(shifttag_beginnings.keys()))
+            )
 
         if open_shifttags:
-            logging.warn("Dropped shifttag(s) ending with nonexistent token: " + str([shifttag['end'] for shifttag in open_shifttags]))
+            logging.warn(
+                "Dropped shifttag(s) ending with nonexistent token: "
+                + str([shifttag["end"] for shifttag in open_shifttags])
+            )
 
         # Get layout info
-        lines = self._connect_with_layout_elements(root, 'line', dipl_tokens, 'dipl token',
-                              lambda element: {'extid': element.attrib['id'], 'name': element.attrib['name']},
-                              lambda dictionary: Line(dictionary['name'], dictionary['subelements'], extid=dictionary['extid']))
-        columns = self._connect_with_layout_elements(root, 'column', lines, 'line',
-                              lambda element: {'extid': element.attrib['id'], 'name': element.attrib.get('name', None)},
-                              lambda dictionary: Column(dictionary['subelements'], extid=dictionary['extid'], name=dictionary['name']))
-        pages = self._connect_with_layout_elements(root, 'page', columns, 'column',
-                              lambda element: {'extid': element.attrib['id'], 'name': element.attrib['no'], 'side': element.attrib.get('side', None)},
-                              lambda dictionary: Page(dictionary['name'], dictionary['side'], dictionary['subelements'], extid=dictionary['extid']))
+        lines = self._connect_with_layout_elements(
+            root,
+            "line",
+            dipl_tokens,
+            "dipl token",
+            lambda element: {
+                "extid": element.attrib["id"],
+                "name": element.attrib["name"],
+            },
+            lambda dictionary: Line(
+                dictionary["name"], dictionary["subelements"], extid=dictionary["extid"]
+            ),
+        )
+        columns = self._connect_with_layout_elements(
+            root,
+            "column",
+            lines,
+            "line",
+            lambda element: {
+                "extid": element.attrib["id"],
+                "name": element.attrib.get("name", None),
+            },
+            lambda dictionary: Column(
+                dictionary["subelements"],
+                extid=dictionary["extid"],
+                name=dictionary["name"],
+            ),
+        )
+        pages = self._connect_with_layout_elements(
+            root,
+            "page",
+            columns,
+            "column",
+            lambda element: {
+                "extid": element.attrib["id"],
+                "name": element.attrib["no"],
+                "side": element.attrib.get("side", None),
+            },
+            lambda dictionary: Page(
+                dictionary["name"],
+                dictionary["side"],
+                dictionary["subelements"],
+                extid=dictionary["extid"],
+            ),
+        )
 
         ## collect document information and create Document object
         sigle = ""
         name = ""
-        cora_header = root.find('cora-header')
+        cora_header = root.find("cora-header")
         if cora_header is not None:
             sigle = cora_header.get("sigle", "")
             name = cora_header.get("name", "")
@@ -387,7 +559,9 @@ class CoraXMLImporter:
         # header_string = ET.tostring(header_element, encoding="unicode", method="xml")
         header_string = header_element.text
         if not list(header_element):
-            header = parse_header(ET.tostring(header_element, encoding="unicode", method="text"))
+            header = parse_header(
+                ET.tostring(header_element, encoding="unicode", method="text")
+            )
         else:
             # header is structured as xml - transform to dict
             header = dict()
@@ -395,28 +569,36 @@ class CoraXMLImporter:
                 header[header_part.tag] = header_part.text
 
         if self.valid_document:
-            return Document(sigle, name, header, pages, tokens, shifttags, header_string)
+            return Document(
+                sigle, name, header, pages, tokens, shifttags, header_string
+            )
         else:
             return None
 
 
 class TransImporter:
-
     def __init__(self, parser):
         self.TokenParser = parser()
         self.Tokenizer = tokenizer.RexTokenizer()
         # allowed bibinfo format
-         # pageno, side, col, linename
-        self.BIBINFO_FORMAT = re.compile(r"""^(?P<sigle>\S+)[-_]
+        # pageno, side, col, linename
+        self.BIBINFO_FORMAT = re.compile(
+            r"""^(?P<sigle>\S+)[-_]
                                              (?P<page>[A-Z0-9]*)
                                              (?P<side>[vr]?)
                                              (?P<col>[a-q]?),?
-                                             (?P<line>\d+)$""", re.VERBOSE)
+                                             (?P<line>\d+)$""",
+            re.VERBOSE,
+        )
 
     def _add_line(self, document, bibinfo, dipl_tokens):
 
         if not dipl_tokens:
-            logging.warning("Line contains no token - skipped: {sigle}-{page}{side}{col},{line}".format(**bibinfo))
+            logging.warning(
+                "Line contains no token - skipped: {sigle}-{page}{side}{col},{line}".format(
+                    **bibinfo
+                )
+            )
         else:
             line = document.add_line(bibinfo)
             line.dipls = dipl_tokens
@@ -429,15 +611,19 @@ class TransImporter:
                 try:
                     bibinfos.append(self.BIBINFO_FORMAT.match(bibinfo).groupdict())
                 except:
-                    logging.error("Bibinfo hat falsches Format (Zeile {}): {}".format(line+1, bibinfo))
+                    logging.error(
+                        "Bibinfo hat falsches Format (Zeile {}): {}".format(
+                            line + 1, bibinfo
+                        )
+                    )
                     self.valid_transcription = False
                     ## use last bibinfo to create current info
                     curr_bibinfo = dict(bibinfos[-1])
-                    curr_bibinfo['line'] = '%02d' % (int(curr_bibinfo['line']) + 1)
+                    curr_bibinfo["line"] = "%02d" % (int(curr_bibinfo["line"]) + 1)
                     bibinfos.append(curr_bibinfo)
             else:
                 curr_bibinfo = dict(bibinfos[-1])
-                curr_bibinfo['line'] = '%02d' % (int(curr_bibinfo['line']) + 1)
+                curr_bibinfo["line"] = "%02d" % (int(curr_bibinfo["line"]) + 1)
                 bibinfos.append(curr_bibinfo)
 
         return bibinfos
@@ -474,8 +660,9 @@ class TransImporter:
         new_doc.header_string = "\n".join(header_lines)
         new_doc.header = parse_header(new_doc.header_string)
         try:
-            new_doc.sigle = re.search(r"[^:\s]:\s+([\w\d]+)", 
-                                      new_doc.header_string).group(1)
+            new_doc.sigle = re.search(
+                r"[^:\s]:\s+([\w\d]+)", new_doc.header_string
+            ).group(1)
             if "_" in new_doc.sigle:
                 new_doc.sigle = new_doc.sigle.split("_")[0]
         except AttributeError:
@@ -525,22 +712,31 @@ class TransImporter:
                     bibstr = "{sigle}-{page}{side}{col},{line}".format(**new_bibinfo)
                     ## put line back to iterator
                     bibinfo_iter = itertools.chain([new_bibinfo], bibinfo_iter)
-                    logging.error("Transcription could not be parsed: {0}\t{1}".format(bibstr,
-                                                                                       chunk.string))
+                    logging.error(
+                        "Transcription could not be parsed: {0}\t{1}".format(
+                            bibstr, chunk.string
+                        )
+                    )
                     print(e.message)
                     self.valid_transcription = False
 
                     #  in case the erroneous transcription also contains a newline
                     for c in chunk.string:
                         if c == "\n":
-                             # start a new line
+                            # start a new line
                             try:
-                                current_line_dipls[-1].trans.parse[-1].line_break_after = True
-                                self._add_line(new_doc, next(bibinfo_iter), current_line_dipls)
+                                current_line_dipls[-1].trans.parse[
+                                    -1
+                                ].line_break_after = True
+                                self._add_line(
+                                    new_doc, next(bibinfo_iter), current_line_dipls
+                                )
                                 current_line_dipls = []
                             except StopIteration:
                                 print(new_bibinfo)
-                                logging.error("Document appears truncated: " + str(new_token))                           
+                                logging.error(
+                                    "Document appears truncated: " + str(new_token)
+                                )
 
                     continue
 
@@ -556,15 +752,25 @@ class TransImporter:
                     if isinstance(c, LineBreak):
                         # start a new line
                         try:
-                            current_line_dipls[-1].trans.parse[-1].line_break_after = True
-                            self._add_line(new_doc, next(bibinfo_iter), current_line_dipls)
+                            current_line_dipls[-1].trans.parse[
+                                -1
+                            ].line_break_after = True
+                            self._add_line(
+                                new_doc, next(bibinfo_iter), current_line_dipls
+                            )
                             current_line_dipls = []
                         except StopIteration:
                             print(new_bibinfo)
-                            logging.error("Document appears truncated: " + str(new_token))
+                            logging.error(
+                                "Document appears truncated: " + str(new_token)
+                            )
                         except AttributeError as e:
                             if not bibinfo_match:
-                                logging.error("Bibinfo '{0}' has wrong format".format(next_bibinfo))
+                                logging.error(
+                                    "Bibinfo '{0}' has wrong format".format(
+                                        next_bibinfo
+                                    )
+                                )
                             else:
                                 raise e
 
@@ -577,12 +783,10 @@ class TransImporter:
                     t.tok_annos.append(TokAnno(anno))
 
                 new_doc.tokens.append(t)
-                # if open_shifttags, add new coratoken obj 
+                # if open_shifttags, add new coratoken obj
                 if open_shifttags:
                     shifttag_stack.append(t)
 
-
-                            
             elif isinstance(chunk, tokenizer.Newline):
                 ## add line to document
                 try:
@@ -593,10 +797,11 @@ class TransImporter:
                     pass
                 except AttributeError as e:
                     if not bibinfo_match:
-                        logging.error("Bibinfo '{0}' has wrong format".format(next_bibinfo))
+                        logging.error(
+                            "Bibinfo '{0}' has wrong format".format(next_bibinfo)
+                        )
                     else:
                         raise e
-                    
 
         ## add last line
         if current_line_dipls:
@@ -606,7 +811,9 @@ class TransImporter:
         try:
             leftover_bibinfo = next(bibinfo_iter)
             if leftover_bibinfo:
-                logging.warning("Bibinfo iterator not empty: line numbers probably wrong")
+                logging.warning(
+                    "Bibinfo iterator not empty: line numbers probably wrong"
+                )
                 print(leftover_bibinfo)
                 print(list(bibinfo_iter))
         except StopIteration:
@@ -619,104 +826,106 @@ class TransImporter:
         else:
             return None
 
+
 class BonnXMLImporter:
-    
     def __init__(self, token_parser):
         self.tokenizer = tokenizer.RexTokenizer()
         self.tokenparser = token_parser()
 
     def _create_header(self, bonnHeader, output="dict"):
-        
-        #Header mapping
-        #(BonnXML element name, attribute name, target name)
-        header_mapping = [("general/title", "val", "text"), \
-                          ("general/abbreviation", "ab_ddd", "abbr_ddd"), \
-                          ("general/abbreviation", "ab_mwb", "abbr_mwb"), \
-                          ("general/text_field", "val", "topic"), \
-                          ("general/text_type", "val", "text-type"), \
-                          ("general/text_form", "val", "genre"), \
-                          ("general/ref", "val", "reference"), \
-                          ("general/sec_ref", "val", "reference-secondary"), \
-                          ("document_medium/library", "val", "library"), \
-                          ("document_medium/shelfmark", "val", "library-shelfmark"), \
-                          ("document_medium/census", "val", "online"), \
-                          ("entry/medium_type", "val", "medium"), \
-                          ("entry/extent", "val", "extent"), \
-                          ("entry/extract", "val", "extract"), \
-                          ("entry/language", "val", "language"), \
-                          ("entry/dialect_region", "val", "language-type"), \
-                          ("entry/dialect_area", "val", "language-region"), \
-                          ("entry/dialect", "val", "language-area"), \
-                          ("entry/localization", "val", "place"), \
-                          ("entry/dating", "val", "time"), \
-                          ("entry/specific_features", "val", "notes-manuscript"), \
-                          ("text/text_dating", "val", "date"), \
-                          ("text/text_localization", "val", "text-place"), \
-                          ("text/author", "val", "text-author"), \
-                          ("text/textdialect", "val", "text-language"), \
-                          ("text/foreign_language_dependence", "val", "text-source"), \
-                          ("text/edition", "val", "edition"), \
-                          ("corpusStmt/corpus", "val", "corpus"), \
-                          ("corpusStmt/transcription_notes", "val", "notes-transcription"), \
-                          ("corpusStmt/annotation_notes", "val", "notes-annotation"), \
-                          ("respStmt/digitization", "val", "digitization_by"), \
-                          ("respStmt/collation", "val", "collation_by"), \
-                          ("respStmt/pre_editing", "val", "pre_editing_by"), \
-                          ("respStmt/annotation", "val", "annotation_by"), \
-                          ("respStmt/proofreading", "val", "proofreading_by")]
 
-        #If output should be a dictionary:
+        # Header mapping
+        # (BonnXML element name, attribute name, target name)
+        header_mapping = [
+            ("general/title", "val", "text"),
+            ("general/abbreviation", "ab_ddd", "abbr_ddd"),
+            ("general/abbreviation", "ab_mwb", "abbr_mwb"),
+            ("general/text_field", "val", "topic"),
+            ("general/text_type", "val", "text-type"),
+            ("general/text_form", "val", "genre"),
+            ("general/ref", "val", "reference"),
+            ("general/sec_ref", "val", "reference-secondary"),
+            ("document_medium/library", "val", "library"),
+            ("document_medium/shelfmark", "val", "library-shelfmark"),
+            ("document_medium/census", "val", "online"),
+            ("entry/medium_type", "val", "medium"),
+            ("entry/extent", "val", "extent"),
+            ("entry/extract", "val", "extract"),
+            ("entry/language", "val", "language"),
+            ("entry/dialect_region", "val", "language-type"),
+            ("entry/dialect_area", "val", "language-region"),
+            ("entry/dialect", "val", "language-area"),
+            ("entry/localization", "val", "place"),
+            ("entry/dating", "val", "time"),
+            ("entry/specific_features", "val", "notes-manuscript"),
+            ("text/text_dating", "val", "date"),
+            ("text/text_localization", "val", "text-place"),
+            ("text/author", "val", "text-author"),
+            ("text/textdialect", "val", "text-language"),
+            ("text/foreign_language_dependence", "val", "text-source"),
+            ("text/edition", "val", "edition"),
+            ("corpusStmt/corpus", "val", "corpus"),
+            ("corpusStmt/transcription_notes", "val", "notes-transcription"),
+            ("corpusStmt/annotation_notes", "val", "notes-annotation"),
+            ("respStmt/digitization", "val", "digitization_by"),
+            ("respStmt/collation", "val", "collation_by"),
+            ("respStmt/pre_editing", "val", "pre_editing_by"),
+            ("respStmt/annotation", "val", "annotation_by"),
+            ("respStmt/proofreading", "val", "proofreading_by"),
+        ]
+
+        # If output should be a dictionary:
         if output == "dict":
-            
-            #Create new header.
+
+            # Create new header.
             header = dict()
 
-            #For each mapping:
+            # For each mapping:
             for mapping in header_mapping:
 
-                #If the element exists in the BonnXML header:
+                # If the element exists in the BonnXML header:
                 elem = bonnHeader.find(mapping[0])
                 if elem is not None:
 
-                    #Add the information from BonnXML with the target name.
+                    # Add the information from BonnXML with the target name.
                     header[mapping[2]] = elem.attrib[mapping[1]]
 
                 else:
-                    #Otherwise add an empty string.
+                    # Otherwise add an empty string.
                     header[mapping[2]] = ""
-              
-        #Otherwise create an XML subtree.
+
+        # Otherwise create an XML subtree.
         else:
-            
-            #Create new header element.
+
+            # Create new header element.
             header = ET.Element("header")
 
-            #For each mapping:
+            # For each mapping:
             for mapping in header_mapping:
 
-                #If the element exists in the bonnXML header:
+                # If the element exists in the bonnXML header:
                 elem = bonnHeader.find(mapping[0])
                 if elem is not None:
 
-                    #Create a new header subelement
-                    #containing the information from bonnXML.
+                    # Create a new header subelement
+                    # containing the information from bonnXML.
                     child = ET.SubElement(header, mapping[2])
                     child.text = elem.attrib[mapping[1]]
 
                 else:
-                    #Otherwise set the text value to "".
+                    # Otherwise set the text value to "".
                     child = ET.SubElement(header, mapping[2])
                     child.text = ""
 
-            #If the output should be a string
-            #convert the XML tree to a string.
+            # If the output should be a string
+            # convert the XML tree to a string.
             if output == "string":
                 header = ET.tostring(header, encoding="utf-8", method="xml")
 
         if not header:
             logging.error("Header is empty!")
-            
-        #Return the header dictionary, string or element.
+
+        # Return the header dictionary, string or element.
         return header
 
     def _create_dipl_token(self, trans):
@@ -729,59 +938,69 @@ class BonnXMLImporter:
         norm = bonn_token.find("form")
         if norm is not None and "normu" in norm.attrib:
             norm = norm.attrib["normu"]
-        if not norm: norm = "--"
+        if not norm:
+            norm = "--"
         anno.tags["norm"] = norm
 
         lemma = bonn_token.find("lemma")
         if lemma is not None and "inst" in lemma.attrib:
             lemma = lemma.attrib["inst"]
-        if not lemma: lemma = "--"
+        if not lemma:
+            lemma = "--"
         anno.tags["lemma"] = lemma
-        
+
         lemma_gen = bonn_token.find("lemma")
         if lemma_gen is not None and "gen" in lemma_gen.attrib:
             lemma_gen = lemma_gen.attrib["gen"]
-        if not lemma_gen: lemma_gen = "--"
+        if not lemma_gen:
+            lemma_gen = "--"
         anno.tags["lemma_gen"] = lemma_gen
-        
+
         lemma_idmwb = bonn_token.find("lemma")
         if lemma_idmwb is not None and "idmwb" in lemma_idmwb.attrib:
             lemma_idmwb = lemma_idmwb.attrib["idmwb"]
-        if not lemma_idmwb: lemma_idmwb = "--"
+        if not lemma_idmwb:
+            lemma_idmwb = "--"
         anno.tags["lemma_idmwb"] = lemma_idmwb
 
         pos = bonn_token.find("pos")
         if pos is not None and "inst" in pos.attrib:
             pos = pos.attrib["inst"]
-        if pos: anno.tags["pos"] = pos
-        
+        if pos:
+            anno.tags["pos"] = pos
+
         pos_gen = bonn_token.find("pos")
         if pos_gen is not None and "gen" in pos_gen.attrib:
             pos_gen = pos_gen.attrib["gen"]
-        if pos_gen: anno.tags["pos_gen"] = pos_gen
-        
+        if pos_gen:
+            anno.tags["pos_gen"] = pos_gen
+
         infl = bonn_token.find("infl")
         if infl is not None and "val" in infl.attrib:
             infl = infl.attrib["val"].replace("_", ".")
-        if not infl: infl = "--"
+        if not infl:
+            infl = "--"
         anno.tags["infl"] = infl
-        
+
         inflClass = bonn_token.find("inflClass")
         if inflClass is not None and "inst" in inflClass.attrib:
             inflClass = inflClass.attrib["inst"].replace("_", ".")
-        if not inflClass: inflClass = "--"
+        if not inflClass:
+            inflClass = "--"
         anno.tags["inflClass"] = inflClass
 
         inflClass_gen = bonn_token.find("inflClass")
         if inflClass_gen is not None and "gen" in inflClass_gen.attrib:
             inflClass_gen = inflClass_gen.attrib["gen"].replace("_", ".")
-        if not inflClass_gen: inflClass_gen = "--"
+        if not inflClass_gen:
+            inflClass_gen = "--"
         anno.tags["inflClass_gen"] = inflClass_gen
 
         grapho = bonn_token.find("grapho")
         if grapho is not None and "val" in grapho.attrib:
             grapho = grapho.attrib["val"]
-        if not grapho: grapho = "--"
+        if not grapho:
+            grapho = "--"
         anno.tags["grapho"] = grapho
 
         comment = bonn_token.find("comment")
@@ -802,13 +1021,13 @@ class BonnXMLImporter:
                 anno.tags["ref_second_line"] = line
             if "token2" in ref_second.attrib:
                 token = ref_second.attrib["token2"]
-                anno.tags["ref_second_token"] = token                
+                anno.tags["ref_second_token"] = token
 
         return anno
 
     def _get_structure_of_bonn_xml(self, root):
-        #Get document structure
-        #[[(pagename, sidename), [[columnname, [[linename, [tok1, tok2, ...]],
+        # Get document structure
+        # [[(pagename, sidename), [[columnname, [[linename, [tok1, tok2, ...]],
         #                                       [linename, [...]],
         #                                        ...
         #                                      ]
@@ -820,183 +1039,195 @@ class BonnXMLImporter:
         # [(pagename, sidename), [...]
         # ],
         # ...
-        #]
+        # ]
         structure = []
-        
-        #For each page element
+
+        # For each page element
         for page_elem in root.findall("page"):
 
-            #If there are side elements
+            # If there are side elements
             if page_elem.findall("side"):
 
-                #For each side element
+                # For each side element
                 for side_elem in page_elem.findall("side"):
 
-                    #Save [(pagename, sidename), [columnslist]]
-                    structure.append([(page_elem.attrib["count"], side_elem.attrib["count"]), []])
+                    # Save [(pagename, sidename), [columnslist]]
+                    structure.append(
+                        [(page_elem.attrib["count"], side_elem.attrib["count"]), []]
+                    )
 
-                    #If there are column elements
+                    # If there are column elements
                     if side_elem.findall("column"):
 
-                        #For each column element
+                        # For each column element
                         for column_elem in side_elem.findall("column"):
 
-                            #Save [columnname, [lineslist]]
+                            # Save [columnname, [lineslist]]
                             structure[-1][-1].append([column_elem.attrib["count"], []])
 
-                            #For each line in the column
-                            for line_index, line_elem in enumerate(column_elem.findall("line")):
+                            # For each line in the column
+                            for line_index, line_elem in enumerate(
+                                column_elem.findall("line")
+                            ):
 
-                                #Save [linename, [tokenslist]]
-                                structure[-1][-1][-1][-1].append([str(line_index+1), []])
+                                # Save [linename, [tokenslist]]
+                                structure[-1][-1][-1][-1].append(
+                                    [str(line_index + 1), []]
+                                )
 
-                                #For each token in the line
+                                # For each token in the line
                                 for token_elem in line_elem.findall("token"):
 
-                                    #Append the token element to the line list
+                                    # Append the token element to the line list
                                     structure[-1][-1][-1][-1][-1][-1].append(token_elem)
 
-                    #If there are only line elements
+                    # If there are only line elements
                     else:
 
-                        #Append a dummy column
+                        # Append a dummy column
                         structure[-1][-1].append(["", []])
 
-                        #For each line element
-                        for line_index, line_elem in enumerate(side_elem.findall("line")):
+                        # For each line element
+                        for line_index, line_elem in enumerate(
+                            side_elem.findall("line")
+                        ):
 
-                            #Save [linename, [tokenslist]]
-                            structure[-1][-1][-1][-1].append([str(line_index+1), []])
+                            # Save [linename, [tokenslist]]
+                            structure[-1][-1][-1][-1].append([str(line_index + 1), []])
 
-                            #For each token in the line
+                            # For each token in the line
                             for token_elem in line_elem.findall("token"):
 
-                                #Append the token element to the line list
+                                # Append the token element to the line list
                                 structure[-1][-1][-1][-1][-1][-1].append(token_elem)
-                            
-            #If there are no side but column elements
+
+            # If there are no side but column elements
             elif page_elem.findall("column"):
 
-                #Save [(pagename, empty sidename), [columnslist]]
+                # Save [(pagename, empty sidename), [columnslist]]
                 structure.append([(page_elem.attrib["count"], ""), []])
 
-                #For each column element
+                # For each column element
                 for column_elem in page_elem.findall("column"):
 
-                    #Save [columnname, [lineslist]]
+                    # Save [columnname, [lineslist]]
                     structure[-1][-1].append([column_elem.attrib["count"], []])
 
-                    #For each line in the column
+                    # For each line in the column
                     for line_index, line_elem in enumerate(column_elem.findall("line")):
 
-                        #Save [linename, [tokenslist]]
-                        structure[-1][-1][-1][-1].append([str(line_index+1), []])
+                        # Save [linename, [tokenslist]]
+                        structure[-1][-1][-1][-1].append([str(line_index + 1), []])
 
-                        #For each token in the line
+                        # For each token in the line
                         for token_elem in line_elem.findall("token"):
 
-                            #Append the token element to the line list
+                            # Append the token element to the line list
                             structure[-1][-1][-1][-1][-1][-1].append(token_elem)
-                                                        
-            #If there are neither sides nor columns, only lines
+
+            # If there are neither sides nor columns, only lines
             else:
 
-                #Save [(pagename, empty sidename), [columnslist]]
+                # Save [(pagename, empty sidename), [columnslist]]
                 structure.append([(page_elem.attrib["count"], ""), []])
 
-                #Append a dummy column
+                # Append a dummy column
                 structure[-1][-1].append(["", []])
 
-                #For each line element
+                # For each line element
                 for line_index, line_elem in enumerate(page_elem.findall("line")):
 
-                    #Save [linename, [tokenslist]]
-                    structure[-1][-1][-1][-1].append([str(line_index+1), []])
+                    # Save [linename, [tokenslist]]
+                    structure[-1][-1][-1][-1].append([str(line_index + 1), []])
 
-                    #For each token in the line
+                    # For each token in the line
                     for token_elem in line_elem.findall("token"):
-                        
-                        #Append the token element to the line list
+
+                        # Append the token element to the line list
                         structure[-1][-1][-1][-1][-1][-1].append(token_elem)
 
         return structure
 
     def _get_transcription_from_bonn_xml(self, structure):
-        #Get full transcription
-        #with tokens separated by spaces
-        #and lines indicated by \n
+        # Get full transcription
+        # with tokens separated by spaces
+        # and lines indicated by \n
         transcription = ""
         for page in structure:
             for column in page[-1]:
                 for line in column[-1]:
-                    for index,token in enumerate(line[-1]):
+                    for index, token in enumerate(line[-1]):
                         if index == 0:
-                            transcription = transcription + token.find("form").attrib["trans"]
+                            transcription = (
+                                transcription + token.find("form").attrib["trans"]
+                            )
                         else:
-                            transcription = transcription + " " + token.find("form").attrib["trans"]
-                        if index == len(line[-1])-1:
+                            transcription = (
+                                transcription + " " + token.find("form").attrib["trans"]
+                            )
+                        if index == len(line[-1]) - 1:
                             transcription = transcription + "\n"
         transcription = transcription.strip()
         return transcription
-    
+
     def _preprocess_transcription(self, transcription):
 
-        #Remove whitespace surrounding |
+        # Remove whitespace surrounding |
         transcription = re.sub(r" *\| *", "|", transcription)
 
-        #Move newlines inside of words
-        #e.g. uil=|\n|er -> uil=||er\n
+        # Move newlines inside of words
+        # e.g. uil=|\n|er -> uil=||er\n
         tokens = transcription.split(" ")
         t = 0
-        while t < len(tokens)-1:
+        while t < len(tokens) - 1:
             if "|\n" in tokens[t]:
-                tokens[t] = tokens[t].replace("|\n", "|", 1)+ "\n"
-            t+=1
+                tokens[t] = tokens[t].replace("|\n", "|", 1) + "\n"
+            t += 1
         transcription = " ".join(tokens)
 
-        #Replace double || with a single |
+        # Replace double || with a single |
         transcription = re.sub(r"\|\|", "|", transcription)
 
-        #Correct line boundaries.
+        # Correct line boundaries.
         lines = [line.split() for line in transcription.split("\n")]
         for l in range(len(lines)):
             line = lines[l]
 
-            #If the first token of a line contains a =
+            # If the first token of a line contains a =
             if "=" in line[0]:
                 pass
-                #logging.warn("Found = in first token '{0}' of line {1}.".format(line[0], l+1))
+                # logging.warn("Found = in first token '{0}' of line {1}.".format(line[0], l+1))
 
-            #If a token in the middle of the line contains a =    
-            if any("=" in line[i] for i in range(1, len(line)-1)):
+            # If a token in the middle of the line contains a =
+            if any("=" in line[i] for i in range(1, len(line) - 1)):
                 pass
-                #logging.warn("Found = in the middle of line {0}.".format(l+1))
+                # logging.warn("Found = in the middle of line {0}.".format(l+1))
 
-            #If the last token contains a =
+            # If the last token contains a =
             if "=" in line[-1]:
 
-                #If this is not the last line of the document,
-                #move the rest of the word to the next line.
-                if l < len(lines)-1:
-                    
-                    #If (=)| or =| or =
+                # If this is not the last line of the document,
+                # move the rest of the word to the next line.
+                if l < len(lines) - 1:
+
+                    # If (=)| or =| or =
                     if re.search(r"=[>\)]*\|*", line[-1]):
                         i_split = re.search(r"=[>\)]*\|*", line[-1]).span()[-1]
-                        lines[l+1].insert(0, line[-1][i_split:])
+                        lines[l + 1].insert(0, line[-1][i_split:])
                         lines[l][-1] = line[-1][:i_split]
 
-                    #If |(=) or |=
+                    # If |(=) or |=
                     elif re.search(r"\|*[<\(]*=", line[-1]):
                         i_split = re.search(r"\|*[<\(]*=", line[-1]).span()[-1]
-                        lines[l+1].insert(0, line[-1][i_split:])
+                        lines[l + 1].insert(0, line[-1][i_split:])
                         lines[l][-1] = line[-1][:i_split]
 
-                #If this is the last line do nothing.
+                # If this is the last line do nothing.
                 else:
                     pass
-                    #logging.warn("Found = in the last token '{0}' of the text.".format(line[-1]))
+                    # logging.warn("Found = in the last token '{0}' of the text.".format(line[-1]))
 
-        #Rejoin and return the transcription.
+        # Rejoin and return the transcription.
         transcription = "\n".join([" ".join(line) for line in lines])
         return transcription
 
@@ -1004,27 +1235,35 @@ class BonnXMLImporter:
         open_shifttags = list()
         shifttag_stack = list()
         shifttags = list()
-        
+
         trans_valid = True
-        
+
         cora_tokens = []
 
-        #Parse tokenized transcription.
+        # Parse tokenized transcription.
         for chunk in tokenized_input:
             try:
                 if isinstance(chunk, tokenizer.Comment):
                     cora_tokens.append(CoraComment(chunk.type, chunk.content))
-                    
+
                 elif isinstance(chunk, tokenizer.Token):
                     parsed_token = self.tokenparser.parse(chunk.string)
                     parsed_dipl_toks = parsed_token.tokenize_dipl()
                     parsed_anno_toks = parsed_token.tokenize_anno()
 
-                    #Transform parses into objects.
-                    dipl_tokens = [self._create_dipl_token(dipl_tok) for dipl_tok in parsed_dipl_toks]
-                    anno_tokens = [self._create_anno_token(anno_tok) for anno_tok in parsed_anno_toks]
-                    cora_tokens.append(CoraToken(parsed_token, dipl_tokens, anno_tokens))
-                    
+                    # Transform parses into objects.
+                    dipl_tokens = [
+                        self._create_dipl_token(dipl_tok)
+                        for dipl_tok in parsed_dipl_toks
+                    ]
+                    anno_tokens = [
+                        self._create_anno_token(anno_tok)
+                        for anno_tok in parsed_anno_toks
+                    ]
+                    cora_tokens.append(
+                        CoraToken(parsed_token, dipl_tokens, anno_tokens)
+                    )
+
                 elif isinstance(chunk, tokenizer.Newline):
                     pass
 
@@ -1033,16 +1272,21 @@ class BonnXMLImporter:
 
                 elif isinstance(chunk, tokenizer.ShiftTagOpen):
                     open_shifttags.append(chunk.type)
-                    
+
                 elif isinstance(chunk, tokenizer.ShiftTagClose):
                     closed_shifttag = open_shifttags.pop()
                     shifttags.append(ShiftTag(closed_shifttag, shifttag_stack))
                     if not open_shifttags:
                         shifttag_stack = list()
-                        
-            #Parse error: return an empty token.
+
+            # Parse error: return an empty token.
             except parser.ParseError as e:
-                logging.error("Token could not be parsed: " + chunk.string + " Message: " + e.message)
+                logging.error(
+                    "Token could not be parsed: "
+                    + chunk.string
+                    + " Message: "
+                    + e.message
+                )
                 trans_valid = False
                 cora_tokens.append(CoraToken(None, [], []))
 
@@ -1054,22 +1298,22 @@ class BonnXMLImporter:
             return (None, None)
 
     def _assign_dipls_to_lines(self, transcription, cora_tokens):
-        
+
         success = True
-        
-        #Assign dipl tokens to lines
-        #[[dipl1_line1, dipl2_line1, ...], [dipl1_line2, ...], ...]
+
+        # Assign dipl tokens to lines
+        # [[dipl1_line1, dipl2_line1, ...], [dipl1_line2, ...], ...]
         c = 0
         d = 0
         lines = [line.split() for line in transcription.split("\n")]
         dipls_per_line = list()
         for line in lines:
             for index, token in enumerate(line):
-                #Create a new line.
+                # Create a new line.
                 if index == 0:
                     dipls_per_line.append(list())
 
-                #Skip Tokens that are not CoraTokens (and thus don't have dipls).
+                # Skip Tokens that are not CoraTokens (and thus don't have dipls).
                 if not type(cora_tokens[c]) is CoraToken:
                     c += 1
                     d = 0
@@ -1077,31 +1321,37 @@ class BonnXMLImporter:
 
                 token_trans = token
                 dipl_trans = str(cora_tokens[c].tok_dipls[d])
-                
-                #If the dipl token matches the transcription:
+
+                # If the dipl token matches the transcription:
                 if dipl_trans == token_trans:
                     dipls_per_line[-1].append(cora_tokens[c].tok_dipls[d])
                     d += 1
 
-                #If the dipl token is included in the transcription
-                #(e.g. 'ursten#' in 'ursten#de'):
+                # If the dipl token is included in the transcription
+                # (e.g. 'ursten#' in 'ursten#de'):
                 elif dipl_trans in token_trans:
 
-                    #Get all dipls coresponding to the transcription.
-                    while d < len(cora_tokens[c].tok_dipls) and dipl_trans in token_trans:
+                    # Get all dipls coresponding to the transcription.
+                    while (
+                        d < len(cora_tokens[c].tok_dipls) and dipl_trans in token_trans
+                    ):
                         token_trans = token_trans.replace(dipl_trans, "", 1)
                         dipls_per_line[-1].append(cora_tokens[c].tok_dipls[d])
                         d += 1
                         if d < len(cora_tokens[c].tok_dipls):
                             dipl_trans = str(cora_tokens[c].tok_dipls[d])
 
-                #If the dipl token is not corresponding to the transcription:
+                # If the dipl token is not corresponding to the transcription:
                 else:
-                    logging.error("Dipl token {0} is not identical to input: {1}".format(str(cora_tokens[c].tok_dipls[d]), token))
+                    logging.error(
+                        "Dipl token {0} is not identical to input: {1}".format(
+                            str(cora_tokens[c].tok_dipls[d]), token
+                        )
+                    )
                     d += 1
                     success = False
-                    
-                if d > len(cora_tokens[c].tok_dipls)-1:
+
+                if d > len(cora_tokens[c].tok_dipls) - 1:
                     c += 1
                     d = 0
 
@@ -1113,95 +1363,121 @@ class BonnXMLImporter:
     def _create_pages(self, dipls_per_line, structure, cora_tokens):
 
         success = True
-        
-        #Create pages, columns and lines with dipls.
-        #While doing this get annotation information for each anno token.
+
+        # Create pages, columns and lines with dipls.
+        # While doing this get annotation information for each anno token.
         c = 0
         a = 0
         line_index = 0
         pages = []
-        
+
         for page in structure:
             pages.append(Page(page[0][0], page[0][1], list()))
             for column in page[1]:
                 pages[-1].columns.append(Column(list(), column[0]))
                 for line in column[1]:
                     try:
-                        pages[-1].columns[-1].lines.append(Line(line[0], dipls_per_line[line_index]))
+                        pages[-1].columns[-1].lines.append(
+                            Line(line[0], dipls_per_line[line_index])
+                        )
                     except IndexError:
                         logging.error("Did not find line {0}.".format(line_index))
                         line_index += 1
                         continue
-                    
-                    #Get annotation from Bonn token.
+
+                    # Get annotation from Bonn token.
                     for bonn_token in line[1]:
-                         
-                        #Skip Tokens that are not CoraTokens.
+
+                        # Skip Tokens that are not CoraTokens.
                         if not type(cora_tokens[c]) is CoraToken:
                             c += 1
                             a = 0
                             continue
 
-                        #For comparison of transcription and anno tokens
-                        #remove | and/or linebreak indicators like (=)| etc.
-                        bonn_trans = re.sub(r"(\|*[\(<]*=[\)>]*\|*|\|+)", "", bonn_token.find("form").attrib["trans"])
-                        anno_trans = re.sub(r"(\|*[\(<]*=[\)>]*\|*|\|+)", "", str(cora_tokens[c].tok_annos[a]))
-                        
-                        #If Bonn and anno token are identical:
+                        # For comparison of transcription and anno tokens
+                        # remove | and/or linebreak indicators like (=)| etc.
+                        bonn_trans = re.sub(
+                            r"(\|*[\(<]*=[\)>]*\|*|\|+)",
+                            "",
+                            bonn_token.find("form").attrib["trans"],
+                        )
+                        anno_trans = re.sub(
+                            r"(\|*[\(<]*=[\)>]*\|*|\|+)",
+                            "",
+                            str(cora_tokens[c].tok_annos[a]),
+                        )
+
+                        # If Bonn and anno token are identical:
                         if anno_trans == bonn_trans:
-                            cora_tokens[c].tok_annos[a] = self._get_annotation(cora_tokens[c].tok_annos[a], bonn_token)
+                            cora_tokens[c].tok_annos[a] = self._get_annotation(
+                                cora_tokens[c].tok_annos[a], bonn_token
+                            )
                             a += 1
-                            
-                        #If the Bonn token contains the anno token:
+
+                        # If the Bonn token contains the anno token:
                         elif anno_trans in bonn_trans:
-                            #Get all anno tokens corresponding to this Bonn token.
-                            while a < len(cora_tokens[c].tok_annos) and anno_trans in bonn_trans:
+                            # Get all anno tokens corresponding to this Bonn token.
+                            while (
+                                a < len(cora_tokens[c].tok_annos)
+                                and anno_trans in bonn_trans
+                            ):
                                 bonn_trans = bonn_trans.replace(anno_trans, "", 1)
-                                #Do not annotate punctuation marks.
+                                # Do not annotate punctuation marks.
                                 if re.search(r"\w", str(cora_tokens[c].tok_annos[a])):
-                                    cora_tokens[c].tok_annos[a] = self._get_annotation(cora_tokens[c].tok_annos[a], bonn_token)
+                                    cora_tokens[c].tok_annos[a] = self._get_annotation(
+                                        cora_tokens[c].tok_annos[a], bonn_token
+                                    )
                                 a += 1
                                 if a < len(cora_tokens[c].tok_annos):
-                                    anno_trans = re.sub(r"(\|*[\(<]*=[\)>]*\|*|\|+)", "", str(cora_tokens[c].tok_annos[a]))
+                                    anno_trans = re.sub(
+                                        r"(\|*[\(<]*=[\)>]*\|*|\|+)",
+                                        "",
+                                        str(cora_tokens[c].tok_annos[a]),
+                                    )
 
-                        #If the anno token does not match the Bonn token:
+                        # If the anno token does not match the Bonn token:
                         else:
-                            logging.error("Anno token {0} is not identical to input {1}.".format(str(cora_tokens[c].tok_annos[a]), \
-                                                                                                 bonn_token.find("form").attrib["trans"]))
+                            logging.error(
+                                "Anno token {0} is not identical to input {1}.".format(
+                                    str(cora_tokens[c].tok_annos[a]),
+                                    bonn_token.find("form").attrib["trans"],
+                                )
+                            )
                             a += 1
                             success = False
-                            
-                        if a > len(cora_tokens[c].tok_annos)-1:
+
+                        if a > len(cora_tokens[c].tok_annos) - 1:
                             c += 1
                             a = 0
-                            
-                            
+
                     line_index += 1
         if success:
             return pages
         else:
             return None
-    
+
     def import_from_file(self, filename):
 
         self.valid_document = True
 
-        #Read in BonnXML file and create ElementTree.
+        # Read in BonnXML file and create ElementTree.
         try:
             tree = ET.parse(filename, ET.XMLParser())
         except:
-            logging.error("Cannot parse file {0}. Message: {1}".format(filename, e.message))
+            logging.error(
+                "Cannot parse file {0}. Message: {1}".format(filename, e.message)
+            )
             return None
         root = tree.getroot()
 
         sigle = ""
         name = ""
 
-        #Get the element containing the header.
+        # Get the element containing the header.
         header_element = root.find("header")
 
-        #Create CoraXML header
-        #and get sigle and name values.
+        # Create CoraXML header
+        # and get sigle and name values.
         if header_element is not None:
             sigle = header_element.find("general/id").attrib["val"]
             name = header_element.find("general/abbreviation").attrib["ab_ddd"]
@@ -1212,56 +1488,60 @@ class BonnXMLImporter:
             header_string = ""
             logging.error("No header!")
 
-        #Reset ID counters
+        # Reset ID counters
         Page.id_counter.clear()
         Column.id_counter.clear()
         Line.id_counter.clear()
         CoraToken.id_counter.clear()
         TokDipl.id_counter.clear()
         TokAnno.id_counter.clear()
-        
+
         pages = []
         tokens = []
         shifttags = []
 
-        #Get structure of the BonnXML
+        # Get structure of the BonnXML
         structure = self._get_structure_of_bonn_xml(root)
 
-        #Get transcription
-        #with tokens separated by spaces
-        #and lines indicated by \n
+        # Get transcription
+        # with tokens separated by spaces
+        # and lines indicated by \n
         transcription = self._get_transcription_from_bonn_xml(structure)
 
-        #Preprocess transcription
+        # Preprocess transcription
         transcription = self._preprocess_transcription(transcription)
 
-        #Tokenize transcription
-        #Remove whitespace tokens
-        tokenized_input = [chunk for chunk in self.tokenizer.tokenize(transcription) \
-                           if not isinstance(chunk, tokenizer.Whitespace)]
+        # Tokenize transcription
+        # Remove whitespace tokens
+        tokenized_input = [
+            chunk
+            for chunk in self.tokenizer.tokenize(transcription)
+            if not isinstance(chunk, tokenizer.Whitespace)
+        ]
 
-        #Create cora tokens.
+        # Create cora tokens.
         (cora_tokens, shifttags) = self._create_cora_tokens(tokenized_input)
         if not cora_tokens:
             logging.error("XML cannot be parsed.")
             return None
-        
-        #Assign dipl tokens to lines.
+
+        # Assign dipl tokens to lines.
         dipls_per_line = self._assign_dipls_to_lines(transcription, cora_tokens)
         if not dipls_per_line:
             logging.error("XML cannot be parsed.")
             return None
-        
-        #Create pages, columns and lines with dipls.
-        #While doing this get annotation information for each anno token.
+
+        # Create pages, columns and lines with dipls.
+        # While doing this get annotation information for each anno token.
         pages = self._create_pages(dipls_per_line, structure, cora_tokens)
         if not pages:
             logging.error("XML cannot be parsed.")
             return None
-        
-        #Create a document object.
-        doc = Document(sigle, name, header, pages, cora_tokens, shifttags, header_string)
 
-        #Return the document object.
+        # Create a document object.
+        doc = Document(
+            sigle, name, header, pages, cora_tokens, shifttags, header_string
+        )
+
+        # Return the document object.
         return doc
-

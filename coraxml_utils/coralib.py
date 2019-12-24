@@ -5,8 +5,8 @@ from collections import defaultdict
 from coraxml_utils.character import Whitespace
 from coraxml_utils.settings import DEFAULT_VAL
 
-class BaseTrans:
 
+class BaseTrans:
     def __init__(self, myparse):
         self.parse = myparse
 
@@ -35,15 +35,18 @@ class BaseTrans:
         return self.__class__([c for c in self.parse if not isinstance(c, t)])
 
     def transform(self, transformation, criterium=None):
-        return self.__class__([c if criterium is not None and not criterium(c) else transformation(c) for c in self.parse])
-
+        return self.__class__(
+            [
+                c if criterium is not None and not criterium(c) else transformation(c)
+                for c in self.parse
+            ]
+        )
 
     def has(self, *t):
         return any(isinstance(c, t) for c in self.parse)
 
 
 class AnnoTrans(BaseTrans):
-
     def __init__(self, myparse):
         super().__init__(myparse)
 
@@ -55,7 +58,6 @@ class AnnoTrans(BaseTrans):
 
 
 class DiplTrans(BaseTrans):
-
     def __init__(self, myparse, subtoken=None):
         super().__init__(myparse)
         self.subtoken_annos = subtoken
@@ -69,7 +71,6 @@ class DiplTrans(BaseTrans):
 
 
 class Trans(BaseTrans):
-
     def __init__(self, myparse, subtoken=None):
         super().__init__(myparse)
 
@@ -105,15 +106,17 @@ class Trans(BaseTrans):
         stack = list()
         for c in self.parse:
             if c.dipl_bound and not c.token_bound:
-                output_tokens.append(DiplTrans(stack, subtoken=self.subtoken_annos).delete(Whitespace))
+                output_tokens.append(
+                    DiplTrans(stack, subtoken=self.subtoken_annos).delete(Whitespace)
+                )
                 stack = list()
             stack.append(c)
         if stack:
             output_tokens.append(DiplTrans(stack).delete(Whitespace))
         return output_tokens
 
-class SubtokenAnno:
 
+class SubtokenAnno:
     def __init__(self, mytype, start_index, end_index):
         self.type = mytype
         self.start = start_index
@@ -124,6 +127,7 @@ class SubtokenAnno:
 
     def __repr__(self):
         return str(self)
+
 
 class IdentifiableObjectMixin:
 
@@ -150,9 +154,17 @@ class IdentifiableObjectMixin:
 
 
 class Document:
-
-    def __init__(self, sigle, name, header, pages, tokens,
-                 shifttags=None, header_string=None, annospans=None):
+    def __init__(
+        self,
+        sigle,
+        name,
+        header,
+        pages,
+        tokens,
+        shifttags=None,
+        header_string=None,
+        annospans=None,
+    ):
         self.sigle = sigle
         self.name = name
         self.header = header
@@ -169,15 +181,23 @@ class Document:
     def _create_indices(self):
 
         ## create index of line beginnings and endings
-        self.index_line_beginnings = frozenset([line.dipls[0]._id
-                                                for page in self.pages
-                                                for column in page.columns
-                                                for line in column.lines])
+        self.index_line_beginnings = frozenset(
+            [
+                line.dipls[0]._id
+                for page in self.pages
+                for column in page.columns
+                for line in column.lines
+            ]
+        )
 
-        self.index_line_endings = frozenset([line.dipls[-1]._id
-                                                for page in self.pages
-                                                for column in page.columns
-                                                for line in column.lines])
+        self.index_line_endings = frozenset(
+            [
+                line.dipls[-1]._id
+                for page in self.pages
+                for column in page.columns
+                for line in column.lines
+            ]
+        )
 
         self.dipl_line_index = {
             dipl._id: line
@@ -224,7 +244,6 @@ class Document:
 
 
 class Page(IdentifiableObjectMixin):
-
     def __init__(self, name, side, columns, extid=""):
         self._set_id("p", extid)
         self.name = name
@@ -244,7 +263,6 @@ class Page(IdentifiableObjectMixin):
 
 
 class Column(IdentifiableObjectMixin):
-
     def __init__(self, lines, name="", extid=""):
         self._set_id("c", extid)
         self.name = name
@@ -265,7 +283,6 @@ class Column(IdentifiableObjectMixin):
 
 
 class Line(IdentifiableObjectMixin):
-
     def __init__(self, name, dipls, extid=""):
         self._set_id("l", extid)
         self.name = name
@@ -293,10 +310,9 @@ class Line(IdentifiableObjectMixin):
             # if first dipl token was merged into last line, then it won't have
             # an ID in that case, just use second token ID for range
             if middle:
-                return "{0}..{1}".format(first.id
-                                         if hasattr(first, "id")
-                                         else middle[0].id,
-                                         last.id)
+                return "{0}..{1}".format(
+                    first.id if hasattr(first, "id") else middle[0].id, last.id
+                )
             else:
                 return "{0}..{1}".format(first.id, last.id)
 
@@ -306,11 +322,12 @@ class Line(IdentifiableObjectMixin):
 
 
 class CoraToken(IdentifiableObjectMixin):
-
     def from_parse(parse):
-        return CoraToken(parse,
-                         [TokDipl(x) for x in parse.tokenize_dipl()],
-                         [TokAnno(x) for x in parse.tokenize_anno()])
+        return CoraToken(
+            parse,
+            [TokDipl(x) for x in parse.tokenize_dipl()],
+            [TokAnno(x) for x in parse.tokenize_anno()],
+        )
 
     def __init__(self, trans, tok_dipls, tok_annos, extid="", errors=None):
         self._set_id("t", extid)
@@ -323,10 +340,12 @@ class CoraToken(IdentifiableObjectMixin):
         return str(self.trans)
 
     def __eq__(self, other):
-        return (self.id == other.id and
-                self.trans == other.trans and
-                self.tok_dipls == other.tok_dipls and
-                self.tok_annos == other.tok_annos)
+        return (
+            self.id == other.id
+            and self.trans == other.trans
+            and self.tok_dipls == other.tok_dipls
+            and self.tok_annos == other.tok_annos
+        )
 
     # TODO: method is deprecated (due to new tokenizer module)
     def merge_token(self, tok, join_dipls=False, join_mods=False):
@@ -345,8 +364,8 @@ class CoraToken(IdentifiableObjectMixin):
         else:
             self.tok_annos.extend(tok.tok_annos)
 
-class TokDipl(IdentifiableObjectMixin):
 
+class TokDipl(IdentifiableObjectMixin):
     def __init__(self, trans: DiplTrans, extid=""):
         self._set_id("d", extid)
         self.trans = trans
@@ -359,14 +378,12 @@ class TokDipl(IdentifiableObjectMixin):
 
 
 class AnnotatableElement:
-
     def __init__(self, tags=None, flags=None):
 
         self.tags = tags if tags else dict()
         self.flags = flags if flags else set()
 
-
-    def append_annotation(self, tagname, tag, sep=' '):
+    def append_annotation(self, tagname, tag, sep=" "):
 
         oldval = self.tags.get(tagname, DEFAULT_VAL)
 
@@ -374,7 +391,6 @@ class AnnotatableElement:
             self.tags[tagname] = oldval + sep + tag
         else:
             self.tags[tagname] = tag
-
 
 
 class TokAnno(AnnotatableElement, IdentifiableObjectMixin):
@@ -394,11 +410,12 @@ class TokAnno(AnnotatableElement, IdentifiableObjectMixin):
         return str(self.trans)
 
     def __eq__(self, other):
-        return (self.id == other.id and
-                self.trans == other.trans and
-                self.tags == other.tags and
-                self.flags == other.flags and
-                self.checked == other.checked
+        return (
+            self.id == other.id
+            and self.trans == other.trans
+            and self.tags == other.tags
+            and self.flags == other.flags
+            and self.checked == other.checked
         )
 
     def merge(self, other):
@@ -406,14 +423,12 @@ class TokAnno(AnnotatableElement, IdentifiableObjectMixin):
 
 
 class AnnoSpan(AnnotatableElement):
-
     def __init__(self, annos, tags=None, flags=None):
         self.annos = annos
         super().__init__(tags=tags, flags=flags)
 
 
 class CoraComment:
-
     def __init__(self, _type, content):
         self.type = _type
         self.content = content
@@ -423,7 +438,6 @@ class CoraComment:
 
 
 class ShiftTag:
-
     def __init__(self, _type, tokens):
         self.type = _type
         self.tokens = tokens
@@ -439,9 +453,11 @@ class ShiftTag:
             return ""
 
     def tag(self):
-        return {"F": "fm",
-                "L": "lat",
-                "R": "rub",
-                "Ü": "title",
-                "M": "marg",
-                "Q": "question"}.get(self.type, self.type)
+        return {
+            "F": "fm",
+            "L": "lat",
+            "R": "rub",
+            "Ü": "title",
+            "M": "marg",
+            "Q": "question",
+        }.get(self.type, self.type)

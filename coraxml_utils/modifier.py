@@ -9,6 +9,7 @@ from coraxml_utils.settings import DEFAULT_VAL
 from coraxml_utils.character import *
 from coraxml_utils.coralib import ShiftTag, CoraToken, TokDipl
 
+
 def add_tokenization_tags(token):
     c = 1
     switch_ML = False
@@ -45,12 +46,12 @@ def add_tokenization_tags(token):
 
 # def add_punc_tags(token):
 #     mods = token.tok_annos
-    
+
 #     for i, m in enumerate(mods):
 #         sent_type = str()
 #         nom_type = str()
 #         mtrans = str(m.trans)
-        
+
 #         if mtrans == "(.)":
 #             sent_type = "DE"
 #         elif mtrans == "(?)":
@@ -103,16 +104,18 @@ def remove_annotation_column(tok_anno, annotation_type, value=DEFAULT_VAL):
        e.g. before uploading the text to CorA."""
     if tok_anno.tags[annotation_type] == value:
         del tok_anno.tags[annotation_type]
-    
+
+
 def change_tags(tok_anno, annotation_type, rename_dict):
     """Change certain tags of the given type to a new value that is specified in rename_dict."""
     if annotation_type in tok_anno.tags:
-        tok_anno.tags[annotation_type] = rename_dict.get(tok_anno.tags[annotation_type], 
-                                                         tok_anno.tags[annotation_type])
+        tok_anno.tags[annotation_type] = rename_dict.get(
+            tok_anno.tags[annotation_type], tok_anno.tags[annotation_type]
+        )
 
 
 # für REF
-def add_punc_tags(token, tagname='punc'):
+def add_punc_tags(token, tagname="punc"):
 
     last_annotatable = None
     keep_annos = list()
@@ -120,7 +123,7 @@ def add_punc_tags(token, tagname='punc'):
 
     for tokanno in token.tok_annos:
 
-        if len(tokanno.trans)==1 and isinstance(tokanno.trans.parse[0], SentBound):
+        if len(tokanno.trans) == 1 and isinstance(tokanno.trans.parse[0], SentBound):
             if last_annotatable is not None:
                 last_annotatable.append_annotation(tagname, str(tokanno.trans))
                 last_annotatable.flags.add(tagname)
@@ -133,7 +136,7 @@ def add_punc_tags(token, tagname='punc'):
                     tokanno.append_annotation(tagname, str(preed_tok.trans))
                 tokanno.flags.add(tagname)
                 unresolved_preed_tokens = []
-                tokanno.append_annotation(tagname, '|')
+                tokanno.append_annotation(tagname, "|")
 
             last_annotatable = tokanno
             keep_annos.append(tokanno)
@@ -145,7 +148,9 @@ def add_punc_tags(token, tagname='punc'):
     token.tok_annos = keep_annos
 
 
-def merge_annotations(token, source_anno1_name, source_anno2_name, res_anno_name, sep='.'):
+def merge_annotations(
+    token, source_anno1_name, source_anno2_name, res_anno_name, sep="."
+):
 
     for tok_anno in token.tok_annos:
 
@@ -153,7 +158,11 @@ def merge_annotations(token, source_anno1_name, source_anno2_name, res_anno_name
             if source_anno2_name in tok_anno.tags:
                 ## both source annos
                 ## 1. create new tag
-                combined_tag = tok_anno.tags[source_anno1_name] + sep + tok_anno.tags[source_anno2_name]
+                combined_tag = (
+                    tok_anno.tags[source_anno1_name]
+                    + sep
+                    + tok_anno.tags[source_anno2_name]
+                )
                 ## 2. remove old annotations
                 del tok_anno.tags[source_anno1_name]
                 del tok_anno.tags[source_anno2_name]
@@ -170,6 +179,7 @@ def merge_annotations(token, source_anno1_name, source_anno2_name, res_anno_name
             ## if source_anno1_name does not exist -> do nothing
             pass
 
+
 def trans_to_cora_json(trans):
     """
     Converts a Trans-object to json as expected from CorA from a token editing script
@@ -177,51 +187,52 @@ def trans_to_cora_json(trans):
     """
 
     json_dict = {
-        'dipl_trans': [''],
-        'dipl_utf': [''],
-        'dipl_breaks': [],
-        'mod_trans': [''],
-        'mod_utf': [''],
-        'mod_ascii': [''],
+        "dipl_trans": [""],
+        "dipl_utf": [""],
+        "dipl_breaks": [],
+        "mod_trans": [""],
+        "mod_utf": [""],
+        "mod_ascii": [""],
     }
 
     for char in trans.parse:
 
         if char.dipl_bound:
-            json_dict['dipl_trans'].append('')
-            json_dict['dipl_utf'].append('')
+            json_dict["dipl_trans"].append("")
+            json_dict["dipl_utf"].append("")
             if isinstance(char, LineBreak):
-                json_dict['dipl_breaks'].append(1)
+                json_dict["dipl_breaks"].append(1)
             elif char.line_break_after:
-                json_dict['dipl_breaks'].append(1)
+                json_dict["dipl_breaks"].append(1)
             else:
-                json_dict['dipl_breaks'].append(0)
+                json_dict["dipl_breaks"].append(0)
 
         if char.anno_bound:
-            json_dict['mod_trans'].append('')
-            json_dict['mod_utf'].append('')
-            json_dict['mod_ascii'].append('')
+            json_dict["mod_trans"].append("")
+            json_dict["mod_utf"].append("")
+            json_dict["mod_ascii"].append("")
 
         if not isinstance(char, Whitespace):
-            json_dict['dipl_trans'][-1] += char.string
-            json_dict['dipl_utf'][-1] += char.dipl_utf
-            json_dict['mod_trans'][-1] += char.string
-            json_dict['mod_utf'][-1] += char.anno_utf
-            json_dict['mod_ascii'][-1] += char.anno_simple
+            json_dict["dipl_trans"][-1] += char.string
+            json_dict["dipl_utf"][-1] += char.dipl_utf
+            json_dict["mod_trans"][-1] += char.string
+            json_dict["mod_utf"][-1] += char.anno_utf
+            json_dict["mod_ascii"][-1] += char.anno_simple
 
-    json_dict['dipl_breaks'].append(0)
+    json_dict["dipl_breaks"].append(0)
 
     return json.dumps(json_dict)
 
+
 ### project specific postprocessing
+
 
 def postprocess(MyImporter, MyExporter, postprocessor, document_processor=None):
 
     description = "Fügt einige extra Annotationen einer CorA-XML-Datei hinzu."
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('infiles', nargs="+", help='Eingabedateien (XML)')
-    parser.add_argument("-o", '--outpath', default=".",
-                        help='Ausgabepfad')
+    parser.add_argument("infiles", nargs="+", help="Eingabedateien (XML)")
+    parser.add_argument("-o", "--outpath", default=".", help="Ausgabepfad")
     args, _ = parser.parse_known_args()
 
     # name mod -> tok_anno, dipl -> tok_dipl
@@ -232,7 +243,7 @@ def postprocess(MyImporter, MyExporter, postprocessor, document_processor=None):
         doc = MyImporter.import_from_file(filepath)
 
         if doc is None:
-            print("Error: Could not load document %s" %filepath)
+            print("Error: Could not load document %s" % filepath)
             continue
 
         for tok in filter(lambda x: isinstance(x, CoraToken), doc.tokens):
@@ -245,16 +256,19 @@ def postprocess(MyImporter, MyExporter, postprocessor, document_processor=None):
         output_xml = MyExporter.export(doc)
         outfilepath = str(Path(args.outpath) / (doc.sigle + ".xml"))
         with open(outfilepath, "wb") as outfile:
-            output_xml.write(outfile, xml_declaration=True,
-                             pretty_print=True, encoding='utf-8')
+            output_xml.write(
+                outfile, xml_declaration=True, pretty_print=True, encoding="utf-8"
+            )
+
 
 def ref_convert(tok):
 
-    merge_annotations(tok, 'pos', 'lemmapos', 'pos', sep='<')
-    merge_annotations(tok, 'pos', 'morph', 'pos', sep='.')
+    merge_annotations(tok, "pos", "lemmapos", "pos", sep="<")
+    merge_annotations(tok, "pos", "morph", "pos", sep=".")
 
     # add punc tags
-    add_punc_tags(tok, 'boundary')
+    add_punc_tags(tok, "boundary")
+
 
 def ref_postprocess(tok):
 
@@ -297,8 +311,9 @@ def anselm_correct_tokenization(doc):
             legacy_counter = 1
             new_dipls = tok.trans.tokenize_dipl()
             for new_dipl_trans in new_dipls:
-                new_dipl = TokDipl(new_dipl_trans, 
-                                "{0}_d{1}".format(tok.id, legacy_counter))
+                new_dipl = TokDipl(
+                    new_dipl_trans, "{0}_d{1}".format(tok.id, legacy_counter)
+                )
                 tok.tok_dipls.append(new_dipl)
                 legacy_counter += 1
 
@@ -306,7 +321,7 @@ def anselm_correct_tokenization(doc):
             line_bound = False
             for new_dipl in tok.tok_dipls:
                 if line_bound:
-                    
+
                     # don't start new line if in middle of line
                     if current_index < len(all_rel_lines[0].dipls):
                         pass
@@ -323,8 +338,8 @@ def anselm_correct_tokenization(doc):
                                         last_id = line.id
                         # start new line
                         current_index = 0
-                        all_rel_lines.pop(0)                  
-                   
+                        all_rel_lines.pop(0)
+
                     all_rel_lines[0].dipls.insert(current_index, new_dipl)
                     doc._create_indices()
 
@@ -332,7 +347,7 @@ def anselm_correct_tokenization(doc):
                     #  otherwise line continues, remove line_bound flag:
                     if not new_dipl.trans.has(Joiner):
                         line_bound = False
-                    
+
                 else:
                     # add dipl normally
                     all_rel_lines[0].dipls.insert(current_index, new_dipl)
@@ -342,46 +357,48 @@ def anselm_correct_tokenization(doc):
                     if new_dipl.trans.has(Joiner) and tok.id not in marginalia:
                         logging.warn("correcting at line bound: %s (prob ok)" % tok.id)
                         line_bound = True
-                
+
         if "err_tok_anno" in tok.errors:
             ###    new trans
-            for old_anno_tok, new_anno_trans in zip(tok.tok_annos, tok.trans.tokenize_anno()):
+            for old_anno_tok, new_anno_trans in zip(
+                tok.tok_annos, tok.trans.tokenize_anno()
+            ):
                 if new_anno_trans.has(Majuscule):
                     old_anno_tok.trans = new_anno_trans
                 else:
-                    logging.info("did not correct error of " +
-                                 "type 'err_tok_anno': '{0}' -> '{1}'".format(old_anno_tok.trans,
-                                                                              new_anno_trans))
+                    logging.info(
+                        "did not correct error of "
+                        + "type 'err_tok_anno': '{0}' -> '{1}'".format(
+                            old_anno_tok.trans, new_anno_trans
+                        )
+                    )
 
     return doc
-       
 
 
 def anselm_postprocess(tok):
 
     for tok_anno in tok.tok_annos:
         # remove comment and boundary
-        tok_anno.tags.pop('comment', None)
-        tok_anno.tags.pop('boundary', None)
-        tok_anno.flags.discard('boundary')
+        tok_anno.tags.pop("comment", None)
+        tok_anno.tags.pop("boundary", None)
+        tok_anno.flags.discard("boundary")
 
         # add "--" if morph is not set
-        fill_annotation_column(tok_anno, 'morph')
+        fill_annotation_column(tok_anno, "morph")
 
         # add norm if it is missing (???)
         # if 'norm' not in tok_anno.tags:
         #     print(tok_anno)
 
         # set norm_broad to norm if it is not set
-        if 'norm' in tok_anno.tags:
-            fill_annotation_column(tok_anno, 'norm_broad', tok_anno.tags['norm'])
+        if "norm" in tok_anno.tags:
+            fill_annotation_column(tok_anno, "norm_broad", tok_anno.tags["norm"])
 
         # rename norm_type-tags
-        change_tags(tok_anno, 'norm_type', {
-            'f': 'inflection',
-            's': 'semantic',
-            'x': 'extinct'
-        })
+        change_tags(
+            tok_anno, "norm_type", {"f": "inflection", "s": "semantic", "x": "extinct"}
+        )
 
         # fix erroneous tags
         change_tags(tok_anno, "pos", {"PDN": "PDS", "PIN": "PIS"})
@@ -390,7 +407,7 @@ def anselm_postprocess(tok):
     add_tokenization_tags(tok)
 
     # add punc tags
-    # ANSELM: as yet no pre-edition punctuation 
+    # ANSELM: as yet no pre-edition punctuation
     # (and therefore no sent bounds discernible)
     # tok = add_punc_tags(tok)
 
@@ -402,20 +419,35 @@ def repair_header(doc, repair_infos):
     with open(repair_infos, "r", encoding="utf-8") as metadata_file:
         csvreader = csv.DictReader(metadata_file, dialect="excel-tab")
         for row in csvreader:
-            if row['Sigle'].strip() == doc.sigle:
+            if row["Sigle"].strip() == doc.sigle:
 
                 new_header_string = list()
-                lines_to_delete = ["Text eingegeben",                                                                              "Datum", "Bearbeiter",
-                                   "Text vorkollationiert", 
-                                   "Text kollationiert",
-                                    "Lat. Passage", "Kenn-Name", 
-                                    "Präeditiert", "Praeditiert",
-                                    "Grubert-Nummer", "Datierung",
-                                    "Lokalisierung", "Textart",
-                                    "Fassung", "Bibliothek", "Archiv",
-                                    "Signatur", "Folio", "Blatt",
-                                    "Edition", "Provenienz", "Literatur",
-                                    "vorhandener Text", "Vorhandener Text"]
+                lines_to_delete = [
+                    "Text eingegeben",
+                    "Datum",
+                    "Bearbeiter",
+                    "Text vorkollationiert",
+                    "Text kollationiert",
+                    "Lat. Passage",
+                    "Kenn-Name",
+                    "Präeditiert",
+                    "Praeditiert",
+                    "Grubert-Nummer",
+                    "Datierung",
+                    "Lokalisierung",
+                    "Textart",
+                    "Fassung",
+                    "Bibliothek",
+                    "Archiv",
+                    "Signatur",
+                    "Folio",
+                    "Blatt",
+                    "Edition",
+                    "Provenienz",
+                    "Literatur",
+                    "vorhandener Text",
+                    "Vorhandener Text",
+                ]
 
                 # delete unnecessary info from header
                 for line in doc.header_string.strip().split("\n"):
@@ -442,25 +474,28 @@ def anselm_document_postprocess(doc):
     repair_header(doc, repair_infos)
 
 
-def no_postprocess(doc): 
+def no_postprocess(doc):
     # do nothing
     return doc
 
-def prepare_for_cora(tok):
-    
-    for tok_anno in tok.tok_annos:
-        
-        #undo renaming of norm_type-tags
-        change_tags(tok_anno, 'norm_type', {
-                    'inflection': 'f',
-                    'semantic': 's',
-                    'extinct': 'x'
-                    })
 
-        #remove empty morph annotations
+def prepare_for_cora(tok):
+
+    for tok_anno in tok.tok_annos:
+
+        # undo renaming of norm_type-tags
+        change_tags(
+            tok_anno, "norm_type", {"inflection": "f", "semantic": "s", "extinct": "x"}
+        )
+
+        # remove empty morph annotations
         remove_annotation_column(tok_anno, "morph", value=DEFAULT_VAL)
 
         # remove norm_broad if it is identical with norm
-        if 'norm_broad' in tok_anno.tags \
-           and tok_anno.tags["norm_broad"] == tok_anno.tags["norm"]:
-            remove_annotation_column(tok_anno, 'norm_broad', tok_anno.tags['norm_broad'])
+        if (
+            "norm_broad" in tok_anno.tags
+            and tok_anno.tags["norm_broad"] == tok_anno.tags["norm"]
+        ):
+            remove_annotation_column(
+                tok_anno, "norm_broad", tok_anno.tags["norm_broad"]
+            )
