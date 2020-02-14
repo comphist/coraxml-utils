@@ -8,7 +8,6 @@ if __name__ == "__main__":
 
     postprocess(
         create_importer("coraxml", dialect="ref", strict=False),
-        create_exporter("coraxml",
-        ),
-        ref_convert
+        create_exporter("coraxml",),
+        ref_convert,
     )

@@ -9,10 +9,14 @@ from coraxml_utils.modifier import trans_to_cora_json
 if __name__ == "__main__":
     description = "Check and parse a CorA token. Can be used as backend for editing tokens in CorA."
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('infile',
-                        help='Eingabedatei (Token-Transkription)')
-    parser.add_argument("-P", "--parser", choices=["rem", "anselm", "ref", "redi"],
-                        default="ref", help="Token parser to use, default: %(default)s")
+    parser.add_argument("infile", help="Eingabedatei (Token-Transkription)")
+    parser.add_argument(
+        "-P",
+        "--parser",
+        choices=["rem", "anselm", "ref", "redi"],
+        default="ref",
+        help="Token parser to use, default: %(default)s",
+    )
     args, _ = parser.parse_known_args()
 
     with open(args.infile, encoding="utf-8") as f:
@@ -21,4 +25,3 @@ if __name__ == "__main__":
     parsed_token = dialect_mapper[args.parser]().parse(token)
 
     print(trans_to_cora_json(parsed_token))
-

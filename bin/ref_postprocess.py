@@ -8,10 +8,13 @@ if __name__ == "__main__":
 
     postprocess(
         create_importer("coraxml", dialect="ref"),
-        create_exporter("coraxml", options={
-            # name mod -> tok_anno, dipl -> tok_dipl
-            'dipl_tag_name': 'tok_dipl',
-            'anno_tag_name': 'tok_anno',
-        }),
-        ref_postprocess
+        create_exporter(
+            "coraxml",
+            options={
+                # name mod -> tok_anno, dipl -> tok_dipl
+                "dipl_tag_name": "tok_dipl",
+                "anno_tag_name": "tok_anno",
+            },
+        ),
+        ref_postprocess,
     )

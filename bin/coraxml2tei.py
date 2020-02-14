@@ -10,12 +10,15 @@ from coraxml_utils.exporter import create_exporter
 if __name__ == "__main__":
     description = "Konvertiert eine CorA-XML-Datei ins TEI-Format."
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('infile',
-                        help='Eingabedatei (XML)')
-    parser.add_argument('outfile', nargs="?",
-                        help='Ausgabedatei (XML)')
-    parser.add_argument("-P", "--parser", choices=["rem", "anselm", "ref", "redi"],
-                        default="ref", help="Token parser to use, default: %(default)s")
+    parser.add_argument("infile", help="Eingabedatei (XML)")
+    parser.add_argument("outfile", nargs="?", help="Ausgabedatei (XML)")
+    parser.add_argument(
+        "-P",
+        "--parser",
+        choices=["rem", "anselm", "ref", "redi"],
+        default="ref",
+        help="Token parser to use, default: %(default)s",
+    )
     args, _ = parser.parse_known_args()
 
     MyImporter = create_importer("coraxml", args.parser)
@@ -24,5 +27,9 @@ if __name__ == "__main__":
     doc = MyImporter.import_from_file(args.infile)
     tei_doc = MyExporter.export(doc)
     ausgabe = etree.tounicode(tei_doc)
-    ausgabe = ausgabe.replace("<lb ", "\n<lb ").replace("<pb ", "\n<pb ").replace("<space ", " <space ")
-    print(ausgabe, file=open(args.outfile, 'w', encoding='utf-8'))
+    ausgabe = (
+        ausgabe.replace("<lb ", "\n<lb ")
+        .replace("<pb ", "\n<pb ")
+        .replace("<space ", " <space ")
+    )
+    print(ausgabe, file=open(args.outfile, "w", encoding="utf-8"))

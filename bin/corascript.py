@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import os
 import json
 import getpass
 import requests
 import click
-from requests.compat import urljoin
 
 
 DEFAULT_BASE = "https://smokehead.linguistics.rub.de/cora/"
@@ -58,7 +60,7 @@ def cli():
 
 @cli.command()
 @click.argument("corpusnames", nargs=-1)
-@click.option("-o", "outdir", default="./")
+@click.option("-o", "outdir", default="./", help="Directory for exported files")
 @click.option("-t", "--onlytexts", help="Just download these particular texts")
 @click.option("-c", "--only-changed")
 @click.option("-s", "--use-sigle")
