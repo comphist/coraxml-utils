@@ -1,0 +1,38 @@
+
+digraph {
+    rankdir=LR; // Left to Right, instead of Top to Bottom
+    subgraph Joiners {
+        node [fillcolor=tan1, style=filled];
+        Joiner -> Hyphen;
+        Joiner -> MultiverbNewline;
+        Joiner -> UniverbNewline;
+    }
+    subgraph NotWhitespace {
+        node [fillcolor=lightskyblue1, style=filled];
+        Bracket -> EditorCompleted;
+        Bracket -> FromEdition;
+        Bracket -> Parenthesis;
+        Bracket -> Recognizable;
+        Bracket -> Strikethrough;
+        Char -> MetaChar;
+        Char -> Punct;
+        Char -> TextChar;
+        MetaChar -> Bracket;
+        MetaChar -> ForeignMarker;
+        MetaChar -> Lacuna;
+        MetaChar -> ParticleLink;
+        MetaChar -> SentBound;
+        MetaChar -> TokenBound;
+        Multiverbation -> MultiverbSpace;
+        Multiverbation -> MultiverbNewline;
+        SentBound -> QuotationMark;
+        TextChar -> IllegibleChar;
+        TextChar -> Majuscule;
+        TextChar -> Hyphen;
+        TokenBound -> Multiverbation;
+        TokenBound -> Univerbation;
+        Univerbation -> UniverbSpace;
+        Univerbation -> UniverbNewline;
+    }
+    Whitespace -> LineBreak;
+}
