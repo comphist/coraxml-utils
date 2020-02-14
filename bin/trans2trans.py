@@ -5,26 +5,26 @@ trans2trans.py
 Adam Roussel
 
 based on
-convert_check.py
+convert_check.rb
 Florian Petran
 
 """
 
 import re
 import sys
-import codecs
 import argparse
 import logging
-logging.basicConfig(format='%(levelname)s: %(message)s')
+from collections import OrderedDict
 
 from coraxml_utils.importer import create_importer
 from coraxml_utils.exporter import create_exporter
 
 __version__ = "2017.12.02"
 
+logging.basicConfig(format="%(levelname)s: %(message)s")
 
 def check_valid(self):
-    
+
     in_tag, close_tag = OrderedDict(), None
     lastbib = {"full": "", "sigle": "", "page": "", "col": "", "side": "", "line": 0}
 
@@ -40,7 +40,9 @@ def check_valid(self):
         # as long as the regex matches
         myline = l["line"]
         for comment_tag in SHIFT_TAGS_ONELINE:
-            comment_regex = re.compile("( |^)\+{0} [^@]+? @{0}( |$)".format(comment_tag))
+            comment_regex = re.compile(
+                r"( |^)\+{0} [^@]+? @{0}( |$)".format(comment_tag)
+            )
             while comment_regex.search(myline):
                 myline = comment_regex.sub(" +{0} @{0} ".format(comment_tag), myline)
 
@@ -51,7 +53,9 @@ def check_valid(self):
         in_tag_items = reversed(in_tag.items())
         for tag, index in in_tag_items:
             if tag in set(SHIFT_TAGS_ONELINE):
-                self.report("Tag wasn't closed at end of line: " + tag, self.text[index], index)
+                self.report(
+                    "Tag wasn't closed at end of line: " + tag, self.text[index], index
+                )
                 in_tag.popitem()
             else:
                 break
@@ -83,47 +87,83 @@ def check_bibinfo(self, lastbib, l, i):
         return lastbib
 
     b = BIBINFO_FORMAT.search(l["bibl"]).groups()
-    thisbib = dict(zip(["full", "sigle", "page", "side", "col", "line"],
-                       [l["bibl"]] + list(b)))
+    thisbib = dict(
+        zip(["full", "sigle", "page", "side", "col", "line"], [l["bibl"]] + list(b))
+    )
     thisbib["line"] = int(thisbib["line"])
 
     if lastbib["sigle"] != thisbib["sigle"] and lastbib["sigle"]:
-        self.report("Text sigle is inconsistent: {0} vs. {1}".format(lastbib["sigle"],
-                                                                thisbib["sigle"]), l, i)
+        self.report(
+            "Text sigle is inconsistent: {0} vs. {1}".format(
+                lastbib["sigle"], thisbib["sigle"]
+            ),
+            l,
+            i,
+        )
 
     # check lines
-    if (thisbib["page"] == lastbib["page"] and 
-        thisbib["side"] == lastbib["side"] and 
-        thisbib["col"] == lastbib["col"]):
+    if (
+        thisbib["page"] == lastbib["page"]
+        and thisbib["side"] == lastbib["side"]
+        and thisbib["col"] == lastbib["col"]
+    ):
         if thisbib["line"] == lastbib["line"]:
             self.report("Duplicate line number: " + str(lastbib["line"]), l, i)
         elif thisbib["line"] != lastbib["line"] + 1:
-            self.warn("Unexpected line: {0} followed by {1}".format(lastbib["full"],
-                                                               l["bibl"]), l , i)
+            self.warn(
+                "Unexpected line: {0} followed by {1}".format(
+                    lastbib["full"], l["bibl"]
+                ),
+                l,
+                i,
+            )
     else:
         if thisbib["line"] != 1:
-            self.warn("Unexpected line: {0}{1}{2} doesn't begin with line 1 ({3}, {4})".format(
-                thisbib["page"], thisbib["side"], thisbib["col"], lastbib["full"], l["bibl"]), l, i)
+            self.warn(
+                "Unexpected line: {0}{1}{2} doesn't begin with line 1 ({3}, {4})".format(
+                    thisbib["page"],
+                    thisbib["side"],
+                    thisbib["col"],
+                    lastbib["full"],
+                    l["bibl"],
+                ),
+                l,
+                i,
+            )
 
     # check columns
-    if (thisbib["page"] == lastbib["page"] and 
-        thisbib["side"] == lastbib["side"] and 
-        thisbib["col"] != lastbib["col"]):
+    if (
+        thisbib["page"] == lastbib["page"]
+        and thisbib["side"] == lastbib["side"]
+        and thisbib["col"] != lastbib["col"]
+    ):
         if lastbib["col"] and thisbib["col"] != chr(ord(lastbib["col"]) + 1):
-            self.warn("Unexpected column: {0} followed by {1} ({2}, {3})".format(lastbib["col"],
-                                                                                thisbib["col"],
-                                                                                lastbib["full"],
-                                                                                l["bibl"]), l ,i)
+            self.warn(
+                "Unexpected column: {0} followed by {1} ({2}, {3})".format(
+                    lastbib["col"], thisbib["col"], lastbib["full"], l["bibl"]
+                ),
+                l,
+                i,
+            )
     elif thisbib["page"] != lastbib["page"] or thisbib["side"] != lastbib["side"]:
         if thisbib["col"] != "a" and thisbib["col"]:
-            self.warn("Unexpected column: {0}{1} doesn't begin with column a ({2}, {3})".format(
-                 thisbib["page"], thisbib["side"], lastbib["full"], l["bibl"]), l, i)
+            self.warn(
+                "Unexpected column: {0}{1} doesn't begin with column a ({2}, {3})".format(
+                    thisbib["page"], thisbib["side"], lastbib["full"], l["bibl"]
+                ),
+                l,
+                i,
+            )
 
     if thisbib["page"] != lastbib["page"] and lastbib["side"]:
         if thisbib["side"] != "r":
-            self.warn("Unexpected side: {0} doesn't begin with side r ({1}, {2})".format(thisbib["page"],
-                                                                                    lastbib["full"],
-                                                                                    l["bibl"]), l, i)
+            self.warn(
+                "Unexpected side: {0} doesn't begin with side r ({1}, {2})".format(
+                    thisbib["page"], lastbib["full"], l["bibl"]
+                ),
+                l,
+                i,
+            )
 
     return thisbib
 
@@ -145,43 +185,68 @@ def check_shifttags(self, my_line, in_tag, close_tag, l, i):
                 last_tag = None
 
             if not last_tag:
-                self.report("Tag {0} closes, but nothing was opened before.".format(close_tag), l, i)
+                self.report(
+                    "Tag {0} closes, but nothing was opened before.".format(close_tag),
+                    l,
+                    i,
+                )
                 continue
             elif last_tag[0] != close_tag:
-                self.report("Tag {0} closed by {1}".format(last_tag[0], close_tag), l, i)
+                self.report(
+                    "Tag {0} closed by {1}".format(last_tag[0], close_tag), l, i
+                )
 
 
-
-
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     ap = argparse.ArgumentParser()
-    ap.add_argument("inputfile", type=str, nargs='?')
+    ap.add_argument("inputfile", type=str, nargs="?")
     # exporter
-    ap.add_argument('-t', '--tokenize', choices=['none', 'historical', 'medium', 'all'],
-                    default='medium', help="Tokenization")
+    ap.add_argument(
+        "-t",
+        "--tokenize",
+        choices=["none", "historical", "medium", "all"],
+        default="medium",
+        help="Tokenization",
+    )
 
-    ap.add_argument("-T", "--taggermode", action="store_true",
-                    help="Output one token per line, all tokenization, no bibinfo")
-    ap.add_argument('-b', '--bibinfo', choices=['line', 'both', 'none'],
-                    default='both', help="Bibliographic info in output")
+    ap.add_argument(
+        "-T",
+        "--taggermode",
+        action="store_true",
+        help="Output one token per line, all tokenization, no bibinfo",
+    )
+    ap.add_argument(
+        "-b",
+        "--bibinfo",
+        choices=["line", "both", "none"],
+        default="both",
+        help="Bibliographic info in output",
+    )
 
     ap.add_argument("-o", "--output", help="Output to file")
-  
-    ap.add_argument("-p", "--parser", choices=["rem", "anselm", "ref", "redi", "plain"],
-                    default="plain", help="Token parser to use, default: %(default)s")
 
-    ap.add_argument("-q", "--nowarnings", help="Quiet mode: show only errors, no warnings", 
-                    action="store_true")
+    ap.add_argument(
+        "-p",
+        "--parser",
+        choices=["rem", "anselm", "ref", "redi", "plain"],
+        default="plain",
+        help="Token parser to use, default: %(default)s",
+    )
+
+    ap.add_argument(
+        "-q",
+        "--nowarnings",
+        help="Quiet mode: show only errors, no warnings",
+        action="store_true",
+    )
 
     args = ap.parse_args()
 
     if args.taggermode:
         args.tokenize = "all"
         args.bibinfo = "none"
-    
+
     if args.nowarnings:
         logging.basicConfig(level=logging.ERROR)
 
