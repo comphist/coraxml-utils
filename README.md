@@ -103,16 +103,6 @@ For REF, Anselm, and REM (at least) we want to have tags indicating where univer
 
 ## Modifying tags
 
-The `add_punc_tags` converts sentence boundary annotations to tags that are easier to query (?)
+The `add_punc_tags` function converts sentence boundary annotations to tags that are easier to query (?)
 
-
-# TODO
-
-* Zweifelhafter Simplifizierungsregeln (möglicherweise müssen diese projektspezifisch
-aufgefasst werden)
-	* I005: `<mod id="a3220" trans="au\-$z*1|" utf="aūſz" simple="aunsz"/>`
-	* I015: `<mod id="a42" trans="rote\-b\:g" utf="rotēb̈g" simple="rotenbg"/>`
-* Validierung
-	* Präeditionszeichen sind alleinstehend als Token nicht erlaubt
-* Extended CorA-XML: extends CorA-XML, adding span annotations and subtoken annotations
 

@@ -1,3 +1,7 @@
+# conversion table from
+# character.rb
+# Florian Petran
+
 # `replacements` needs to be an array, since they must be done in the
 # correct order.
 #
