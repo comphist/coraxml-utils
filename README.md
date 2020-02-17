@@ -1,5 +1,8 @@
 
 # `coraxml_utils`
+![[License: GPLv3](LICENSE)](https://img.shields.io/badge/License-GPLv3-blue.svg)
+![[Test coverage](https://docs.nose2.io/en/latest/)](coverage.svg)
+![[Code style: black](https://github.com/psf/black)](https://img.shields.io/badge/code%20style-black-000000.svg)
 
 `coraxml_utils` is a collection of tools for processing CorA-XML and the various associated transcription languages for historical manuscripts.
 
@@ -10,6 +13,29 @@ It consists of:
 - Importers to read different file formats and 
 - Exporters to dump the content of a data model to certain formats 
 - Scripts for carrying out various combinations of these tasks.
+
+# Installation
+
+Dependencies:
+* `regex`
+* `lxml`
+* `nose2`
+* `click`
+
+These should be installed automatically by the setup script:
+```
+# NB: your Python 3 executable might just be called `python`
+python3 setup.py install --user
+```
+
+
+
+# Running tests
+
+```
+# from the `test/` directory
+nose2
+```
 
 
 # The data model
@@ -73,14 +99,11 @@ the data are valid and correctly processed.
 
 Currently there are parsers for the following transcription conventions.
 
-
-## `RexParser`
-
-This parser should cover all of the features of the transcription languages for ReF, ReDi, and Anselm, as well as a few other of the related projects (maybe).
-
-## `RemParser`
-
-Due to a few special features of the ReM transcriptions, there is a separate parser for ReM-style transcriptions.
+* ReM ([Referenzkorpus Mittelhochdeutsch](https://linguistics.rub.de/rem))
+* ReF ([Referenzkorpus Frühneuhochdeutsch](https://linguistics.rub.de/ref))
+* ReDI ([Referenzkorpus Deutscher Inschriften](https://www.ruhr-uni-bochum.de/wegera/ReDI/index.htm))
+* Anselm ([The Anselm Corpus](https://linguistics.rub.de/anselm))
+* ReN ([Referenzkorpus Mittelniederdeutsch/Niederrheinisch (1200&ndash;1650)](https://www.slm.uni-hamburg.de/ren.html))
 
 
 # Importers
@@ -117,5 +140,8 @@ transcription phase.
 
 The `add_punc_tags` function converts sentence boundary annotations (such as
 `(.)` or `(?)`) to tags that are easier to query.
+
+
+# Credits
 
 
