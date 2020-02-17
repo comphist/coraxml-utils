@@ -19,8 +19,7 @@ It consists of:
 
 A CorA-XML file is represented in our data model by the `Document` object. The internal structure of `Document` objects reflects the fact that they are meant to represent historical prints and manuscripts. They thus also model the layout of text on pages. 
 
-![document model viz](res/docmodel.png)
-
+A `Document` thus consists of `Page`s which then are made up of `Column`s which contain a series of `Line`s. Each line contains a series of diplomatic transcriptions (`TokDipl`). Parallel to these structures, the `Document`s contains the list of `CoraToken`s, which represent the mapping between the diplomatically faithful tokenizations and the modernized, annotatable tokenizations. Each `CoraToken` object contains a series of `TokDipl` and `TokAnno` objects, and the `TokAnno` objects contain all of the annotations visible/editable on CorA.
 
 ## Transcriptions
 
@@ -46,10 +45,31 @@ Visualization of character class hierarchy:
 
 # Scripts
 
+Contents of the `bin/` directory.
+
+Some of these script
+
+## Interacting with CorA
+
+For scripting some of the basic functions of [CorA](http://github.com/comphist/cora) there is `corascript.py`.
+
+## Conversion Scripts
+
+Scripts used for converting between formats follow the naming convention `{source}2{destination}.py`. Some examples:
+
 - trans2coraxml.py
 - coraxml2gatejson.py
+- coraxml2tei.py
+- (etc.)
 
-# Parsers
+## Applying Transformations to a Corpus
+
+It may seem surprising that there is a script for converting from *and* to
+CorA-XML: `coraxml2coraxml.py`. This script is intended to assist in the
+application of various custom transformations to the data and to confirm that
+the data are valid and correctly processed.
+
+# Available Transcription Parsers
 
 Currently there are parsers for the following transcription conventions.
 
@@ -60,49 +80,42 @@ This parser should cover all of the features of the transcription languages for 
 
 ## `RemParser`
 
-Due to a few special features of the REM transcriptions, we have also implemented a parser for REM in particular.
+Due to a few special features of the ReM transcriptions, there is a separate parser for ReM-style transcriptions.
 
 
 # Importers
 
-## `CoraXMLImporter`
-
-
-## `TransImporter`
-
-For plain text transcription files.
-
-## `BonnXMLImporter`
-
-For REM.
-
+* `CoraXMLImporter`
+* `TransImporter` (For plain text transcription files.)
+* `BonnXMLImporter` (For ReM.)
 
 
 # Exporters
 
-## `CoraXMLExporter`
-
-Data imported with the `CoraXMLImporter` and exported with this exporter should be identical.
-
-## `TransExporter`
-
-## `TEIExporter`
-
-## `GateJsonExporter`
-
-This is the variant of Tweet JSON used by GATE.
+*`CoraXMLExporter`
+    * Data imported with the `CoraXMLImporter` and exported with this exporter should be identical.
+* `TransExporter` 
+* `TEIExporter`
+* `GateJsonExporter` (This is the variant of Tweet JSON used by GATE.)
+* `MarkdownExporter`
 
 
 # Modifiers
 
-Modifiers are functions that perform whatever post-processing one might require in certain situations.
+Sometimes you want to transform a document in some way before exporting it to a destination format: rename a node, add some tags, etc. For this, CorA-XML Utils uses **modifiers**: functions that perform whatever post-processing one might require in certain situations.
+
+The following are some of the modifiers currently included in CorA-XML Utils.
 
 ## Adding tokenization tags
 
-For REF, Anselm, and REM (at least) we want to have tags indicating where univerbation or multiverbation has taken place. The `add_tokenization_tags` function adds these tags based on the `TokenBound` annotations added during the transcription phase.
+For ReF, Anselm, and ReM (at least) we want to have tags indicating where
+univerbation or multiverbation has taken place. The `add_tokenization_tags`
+function adds these tags based on the `TokenBound` annotations added during the
+transcription phase.
 
 ## Modifying tags
 
-The `add_punc_tags` function converts sentence boundary annotations to tags that are easier to query (?)
+The `add_punc_tags` function converts sentence boundary annotations (such as
+`(.)` or `(?)`) to tags that are easier to query.
 
 
