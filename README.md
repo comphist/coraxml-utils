@@ -47,8 +47,6 @@ Visualization of character class hierarchy:
 
 Contents of the `bin/` directory.
 
-Some of these script
-
 ## Interacting with CorA
 
 For scripting some of the basic functions of [CorA](http://github.com/comphist/cora) there is `corascript.py`.
