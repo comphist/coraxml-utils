@@ -1,10 +1,10 @@
 
-# `coraxml_utils`
+# CorA-XML Utils
 ![[License: GPLv3](LICENSE)](https://img.shields.io/badge/License-GPLv3-blue.svg)
 ![[Test coverage](https://docs.nose2.io/en/latest/)](coverage.svg)
 ![[Code style: black](https://github.com/psf/black)](https://img.shields.io/badge/code%20style-black-000000.svg)
 
-`coraxml_utils` is a collection of tools for processing CorA-XML and the various associated transcription languages for historical manuscripts.
+CorA-XML Utils is a collection of tools for processing CorA-XML and the various associated transcription languages for historical manuscripts.
 
 It consists of:
 
@@ -73,8 +73,6 @@ Visualization of character class hierarchy:
 
 Contents of the `bin/` directory.
 
-Some of these script
-
 ## Interacting with CorA
 
 For scripting some of the basic functions of [CorA](http://github.com/comphist/cora) there is `corascript.py`.
@@ -140,8 +138,5 @@ transcription phase.
 
 The `add_punc_tags` function converts sentence boundary annotations (such as
 `(.)` or `(?)`) to tags that are easier to query.
-
-
-# Credits
 
 
