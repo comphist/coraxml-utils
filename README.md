@@ -1,7 +1,7 @@
 
-# `coraxml_utils`
+# CorA-XML Utils
 
-`coraxml_utils` is a collection of tools for processing CorA-XML and the various associated transcription languages for historical manuscripts.
+CorA-XML Utils is a collection of tools for processing CorA-XML and the various associated transcription languages for historical manuscripts.
 
 It consists of:
 
