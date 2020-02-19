@@ -64,7 +64,7 @@ A `Trans` object thus has two essential methods: `tokenize_dipl` and `tokenize_a
 For the processing of transcriptions, `coraxml_utils` makes use of a detailed character class model.
 
 Visualization of character class hierarchy:
-![character model overview](res/charclasses.png)
+![character model overview](res/charclasses.svg)
 
 
 
