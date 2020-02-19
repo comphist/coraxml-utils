@@ -113,8 +113,8 @@ Currently there are parsers for the following transcription conventions.
 
 # Exporters
 
-*`CoraXMLExporter`
-    * Data imported with the `CoraXMLImporter` and exported with this exporter should be identical.
+* `CoraXMLExporter`
+  - Data imported with the `CoraXMLImporter` and exported with this exporter should be identical.
 * `TransExporter` 
 * `TEIExporter`
 * `GateJsonExporter` (This is the variant of Tweet JSON used by GATE.)
