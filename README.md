@@ -24,17 +24,17 @@ Dependencies:
 
 These should be installed automatically by the setup script:
 ```
-# NB: your Python 3 executable might just be called `python`
 python3 setup.py install --user
 ```
+(NB: Your Python 3 executable might just be called `python`.)
 
 
 
 # Running tests
 
+From the `test/` directory (optionally calculating test coverage):
 ```
-# from the `test/` directory
-nose2
+nose2 [--with-coverage --coverage coraxml_utils]
 ```
 
 
