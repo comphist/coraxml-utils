@@ -1,8 +1,8 @@
 
 # CorA-XML Utils
-![[License: GPLv3](LICENSE)](https://img.shields.io/badge/License-GPLv3-blue.svg)
-![[Test coverage](https://docs.nose2.io/en/latest/)](coverage.svg)
-![[Code style: black](https://github.com/psf/black)](https://img.shields.io/badge/code%20style-black-000000.svg)
+[![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Test coverage](coverage.svg)](https://docs.nose2.io/en/latest/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 CorA-XML Utils is a collection of tools for processing CorA-XML and the various associated transcription languages for historical manuscripts.
 
