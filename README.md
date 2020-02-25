@@ -101,7 +101,10 @@ Currently there are parsers for the following transcription conventions.
 * ReF ([Referenzkorpus Frühneuhochdeutsch](https://linguistics.rub.de/ref))
 * ReDI ([Referenzkorpus Deutscher Inschriften](https://www.ruhr-uni-bochum.de/wegera/ReDI/index.htm))
 * Anselm ([The Anselm Corpus](https://linguistics.rub.de/anselm))
-* ReN ([Referenzkorpus Mittelniederdeutsch/Niederrheinisch (1200&ndash;1650)](https://www.slm.uni-hamburg.de/ren.html))
+* ReN ([Referenzkorpus Mittelniederdeutsch/Niederrheinisch (1200&ndash;1650)](https://www.slm.uni-hamburg.de/ren))
+
+Please note: The parser for ReN is not very strict. Therefore it can be used to import valid transcriptions.
+But it should not be used to validate transcriptions.
 
 
 # Importers
