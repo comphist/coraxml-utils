@@ -4,7 +4,8 @@
 [![Test coverage](coverage.svg)](https://docs.nose2.io/en/latest/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-CorA-XML Utils is a collection of tools for processing CorA-XML and the various associated transcription languages for historical manuscripts.
+CorA-XML Utils is a collection of tools for processing CorA-XML and the various
+associated transcription languages for historical manuscripts.
 
 It consists of:
 
@@ -13,6 +14,29 @@ It consists of:
 - Importers to read different file formats and 
 - Exporters to dump the content of a data model to certain formats 
 - Scripts for carrying out various combinations of these tasks.
+
+Due to the distinction between "dipl" and "mod" tokenizations in CorA-XML, CorA
+requires functions that can keep track of these parallel tokenizations whenever
+tokens are edited in the interface. However, because the details of each
+project's transcription guidelines can differ, [CorA relies on external
+scripts](https://cora.readthedocs.io/en/latest/admin-projects/#setting-a-token-editing-script)
+to manage this process. Users can of course write their own scripts to manage
+token editing and importing documents, but we provide our CorA-XML Utils to
+support the production of the requisite scripts and to offer additional
+functionality besides.
+
+In order to support a new transcription standard, one must only define the
+regular expressions (which comprise the main functionality of a parser) in
+`coraxml_utils/parser.py` and in `coraxml_utils/tokenizer.py` -- insofar as the
+existing modules aren't compatible, in which case the existing modules can be
+used as a reference. Once this has been done, the rest of the functionality
+comes free: the included editing script (`bin/check_and_parse_token`) and
+import script (`bin/trans2coraxml.py`) operate on the structured internal
+representation of token transcriptions and thus work for any transcription
+standard for which there is a parser. This is then all you need to use CorA for
+your data. Additionally, CorA-XML Utils contains a number of export modules,
+for JSON, TEI, Markdown, etc. Once the parsers have been defined, these modules
+can help get your data into the format you need it in. 
 
 # Installation
 
