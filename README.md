@@ -11,8 +11,8 @@ It consists of:
 
 - A model for CorA-XML
 - A model for transcriptions
-- Importers to read different file formats and 
-- Exporters to dump the content of a data model to certain formats 
+- Importers to read different file formats and
+- Exporters to dump the content of a data model to certain formats
 - Scripts for carrying out various combinations of these tasks.
 
 Due to the distinction between "dipl" and "mod" tokenizations in CorA-XML, CorA
@@ -36,11 +36,12 @@ representation of token transcriptions and thus work for any transcription
 standard for which there is a parser. This is then all you need to use CorA for
 your data. Additionally, CorA-XML Utils contains a number of export modules,
 for JSON, TEI, Markdown, etc. Once the parsers have been defined, these modules
-can help get your data into the format you need it in. 
+can help get your data into the format you need it in.
 
 # Installation
 
 Dependencies:
+
 * `regex`
 * `lxml`
 * `nose2`
@@ -67,13 +68,13 @@ nose2 [--with-coverage --coverage coraxml_utils]
 
 ## Corpus documents
 
-A CorA-XML file is represented in our data model by the `Document` object. The internal structure of `Document` objects reflects the fact that they are meant to represent historical prints and manuscripts. They thus also model the layout of text on pages. 
+A CorA-XML file is represented in our data model by the `Document` object. The internal structure of `Document` objects reflects the fact that they are meant to represent historical prints and manuscripts. They thus also model the layout of text on pages.
 
 A `Document` thus consists of `Page`s which then are made up of `Column`s which contain a series of `Line`s. Each line contains a series of diplomatic transcriptions (`TokDipl`). Parallel to these structures, the `Document`s contains the list of `CoraToken`s, which represent the mapping between the diplomatically faithful tokenizations and the modernized, annotatable tokenizations. Each `CoraToken` object contains a series of `TokDipl` and `TokAnno` objects, and the `TokAnno` objects contain all of the annotations visible/editable on CorA.
 
 ## Transcriptions
 
-A transcription (`Trans`) consists of characters (`Char`) -- see the next section for more on characters. 
+A transcription (`Trans`) consists of characters (`Char`) -- see the next section for more on characters.
 
 The central distinction that CorA-XML makes is that between *diplomatic* tokenizations and *modernized*, i.e. *annotatable*, tokenizations. CorA-XML additionally differentiates between *diplomatic* representations of transcribed text and *simplified* ASCII representations of the same text.
 
@@ -103,19 +104,43 @@ For scripting some of the basic functions of [CorA](http://github.com/comphist/c
 
 ## Conversion Scripts
 
-Scripts used for converting between formats follow the naming convention `{source}2{destination}.py`. Some examples:
+Included are a number of scripts for converting between formats, which
+follow the naming convention `{source}2{destination}.py`:
 
-- trans2coraxml.py
-- coraxml2gatejson.py
-- coraxml2tei.py
+- `trans2coraxml.py`
+- `coraxml2gatejson.py`
+- `coraxml2tei.py`
 - (etc.)
 
-## Applying Transformations to a Corpus
+These special scripts sometimes perform various related functions in
+addition to simply converting from one format to another. For
+instance, `trans2coraxml.py` also prints the messages that CorA uses
+to provide user feedback when new documents are being uploaded and
+processed.
 
-It may seem surprising that there is a script for converting from *and* to
-CorA-XML: `coraxml2coraxml.py`. This script is intended to assist in the
-application of various custom transformations to the data and to confirm that
-the data are valid and correctly processed.
+Scripts such as `coraxml2coraxml.py` also apply various custom
+transformations to the data and confirm that the data are valid and
+have been correctly processed.
+
+If all you need is plain conversion from one format to another, you
+might only need the `coraxml_utils` executable.
+
+<details>
+	<summary>Usage</summary>
+```
+Usage: coraxml_utils convert [OPTIONS] INFILE
+
+Options:
+  -f, --from [coraxml|bonnxml|trans]
+                                  Format of the input.  [default: trans]
+  -t, --to [coraxml|trans|gatejson|tei|md]
+                                  Format of the output.  [default: coraxml]
+  -P, --parser [plain|rem|ref|ren|redi|anselm]
+                                  Token parser to use.  [default: plain]
+  -o, --outfile FILENAME
+  --help                          Show this message and exit.
+```
+</details>
 
 # Available Transcription Parsers
 
@@ -142,7 +167,7 @@ But it should not be used to validate transcriptions.
 
 * `CoraXMLExporter`
   - Data imported with the `CoraXMLImporter` and exported with this exporter should be identical.
-* `TransExporter` 
+* `TransExporter`
 * `TEIExporter`
 * `GateJsonExporter` (This is the variant of Tweet JSON used by GATE.)
 * `MarkdownExporter`
@@ -165,5 +190,3 @@ transcription phase.
 
 The `add_punc_tags` function converts sentence boundary annotations (such as
 `(.)` or `(?)`) to tags that are easier to query.
-
-
