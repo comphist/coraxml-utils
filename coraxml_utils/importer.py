@@ -826,6 +826,9 @@ class TransImporter:
         else:
             return None
 
+    def import_from_file(self, inputfile):
+        return self.import_from_string(inputfile.read())
+
 
 class BonnXMLImporter:
     def __init__(self, token_parser):
