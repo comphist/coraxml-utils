@@ -250,7 +250,7 @@ class RexParser(BaseParser):
         # LIST OF ALLOWED CHARACTERS FOR validity check
         self.allowed = set(ALPHA)
         self.allowed.update(ALPHA.upper())
-        self.allowed.update(r'-",.:;\/!?1234567890ßäöüÄÖÜ\n')
+        self.allowed.update('-",.:;\/!?1234567890ßäöüÄÖÜ\n')
         # for r-kuerzung
         self.allowed.update("'")
 

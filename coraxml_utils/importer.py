@@ -578,8 +578,8 @@ class CoraXMLImporter:
 
 class TransImporter:
     def __init__(self, parser):
-        self.TokenParser = parser()
-        self.Tokenizer = tokenizer.RexTokenizer()
+        self.tokenparser = parser()
+        self.tokenizer = tokenizer.RexTokenizer()
         # allowed bibinfo format
         # pageno, side, col, linename
         self.BIBINFO_FORMAT = re.compile(
@@ -685,7 +685,7 @@ class TransImporter:
             else:
                 transcription_content.append(line.strip())
                 bibinfo_lines.append(None)
-        tokenized_input = self.Tokenizer.tokenize("\n".join(transcription_content))
+        tokenized_input = self.tokenizer.tokenize("\n".join(transcription_content))
 
         bibinfo_lines = self._parse_bibinfos(bibinfo_lines)
 
