@@ -1,5 +1,0 @@
-Click==7.0
-lark-parser==0.7.3
-lxml==4.4.1
-markdown-strings==3.1.1
-regex==2019.8.19
