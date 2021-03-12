@@ -179,7 +179,30 @@ def merge_annotations(
             ## if source_anno1_name does not exist -> do nothing
             pass
 
+def split_annotations(token, source_anno_name, res_anno1_name, res_anno2_name, sep='.'):
 
+    for tok_anno in token.tok_annos:
+        if source_anno_name in tok_anno.tags:
+            annos = [a.strip() for a in tok_anno.tags[source_anno_name].split(sep) if a.strip()]
+            if len(annos) > 1:
+                ## both res annos
+                ## create new annotations
+                tok_anno.tags[res_anno1_name] = annos[0]
+                tok_anno.tags[res_anno2_name] = annos[1]
+            else:
+                ## only res anno1
+                ## keep this tag under new name
+                tok_anno.tags[res_anno1_name] = tok_anno.tags[source_anno_name]
+
+            #Remove source tag
+            if source_anno_name != res_anno1_name and source_anno_name != res_anno1_name:
+                del tok_anno.tags[source_anno_name]
+                    
+        ### TODO just for readability?
+        else:
+            ## if source_anno1_name does not exist -> do nothing
+            pass
+        
 def trans_to_cora_json(trans):
     """
     Converts a Trans-object to json as expected from CorA from a token editing script
@@ -256,21 +279,205 @@ def postprocess(MyImporter, MyExporter, postprocessor, document_processor=None):
         output_xml = MyExporter.export(doc)
         outfilepath = str(Path(args.outpath) / (doc.sigle + ".xml"))
         with open(outfilepath, "wb") as outfile:
-            output_xml.write(
-                outfile, xml_declaration=True, pretty_print=True, encoding="utf-8"
-            )
-
+            output_xml.write(outfile, xml_declaration=True,
+                             pretty_print=True, encoding='utf-8')
 
 def ref_convert(tok):
 
-    merge_annotations(tok, "pos", "lemmapos", "pos", sep="<")
-    merge_annotations(tok, "pos", "morph", "pos", sep=".")
+    merge_annotations(tok, 'pos', 'lemmapos', 'pos', sep='<')
+    merge_annotations(tok, 'pos', 'morph', 'pos', sep='.')
 
     # add punc tags
-    add_punc_tags(tok, "boundary")
+    add_punc_tags(tok, 'boundary')
 
+def ref_header(doc):
 
-def ref_postprocess(tok):
+    new_header_string = []
+
+    # delete unnecessary info from header
+    lines_to_delete = ["Text eingegeben", "Datum", "Bearbeiter",
+                       "Text präeditiert", 
+                       "Text kollationiert",
+                       "Lat. Passage",
+                       "Annotiert", 
+                       "KTX-Korrektur"]
+    mapping = [("Korpus-Sigle", "corpus-sigle"),
+               ("Titel", "text"),
+               ("Verfasser", "text-author"),
+               #("Textart", "genre"),
+               ("Text[\$s]orte", "text-type"),
+               ("Zuordnung[$s]qualität", "assignment_quality"),
+               ("Hoffmann/Wetter-Nr", "hoffmann_wetter_nr"),
+               ("Bibliothek/Archiv", "library"),
+               ("[$S]ignatur", "library-shelfmark"),
+               ("Datierung", "date"),
+               #("Lokali[$s]ierung", "text-place"),
+               ("Druckort", "place"),
+               ("Schreibort", "text-place"),
+               ("Drucker", "printer"),
+               ("verwendete\sEdition", "edition"),
+               ("Literatur", "literature"),
+               ("(Ge[$s]amtumfang|Umfang\s*in\s*Wortformen\s*:|Umfang\s*in\s*Wortformen\s*\(*\s*insgesamt\s*\)*)", "size")]
+
+    header = [line.strip() for line in doc.header_string.strip().split("\n") if line.strip()]
+
+    new_header_dict = dict()
+    
+    for oldkey,newkey in mapping:
+        for line in header:
+            if re.match(oldkey, line, re.I):
+                val = ":".join(line.split(":")[1:]).strip()
+                if not val: val = "-"
+                elif re.match(r"^-+$", val): val = "-"
+                new_header_dict[newkey] = val
+    for _, newkey in mapping:
+        if newkey in new_header_dict:
+            if newkey == "corpus-sigle":
+                match = re.search(r"(F\d+)[,\s]*([IV]+)-([A-F])([a-f]+)-([PVT])\d*[,(\s]*(H|D)", new_header_dict[newkey])
+                new_header_dict["time"] = {"I" : "14,2", "II" : "15,1", "III" : "15,2",
+                                           "IV" : "16,1", "V" : "16,2", "VI" : "17,1"}.get(match.group(2), "-")
+                if match.group(3) == "B":
+                    new_header_dict["language-type"] = "oberdeutsch"
+                    new_header_dict["language-region"] = "westoberdeutsch"
+                    if match.group(4) == "a":
+                        new_header_dict["language-area"] = "oberrheinisch"
+                    elif match.group(4) == "b":
+                        new_header_dict["language-area"] = "hochalemannisch"
+                    elif match.group(4) == "c":
+                        new_header_dict["language-area"] = "schwäbisch"
+                    elif match.group(4) == "d":
+                        new_header_dict["language-area"] = "ostschwäbisch"
+                    elif match.group(4) == "cd":
+                        new_header_dict["language-area"] = "gesamtschwäbisch"
+                elif match.group(3) == "C":
+                    new_header_dict["language-type"] = "mitteldeutsch"
+                    new_header_dict["language-region"] = "westmitteldeutsch"
+                    if match.group(4) == "a":
+                        new_header_dict["language-area"] = "ripuarisch"
+                    elif match.group(4) == "b":
+                        new_header_dict["language-area"] = "moselfränkisch"
+                    elif match.group(4) == "c":
+                        new_header_dict["language-area"] = "hessisch"
+                    elif match.group(4) == "d":
+                        new_header_dict["language-area"] = "südrheinfränkisch"
+                    elif match.group(4) == "cd":
+                        new_header_dict["language-area"] = "hessisch-südrheinfränkisch"
+                    elif match.group(4) == "abcd":
+                        new_header_dict["language-area"] = "westmitteldeutsch"
+                else:
+                    new_header_dict["language-area"] = "-"
+                    new_header_dict["language-region"] = "-"
+                    new_header_dict["language-type"] = "-"
+                new_header_dict["genre"] = match.group(5)
+                if match.group(6) == "H":
+                    new_header_dict["medium"] = "Handschrift"
+                    new_header_dict["reference"] = "Hs.: Blatt (r/v), Kolumne (a/b), Zeile"
+                else:
+                    new_header_dict["medium"] = "Druck"
+                    new_header_dict["reference"] = "Seite, Zeile"
+
+                for key in ["language-area", "language-region", "language-type", "genre", "medium", "time", "reference"]:
+                    new_header_string.append(key + ": " + new_header_dict[key])
+            elif newkey in ["text-place", "place"]:
+                if new_header_dict["medium"] == "Handschrift" and newkey == "place":
+                    new_header_dict["text-place"] = new_header_dict[newkey]
+                    new_header_string.append(newkey + ": -")
+                    newkey = "text-place"
+                elif new_header_dict["medium"] == "Handschrift" and "place" in new_header_dict:
+                    continue
+            new_header_string.append(newkey + ": " + new_header_dict[newkey])
+        else:
+            new_header_string.append(newkey + ": -")
+    new_header_string.append("language: fnhd")
+    new_header_string.append("corpus: ReF.BO")
+***REMOVED***
+
+    notes = {l.split("\t")[0] : l.split("\t")[1].strip() for l in notesfile.readlines() if l.strip()}
+    notesfile.close()
+    new_header_string.append("notes-transcription" + ": " + notes[new_header_dict["corpus-sigle"][:4]])
+
+***REMOVED***
+    abbrs = {l.split("\t")[1].strip() : l.split("\t")[0].strip() for l in abbr_file.readlines() if l.strip()}
+    abbr_file.close()
+    new_header_string.append("abbr_ddd" + ": " + abbrs[new_header_dict["corpus-sigle"][:4]])
+    
+    extent_fnhdc = ""
+    extent_ref = ""
+    size_fnhdc = ""
+    size_ref = ""
+    for line in header:
+        if re.match(r"Auswahl\s*Bonner\s*Frnhd\.\s*Korpus", line, re.I):
+            extent_fnhdc = ":".join(line.split(":")[1:]).strip()
+        elif re.match(r"Auswahl\s*Referenzkorpus", line, re.I) \
+             or re.match(r"Ergänzung\s*Referenzkorpus", line, re.I):
+            if extent_ref: extent_ref += ", " + ":".join(line.split(":")[1:]).strip()
+            else: extent_ref += ":".join(line.split(":")[1:]).strip()
+        elif re.match(r"Umfang\s*in\s*Wortformen\s*\(\s*Frnhd\.\s*Korpus\s*\)", line, re.I):
+            size_fnhdc = ":".join(line.split(":")[1:]).strip()
+        elif re.match(r"Umfang\s*in\s*Wortformen\s*\(\s*Referenzkorpus\s*\)", line, re.I):
+            size_ref = ":".join(line.split(":")[1:]).strip()
+    if not extent_fnhdc: extent_fnhdc = "-"
+    elif re.match(r"^-+$", extent_fnhdc): extent_fnhdc = "-"
+    if not extent_ref: extent_ref = "-"
+    elif re.match(r"^-+$", extent_ref): extent_ref = "-"
+    new_header_string.append("extent: FnhdC: " + extent_fnhdc + "; compl: " + extent_ref)
+
+    if not size_fnhdc: size_fnhdc = "-"
+    elif re.match(r"^-+$", size_fnhdc): size_fnhdc = "-"
+    if not size_ref: size_ref = "-"
+    elif re.match(r"^-+$", size_ref): size_ref = "-"
+    size = "FnhdC: " + str(size_fnhdc) + "; compl: " + str(size_ref)
+    new_header_string.append("extent-size: " + str(size))
+    
+    doc.header_string = "\n".join(new_header_string)
+
+def ref_postprocess(tok, link_style=False):
+
+    #re-separate annotations
+    split_annotations(tok, "pos", "pos", "posLemma", sep="<")
+    split_annotations(tok, "lemma", "lemma", "lemmaId", sep=" ")
+
+    #Create lemma URL or link
+    for tok_anno in tok.tok_annos:
+        if "lemmaId" in tok_anno.tags:
+            lemmaId = re.search(r".*?\[{0,1}(?P<lemmaId>\w+)\]{0,1}.*?", tok_anno.tags["lemmaId"]).group("lemmaId")
+            if link_style:
+                tok_anno.tags["lemmaURL"] = "<a href=\'http://www.woerterbuchnetz.de/DWB?lemid={0}\'>{1}</a>".format(lemmaId, lemmaId)
+            else:
+                tok_anno.tags["lemmaURL"] = "http://www.woerterbuchnetz.de/DWB?lemid={0}".format(lemmaId)
+        elif "lemma" in tok_anno.tags:
+            lemma = tok_anno.tags["lemma"].strip()
+            if link_style:
+                tok_anno.tags["lemmaURL"] = "<a href=\'http://www.woerterbuchnetz.de/DWB?lemma={0}\'>{1}</a>".format(lemma, lemma)
+            else:
+                tok_anno.tags["lemmaURL"] = "http://www.woerterbuchnetz.de/DWB?lemma={0}".format(lemma)
+
+        #Correct inflection of irregular verbs
+        #VV: gönnen, taugen, turren, wissen, gehen, stehen, tun, lassen
+        #VA: haben, sein
+        #VM: dürfen, können, mögen, müssen, sollen, wollen
+        #final * -> Unr
+        if "pos" in tok_anno.tags and tok_anno.tags["pos"].startswith("V") \
+           and "lemma" in tok_anno.tags and "morph" in tok_anno.tags \
+           and len(tok_anno.tags["morph"].split(".")) == 5 \
+           and tok_anno.tags["morph"].endswith("*"):
+            if (tok_anno.tags["pos"].startswith("VV") \
+               and tok_anno.tags["lemma"] in ["gönnen", "taugen", "turren", "wissen", \
+                                              "gehen", "stehen", "tun", "lassen"]) \
+               or (tok_anno.tags["pos"].startswith("VA") \
+               and tok_anno.tags["lemma"] in ["haben", "sein"]) \
+               or (tok_anno.tags["pos"].startswith("VM") \
+               and tok_anno.tags["lemma"] in ["dürfen", "können", "mögen", "müssen", \
+                                              "sollen", "wollen"]):
+                inflection = tok_anno.tags["morph"].split(".")
+                inflection[-1] = "Unr"
+                tok_anno.tags["morph"] = ".".join(inflection)
+                
+        #mark automatic vs. manual annotation
+        if tok_anno.checked == True:
+            tok_anno.tags["annoType"] = "man"
+        else:
+            tok_anno.tags["annoType"] = "auto"
 
     # add tokenization tags
     add_tokenization_tags(tok)
