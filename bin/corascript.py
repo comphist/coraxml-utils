@@ -8,7 +8,7 @@ import requests
 import click
 
 
-DEFAULT_BASE = "https://smokehead.linguistics.rub.de/cora/"
+DEFAULT_BASE = "https://cora.linguistics.rub.de/"
 
 
 class CoraClient:

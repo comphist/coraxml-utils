@@ -74,7 +74,7 @@ class CoraXMLExporter:
             root, "cora-header", {"sigle": doc.sigle, "name": doc.name}
         )
 
-        ## TODO improve export of the header
+        # TODO improve export of the header
         if doc.header_string:
             # try:
             #     header = ET.fromstring(doc.header_string)
@@ -146,7 +146,7 @@ class TransExporter:
         output = list()
 
         output.append("+H")
-        ## TODO improve export of the header
+        # TODO improve export of the header
         if doc.header_string:
             output.append(doc.header_string)
         else:
@@ -218,6 +218,16 @@ class TransExporter:
         current_line = list()
         recent_linebreak = False
 
+        def finish_line():
+            current_line.append("".join(output_token))
+            output.append(
+                next(bibinfos_iter) + " ".join(current_line)
+            )
+            output_token = list()
+            current_line = list()
+            recent_linebreak = False
+
+        
         for token_or_comment in doc.tokens:
             if isinstance(token_or_comment, CoraComment):
                 if "trans" in token_form:
@@ -262,12 +272,20 @@ class TransExporter:
                                 output_token = list()
                                 current_line = list()
                                 recent_linebreak = False
+                    else:
+                        current_line.append("".join(output_token))
+                        output.append(
+                            next(bibinfos_iter) + " ".join(current_line)
+                        )
+                        output_token = list()
+                        current_line = list()
+                        recent_linebreak = False
                 if output_token:
                     current_line.append("".join(output_token))
 
             else:
                 logging.warning(
-                    "Unexpected object in token list of document '%s'" % doc.sigle
+                    "Unexpected object in token list of document '%s'", doc.sigle
                 )
 
         return "\n".join(output)
@@ -301,8 +319,8 @@ class TEIExporter:
         else:
             self.curr_part.append(element)
 
-    ## TODO sent_tag="bound_sent" is specific for ReN
-    ## TODO it is also a hack - importers should use anno_span for sentences
+    # TODO sent_tag="bound_sent" is specific for ReN
+    # TODO it is also a hack - importers should use anno_span for sentences
     def export(self, doc, sent_tag="bound_sent"):
 
         page = {}
@@ -321,14 +339,14 @@ class TEIExporter:
         self.sent_tag = sent_tag
         self.curr_part = []
 
-        ## the xml element to which characters are added
+        # the xml element to which characters are added
         self._current_text_element = tei_root
-        ## characters have to be added either to tail or to text
+        # characters have to be added either to tail or to text
         self._current_text_attribute = "text"
 
         in_multiverbation = False
 
-        ## get layoutinfo
+        # get layoutinfo
         for page_object in doc.pages:
             page[page_object.columns[0].lines[0].dipls[0].get_internal_id()] = (
                 page_object.name + page_object.side
@@ -380,15 +398,15 @@ class TEIExporter:
                         if dipl_tokens:
                             current_dipl = dipl_tokens.pop()
 
-                            ## test for line
+                            # test for line
                             if current_dipl.get_internal_id() in line:
 
-                                ## test for column
+                                # test for column
                                 if current_dipl.get_internal_id() in column:
 
-                                    ## test for page
+                                    # test for page
                                     if current_dipl.get_internal_id() in page:
-                                        ## add page
+                                        # add page
                                         self._add_element(
                                             ET.Element(
                                                 "pb",
@@ -397,7 +415,7 @@ class TEIExporter:
                                             current_parent,
                                         )
 
-                                    ## add column
+                                    # add column
                                     column_name = None
                                     if column[current_dipl.get_internal_id()]:
                                         column_name = column[
@@ -411,7 +429,7 @@ class TEIExporter:
                                         if column_name != None:
                                             last_element.attrib["n"] = column_name
 
-                                ## add line
+                                # add line
                                 self._current_text_element = ET.Element(
                                     "lb", n=line[current_dipl.get_internal_id()]
                                 )
@@ -420,7 +438,7 @@ class TEIExporter:
                                 )
                                 self._current_text_attribute = "tail"
 
-                            ## test for univerbation without linebreak
+                            # test for univerbation without linebreak
                             elif not char.anno_bound:
                                 self._current_text_element = ET.Element(
                                     "space", quantity="1", unit="chars"
@@ -459,7 +477,7 @@ class TEIExporter:
                                     ] += "<" + self._curr_anno.tags.get("pos_gen")
                             if "morph" in self._curr_anno.tags:
                                 annotations["msd"] = self._curr_anno.tags.get("morph")
-                            ## TODO this is specific for ren -- add option
+                            # TODO this is specific for ren -- add option
                             if "lemma_wsd" in self._curr_anno.tags:
                                 annotations["lemma"] = self._curr_anno.tags.get(
                                     "lemma_wsd"
@@ -491,7 +509,7 @@ class TEIExporter:
 
                             if curr_sent_tag is not None and curr_sent_tag != "None":
 
-                                ## create new sentence node
+                                # create new sentence node
                                 parent_node = ET.SubElement(parent_node, "s")
                                 if self._curr_anno.tags[self.sent_tag].startswith(
                                     "Satzteil_"
@@ -500,7 +518,7 @@ class TEIExporter:
                                         "part", self._curr_anno.tags[self.sent_tag][-1]
                                     )
 
-                            ## add elements to part
+                            # add elements to part
                             if (
                                 curr_sent_tag is not None
                             ):  # or curr_head_tag is not None:
@@ -510,13 +528,13 @@ class TEIExporter:
 
                     def getPlacement(bracket_string):
 
-                        ## ReN: continuation below or above line
+                        # ReN: continuation below or above line
                         if bracket_string.startswith("\\F"):
                             if bracket_string[2] == "U":
                                 return "below"
                             elif char.string[2] == "O":
                                 return "above"
-                        ## ReN: paratext
+                        # ReN: paratext
                         elif char.string.startswith("*"):
                             if char.string[1] == "U":
                                 return "bottom"
@@ -531,10 +549,10 @@ class TEIExporter:
                             elif char.string[1] == "I":
                                 return "interlinear"
 
-                        ## bracket string does not have a known format
+                        # bracket string does not have a known format
                         return None
 
-                    ## add subtoken information (like strikethrough)
+                    # add subtoken information (like strikethrough)
                     if (
                         isinstance(char, Whitespace)
                         or isinstance(char, Multiverbation)
@@ -600,11 +618,11 @@ class TEIExporter:
                         self._add_text(char.string)
 
             elif type(token) == CoraComment:
-                ## TODO what about type?
+                # TODO what about type?
                 comment_element = ET.SubElement(tei_root, "note", type="editorial")
                 comment_element.text = token.content
 
-        ## elements not assigned to a part
+        # elements not assigned to a part
         if self.curr_part:
             for element in self.curr_part:
                 tei_root.append(element)
@@ -631,7 +649,7 @@ class GateJsonExporter:
             },
         }
 
-        ## add metadata
+        # add metadata
         json_object["sigle"] = doc.sigle
         json_object["name"] = doc.name
         json_object["header"] = doc.header
@@ -682,8 +700,8 @@ class GateJsonExporter:
                 tok_dipls = list(token.tok_dipls)
                 tok_dipls.reverse()
 
-                ## CoraToken will start with a dipl token - so add 1 to curr char offset
-                ## (unless we are at the beginning of the text)
+                # CoraToken will start with a dipl token - so add 1 to curr char offset
+                # (unless we are at the beginning of the text)
                 last_cora_token_offset = (
                     char_offset + 1 if char_offset > 0 else char_offset
                 )
@@ -712,9 +730,9 @@ class GateJsonExporter:
                     if token_char.dipl_bound:
 
                         if current_dipl:
-                            ## close last token
+                            # close last token
                             last_dipl = current_dipl
-                            ## add page annotation
+                            # add page annotation
                             if last_dipl._id in page_ends:
                                 json_object["entities"]["Layout:Page"].append(
                                     {
@@ -724,7 +742,7 @@ class GateJsonExporter:
                                         "side": page_ends[last_dipl._id].side,
                                     }
                                 )
-                            ## add column annotation
+                            # add column annotation
                             if last_dipl._id in column_ends:
                                 json_object["entities"]["Layout:Column"].append(
                                     {
@@ -733,7 +751,7 @@ class GateJsonExporter:
                                         "name": column_ends[last_dipl._id].name,
                                     }
                                 )
-                            ## add line annotation
+                            # add line annotation
                             if last_dipl._id in line_ends:
                                 json_object["entities"]["Layout:Line"].append(
                                     {
@@ -742,7 +760,7 @@ class GateJsonExporter:
                                         "name": line_ends[last_dipl._id].name,
                                     }
                                 )
-                            ## add dipl token annotation
+                            # add dipl token annotation
                             tok_dipl = {
                                 "indices": [last_dipl_token_offset, char_offset],
                             }
@@ -757,16 +775,16 @@ class GateJsonExporter:
 
                         if tok_dipls:
                             current_dipl = tok_dipls.pop()
-                            ## add linebreak or whitespace
+                            # add linebreak or whitespace
                             if current_dipl._id in line_beginnings:
                                 if (
                                     last_line_offset is not None
-                                ):  ## ignore first linebreak
+                                ):  # ignore first linebreak
                                     json_object["text"] += "\n"
                                     char_offset += 1
                                 last_line_offset = char_offset
                             else:
-                                ## TODO is this correct?
+                                # TODO is this correct?
                                 json_object["text"] += " "
                                 char_offset += 1
 
@@ -776,11 +794,11 @@ class GateJsonExporter:
                             if current_dipl._id in column_beginnings:
                                 last_column_offset = char_offset
 
-                            ## update last dipl offset
+                            # update last dipl offset
                             last_dipl_token_offset = char_offset
 
                     if token_char.anno_bound:
-                        ### close last token
+                        # close last token
                         if current_anno is not None:
                             tok_anno = {
                                 "indices": [last_anno_token_offset, char_offset],
@@ -801,7 +819,7 @@ class GateJsonExporter:
 
                             json_object["entities"]["Token:Anno"].append(tok_anno)
 
-                        ### start new token
+                        # start new token
                         if tok_annos:
                             current_anno = tok_annos.pop()
                             last_anno_token_offset = char_offset
@@ -809,7 +827,7 @@ class GateJsonExporter:
                     json_object["text"] += token_char.dipl_utf
                     char_offset += len(token_char.dipl_utf)
 
-                ## add CoraToken annotation
+                # add CoraToken annotation
                 json_object["entities"]["Token:Cora"].append(
                     {
                         "indices": [last_cora_token_offset, char_offset],
@@ -818,7 +836,7 @@ class GateJsonExporter:
                     }
                 )
 
-                ## add shifttags
+                # add shifttags
                 if token._id in open_shifttags:
                     for start_offset, shifttag in open_shifttags[token._id]:
                         if "Shifttags:" + shifttag.tag() not in json_object["entities"]:
@@ -848,13 +866,13 @@ class MarkdownExporter:
 
     def export(self, doc):
 
-        ## export as markdown
-        ## uses to the pandoc extensions pipe_tables, inline_notes and strikeout
+        # export as markdown
+        # uses to the pandoc extensions pipe_tables, inline_notes and strikeout
 
         page = {}
         column = {}
 
-        ## get page and column info
+        # get page and column info
         for page_object in doc.pages:
             page[page_object.columns[0].lines[0].dipls[0].get_internal_id()] = (
                 page_object.name + page_object.side
@@ -878,12 +896,12 @@ class MarkdownExporter:
             if isinstance(token, CoraComment):
 
                 # converts comment to pandoc markdowns inline footnote
-                ## TODO handle square brackets in comments
+                # TODO handle square brackets in comments
                 assert "]" not in token.content
                 comment = "^[" + markdown_strings.esc_format(token.content) + "]"
 
-                ## add to current_line - if current_line is empty: add to last line in output
-                ## (except for at the beginning)
+                # add to current_line - if current_line is empty: add to last line in output
+                # (except for at the beginning)
                 if current_line:
                     current_line.append(comment)
                 else:
@@ -904,7 +922,7 @@ class MarkdownExporter:
                     current_line.append(
                         markdown_strings.esc_format(
                             dipl.trans
-                            ## mark expansions, paratext and strikethrough with markdown (strikethrough uses pandocs markdown)
+                            # mark expansions, paratext and strikethrough with markdown (strikethrough uses pandocs markdown)
                             .transform(
                                 lambda c: ExpandedAbbreviation("*", dipl_utf="*"),
                                 lambda c: isinstance(c, ExpandedAbbreviation),
@@ -917,8 +935,8 @@ class MarkdownExporter:
                                 lambda c: Strikethrough("~~", dipl_utf="~~"),
                                 lambda c: isinstance(c, Strikethrough),
                             )
-                            ## TODO the following transformations are specific for ReN
-                            ## this should be changed to be usable for other corpora as well
+                            # TODO the following transformations are specific for ReN
+                            # this should be changed to be usable for other corpora as well
                             .transform(
                                 lambda c: Multiverbation("", dipl_utf=""),
                                 lambda c: isinstance(c, Multiverbation),

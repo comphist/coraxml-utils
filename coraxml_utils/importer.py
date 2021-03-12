@@ -133,6 +133,9 @@ class CoraXMLImporter:
         ## get dipl and anno elements
         dipl_tokens = coratoken_element.findall(self.tok_dipl_tag)
         anno_tokens = coratoken_element.findall(self.tok_anno_tag)
+        if not (dipl_tokens + anno_tokens):
+            logging.error("Token element contains no dipl/anno elements. " +
+                          "Check tag name settings!")
         thistoken_errs = list()
 
         ## test that transcriptions are the same for the different levels

@@ -30,28 +30,28 @@ regular expressions (which comprise the main functionality of a parser) in
 `coraxml_utils/parser.py` and in `coraxml_utils/tokenizer.py` -- insofar as the
 existing modules aren't compatible, in which case the existing modules can be
 used as a reference. Once this has been done, the rest of the functionality
-comes free: the included editing script (`bin/check_and_parse_token`) and
-import script (`bin/trans2coraxml.py`) operate on the structured internal
+comes free: the included editing script (`bin/check_and_parse_token`) and import
+script (`bin/trans2coraxml.py`) operate on the structured internal
 representation of token transcriptions and thus work for any transcription
 standard for which there is a parser. This is then all you need to use CorA for
-your data. Additionally, CorA-XML Utils contains a number of export modules,
-for JSON, TEI, Markdown, etc. Once the parsers have been defined, these modules
-can help get your data into the format you need it in.
+your data. Additionally, CorA-XML Utils contains a number of export modules, for
+JSON, TEI, Markdown, etc. Once the parsers have been defined, these modules can
+help get your data into the format you need it in.
 
 # Installation
 
 Dependencies:
 
-* `regex`
-* `lxml`
-* `nose2`
-* `click`
+- `regex`
+- `lxml`
+- `nose2`
+- `click`
 
 These should be installed automatically by the setup script:
 ```
-python3 setup.py install --user
+pip install [--user] git+https://github.com/comphist/coraxml-utils
 ```
-(NB: Your Python 3 executable might just be called `python`.)
+(NB: Your `pip` executable might be called `pip3`.)
 
 
 
@@ -68,17 +68,36 @@ nose2 [--with-coverage --coverage coraxml_utils]
 
 ## Corpus documents
 
-A CorA-XML file is represented in our data model by the `Document` object. The internal structure of `Document` objects reflects the fact that they are meant to represent historical prints and manuscripts. They thus also model the layout of text on pages.
+A CorA-XML file is represented in our data model by the `Document` object. The
+internal structure of `Document` objects reflects the fact that they are meant
+to represent historical prints and manuscripts. They thus also model the layout
+of text on pages.
 
-A `Document` thus consists of `Page`s which then are made up of `Column`s which contain a series of `Line`s. Each line contains a series of diplomatic transcriptions (`TokDipl`). Parallel to these structures, the `Document`s contains the list of `CoraToken`s, which represent the mapping between the diplomatically faithful tokenizations and the modernized, annotatable tokenizations. Each `CoraToken` object contains a series of `TokDipl` and `TokAnno` objects, and the `TokAnno` objects contain all of the annotations visible/editable on CorA.
+A `Document` thus consists of `Page`s which then are made up of `Column`s which
+contain a series of `Line`s. Each line contains a series of diplomatic
+transcriptions (`TokDipl`). Parallel to these structures, the `Document`s
+contains the list of `CoraToken`s, which represent the mapping between the
+diplomatically faithful tokenizations and the modernized, annotatable
+tokenizations. Each `CoraToken` object contains a series of `TokDipl` and
+`TokAnno` objects, and the `TokAnno` objects contain all of the annotations
+visible/editable on CorA.
 
 ## Transcriptions
 
-A transcription (`Trans`) consists of characters (`Char`) -- see the next section for more on characters.
+A transcription (`Trans`) consists of characters (`Char`) -- see the next
+section for more on characters.
 
-The central distinction that CorA-XML makes is that between *diplomatic* tokenizations and *modernized*, i.e. *annotatable*, tokenizations. CorA-XML additionally differentiates between *diplomatic* representations of transcribed text and *simplified* ASCII representations of the same text.
+The central distinction that CorA-XML makes is that between *diplomatic*
+tokenizations and *modernized*, i.e. *annotatable*, tokenizations. CorA-XML
+additionally differentiates between *diplomatic* representations of transcribed
+text and *simplified* ASCII representations of the same text.
 
-A `Trans` object thus has two essential methods: `tokenize_dipl` and `tokenize_anno` for producing the two tokenizations. The `tokenize_dipl` method produces a list of `DiplTrans` objects, which contain the UTF diplomatic representation of the transcriptions (accessible with `.utf()`). The `tokenize_anno` produces a list of `AnnoTrans` objects that contain the simplified ASCII representations (`.simple()`).
+A `Trans` object thus has two essential methods: `tokenize_dipl` and
+`tokenize_anno` for producing the two tokenizations. The `tokenize_dipl` method
+produces a list of `DiplTrans` objects, which contain the UTF diplomatic
+representation of the transcriptions (accessible with `.utf()`). The
+`tokenize_anno` produces a list of `AnnoTrans` objects that contain the
+simplified ASCII representations (`.simple()`).
 
 
 
@@ -86,7 +105,8 @@ A `Trans` object thus has two essential methods: `tokenize_dipl` and `tokenize_a
 
 ## Character classes
 
-For the processing of transcriptions, `coraxml_utils` makes use of a detailed character class model.
+For the processing of transcriptions, `coraxml_utils` makes use of a detailed
+character class model.
 
 Visualization of character class hierarchy:
 ![character model overview](res/charclasses.svg)
@@ -100,7 +120,8 @@ Contents of the `bin/` directory.
 
 ## Interacting with CorA
 
-For scripting some of the basic functions of [CorA](http://github.com/comphist/cora) there is `corascript.py`.
+For scripting some of the basic functions of
+[CorA](http://github.com/comphist/cora) there is `corascript.py`.
 
 ## Conversion Scripts
 
@@ -152,8 +173,9 @@ Currently there are parsers for the following transcription conventions.
 * Anselm ([The Anselm Corpus](https://linguistics.rub.de/anselm))
 * ReN ([Referenzkorpus Mittelniederdeutsch/Niederrheinisch (1200&ndash;1650)](https://www.slm.uni-hamburg.de/ren))
 
-Please note: The parser for ReN is not very strict. Therefore it can be used to import valid transcriptions.
-But it should not be used to validate transcriptions.
+Please note: The parser for ReN is not very strict. Therefore it can be used to
+import valid transcriptions.  But it should not be used to validate
+transcriptions.
 
 
 # Importers
@@ -175,7 +197,10 @@ But it should not be used to validate transcriptions.
 
 # Modifiers
 
-Sometimes you want to transform a document in some way before exporting it to a destination format: rename a node, add some tags, etc. For this, CorA-XML Utils uses **modifiers**: functions that perform whatever post-processing one might require in certain situations.
+Sometimes you want to transform a document in some way before exporting it to a
+destination format: rename a node, add some tags, etc. For this, CorA-XML Utils
+uses **modifiers**: functions that perform whatever post-processing one might
+require in certain situations.
 
 The following are some of the modifiers currently included in CorA-XML Utils.
 
